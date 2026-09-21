@@ -1,0 +1,74 @@
+﻿SmartRing-PoC: W/A/S/D move, C click, ? status (115200 baud)
+Connected: 1
+Notify subscribed: 1
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1602 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1603 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1604 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1605 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1606 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1607 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1608 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1609 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1610 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1611 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1612 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1613 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1614 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1615 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1616 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1617 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1618 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1619 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1620 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=1621 notify queued
+HID queued (verify on phone)
+

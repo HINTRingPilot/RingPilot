@@ -1,0 +1,35 @@
+﻿HID queued (verify on phone)
+HID queued (verify on phone)
+seq=53 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=54 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=55 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=56 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=57 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=58 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=59 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=60 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=61 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=62 notify queued
+

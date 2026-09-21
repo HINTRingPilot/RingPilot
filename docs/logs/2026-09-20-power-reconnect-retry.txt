@@ -1,0 +1,69 @@
+﻿SmartRing-PoC: W/A/S/D move, C click, ? status (115200 baud)
+Connected: 1
+Notify subscribed: 1
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=319 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=320 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=321 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=322 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=323 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=324 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=325 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=326 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=327 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=328 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=329 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=330 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=331 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=332 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=333 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+

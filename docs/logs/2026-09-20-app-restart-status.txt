@@ -1,0 +1,7 @@
+﻿seq=932 notify queued
+SmartRing-PoC: W/A/S/D move, C click, ? status (115200 baud)
+Connected: 1
+Notify subscribed: 1
+seq=933 notify queued
+seq=934 notify queued
+

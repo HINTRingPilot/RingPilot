@@ -1,0 +1,7 @@
+﻿SmartRing-PoC: W/A/S/D move, C click, ? status (115200 baud)
+Connected: 1
+Notify subscribed: 1
+seq=634 notify queued
+seq=635 notify queued
+seq=636 notify queued
+
