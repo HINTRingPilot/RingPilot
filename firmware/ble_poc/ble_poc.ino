@@ -11,9 +11,16 @@ bool releasePending = false;
 uint32_t pressedAt = 0;
 
 void help() {
-  Serial.println("SmartRing-PoC: W/A/S/D move, C click, ? status (115200 baud)");
+  Serial.println("SmartRing-PoC: W/A/S/D move, C click, U/J/L/R swipe, ? status (115200 baud)");
   Serial.print("Connected: "); Serial.println(Bluefruit.connected());
   Serial.print("Notify subscribed: "); Serial.println(counter.notifyEnabled());
+}
+
+void sendGesture(const char* command) {
+  counter.write(command);
+  bool sent = counter.notify(command);
+  Serial.print(command);
+  Serial.println(sent ? " notify queued" : " notify failed");
 }
 
 void setup() {
@@ -50,6 +57,18 @@ void loop() {
     char command = Serial.read();
     if (command >= 'a' && command <= 'z') command -= 'a' - 'A';
     if (command == '?') help();
+    else if (command == 'U' || command == 'J' || command == 'L' || command == 'R') {
+      if (!Bluefruit.connected()) Serial.println("Not connected: pair in phone Bluetooth settings.");
+      else if (!counter.notifyEnabled()) Serial.println("GATT notify not subscribed: connect the RingPilot app.");
+      else {
+        switch (command) {
+          case 'U': sendGesture("SWIPE_UP"); break;
+          case 'J': sendGesture("SWIPE_DOWN"); break;
+          case 'L': sendGesture("SWIPE_LEFT"); break;
+          case 'R': sendGesture("SWIPE_RIGHT"); break;
+        }
+      }
+    }
     else if (command == 'W' || command == 'A' || command == 'S' || command == 'D' || command == 'C') {
       if (!Bluefruit.connected()) Serial.println("Not connected: pair in phone Bluetooth settings.");
       else if (releasePending) Serial.println("Click release pending; retry command.");

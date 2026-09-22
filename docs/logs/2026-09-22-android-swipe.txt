@@ -1,0 +1,16 @@
+SmartRing-PoC: W/A/S/D move, C click, U/J swipe up/down, ? status (115200 baud)
+Connected: 1
+Notify subscribed: 1
+seq=2001 notify queued
+seq=2002 notify queued
+seq=2003 notify queued
+seq=2004 notify queued
+seq=2005 notify queued
+SWIPE_UP notify queued
+seq=2006 notify queued
+seq=2007 notify queued
+SWIPE_DOWN notify queued
+seq=2063 notify queued
+seq=2064 notify queued
+
+User observation: Galaxy S10 / Android 12 YouTube screen moved in both directions.

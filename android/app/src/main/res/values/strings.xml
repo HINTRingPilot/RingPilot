@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RingPilot</string>
+    <string name="accessibility_service_name">RingPilot 스와이프</string>
+    <string name="accessibility_service_description">BLE 명령을 화면의 위·아래 스와이프로 변환합니다.</string>
+</resources>

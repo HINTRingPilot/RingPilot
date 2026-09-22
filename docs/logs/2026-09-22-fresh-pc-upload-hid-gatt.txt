@@ -1,0 +1,45 @@
+SmartRing-PoC: W/A/S/D move, C click, ? status (115200 baud)
+Connected: 1
+Notify subscribed: 1
+seq=120 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=121 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=122 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=123 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=124 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=125 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=126 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=127 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=128 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=129 notify queued
+HID queued (verify on phone)
+HID queued (verify on phone)
+seq=130 notify queued
+seq=131 notify queued

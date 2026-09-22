@@ -1,0 +1,18 @@
+SmartRing-PoC: W/A/S/D move, C click, U/J/L/R swipe, ? status (115200 baud)
+Connected: 1
+Notify subscribed: 1
+seq=231 notify queued
+seq=232 notify queued
+seq=233 notify queued
+seq=234 notify queued
+SWIPE_LEFT notify queued
+seq=235 notify queued
+seq=236 notify queued
+SWIPE_LEFT notify queued
+seq=237 notify queued
+seq=238 notify queued
+SWIPE_RIGHT notify queued
+seq=239 notify queued
+seq=240 notify queued
+
+User observation: left swipe twice and right swipe once worked after reconnecting the RingPilot app.
