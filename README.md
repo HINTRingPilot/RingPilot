@@ -7,7 +7,7 @@
 
 XIAO nRF52840 Sense의 Arduino/Bluefruit 펌웨어로 BLE HID 마우스와 Custom GATT 서비스를 제공합니다.
 Android 최소 앱은 AccessibilityService로 다른 앱 위에 스와이프를 전달하고, Custom GATT의 `SWIPE_UP` / `SWIPE_DOWN` 명령을 수신합니다.
-현재 입력은 USB 시리얼 명령으로 대체하며 실제 스틱·IMU·TinyML은 아직 구현하지 않았습니다.
+현재 스와이프 입력은 USB 시리얼 명령으로 대체합니다. Edge Impulse용 100 Hz IMU 6축 출력과 Studio 장치 연결까지 검증했으며, 라벨 데이터 수집·학습·TinyML 통합은 아직 진행 전입니다.
 
 ```text
 PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
@@ -33,13 +33,16 @@ PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
 4. USB 시리얼 모니터(115200 baud)에서 WASD로 이동, C로 클릭, U/J/L/R로 위·아래·왼쪽·오른쪽 스와이프 명령, ?로 상태를 조회합니다.
 5. 스와이프 시험은 [Android 앱 안내](android/README.md), 전체 통신 시험은 [BLE 테스트 안내](docs/BLE테스트.md)를 따릅니다.
 
+제스처 학습을 시작할 때는 [Edge Impulse 데이터 수집 안내](docs/EdgeImpulse.md)에 따라 별도 IMU 수집 펌웨어를 업로드합니다.
+
 ## 문서
 
 - [기획서 원안](기획서%20원안.txt)
 - [진행 기록 및 검증 근거](docs/진행기록.md)
 - [Windows 개발환경 설치](docs/설치안내.md)
 - [Android 스와이프 앱](android/README.md)
+- [Edge Impulse 제스처 데이터 수집](docs/EdgeImpulse.md)
 - [시리얼 테스트 로그](docs/logs/)
 
-다음 단계는 BLE 연결을 백그라운드 서비스와 자동 재연결 구조로 보강하거나, 입력 스틱·IMU 데이터 수집·TinyML로 확장하는 것입니다.
+다음 단계는 IMU 원시 데이터의 실물 출력을 확인하고 Edge Impulse에서 제스처 데이터셋을 수집하는 것입니다.
 펌웨어 `.build/`, Android 빌드 결과와 로컬 SDK `.tools/`는 저장소에서 제외합니다.

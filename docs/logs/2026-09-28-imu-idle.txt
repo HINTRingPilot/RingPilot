@@ -1,0 +1,23 @@
+RingPilot XIAO nRF52840 Sense IMU idle probe
+Date: 2026-09-28 KST
+Port: COM6
+Baud: 115200
+Configured output rate: 100 Hz
+Observation duration: 3.034 s
+Valid six-axis samples: 304
+Observed rate: 100.2 Hz
+Mean acceleration magnitude: 9.8049 m/s^2
+Mean gyroscope XYZ: 0.004, -2.565, -0.117 deg/s
+Axis order: accX,accY,accZ,gyrX,gyrY,gyrZ
+
+First 8 samples:
+-2.17866,8.76730,-3.78903,0.3150,-2.4150,0.0000
+-2.16072,8.75893,-3.81177,0.0700,-2.5550,-0.2100
+-2.14756,8.73021,-3.81655,-0.3150,-2.5900,-0.3500
+-2.15234,8.71346,-3.81057,-0.2100,-2.6250,-0.3500
+-2.17627,8.72184,-3.78664,-0.7000,-2.6600,-0.3850
+-2.21456,8.74337,-3.75793,-0.4900,-2.6950,-0.3850
+-2.26122,8.78286,-3.73161,-0.2100,-2.6250,-0.1400
+-2.30668,8.83550,-3.71127,-0.3500,-2.6600,0.0000
+
+This is a short stationary-board sanity check, not a calibration result.
