@@ -1,0 +1,9 @@
+﻿uptime_ms=7000 vbat_raw=1820 vbat_est=3.95V (추정)
+uptime_ms=8000 vbat_raw=1912 vbat_est=4.15V (추정)
+uptime_ms=9000 vbat_raw=1906 vbat_est=4.13V (추정)
+uptime_ms=10000 vbat_raw=1906 vbat_est=4.13V (추정)
+uptime_ms=11000 vbat_raw=1915 vbat_est=4.15V (추정)
+uptime_ms=12000 vbat_raw=1912 vbat_est=4.15V (추정)
+uptime_ms=13000 vbat_raw=1908 vbat_est=4.14V (추정)
+uptime_ms=14000 vbat_raw=1912 vbat_est=4.15V (추정)
+
