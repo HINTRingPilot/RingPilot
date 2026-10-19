@@ -1,4 +1,4 @@
-# causal window 길이 1차 비교
+# Causal Window 길이 1차 비교
 
 2026-09-28에 Edge Impulse 프로젝트 `RingPilot`(ID `1122630`)의 방향별 3초 원시 샘플과 `data/annotations/gesture-completions.csv`를 이용해 `800 / 1200 / 1600 ms` 입력 길이를 비교했다.
 

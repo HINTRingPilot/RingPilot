@@ -41,7 +41,13 @@ PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
 - [진행 기록 및 검증 근거](docs/진행기록.md)
 - [Windows 개발환경 설치](docs/설치안내.md)
 - [Android 스와이프 앱](android/README.md)
+- [BLE 테스트 안내](docs/BLE테스트.md)
 - [Edge Impulse 제스처 데이터 수집](docs/EdgeImpulse.md)
+- [제스처 인식 구조 제안](docs/제스처인식구조안.md)
+- [Windowing 설계 검토](docs/Windowing검토.md)
+- [Causal Window 길이 1차 비교](docs/WindowLengthComparison.md)
+- [제스처 분류 모델 실험 기록](docs/ModelExperiments.md)
+- [하드웨어 제작 보고서](docs/HardwareBuild.md)
 - [시리얼 테스트 로그](docs/logs/)
 
 다음 단계는 IMU 원시 데이터의 실물 출력을 확인하고 Edge Impulse에서 제스처 데이터셋을 수집하는 것입니다.

@@ -1,7 +1,11 @@
+// BLE PoC: HID 마우스 이동/클릭과 Custom GATT 스와이프 알림을 USB 시리얼 명령으로 시험한다.
+// W/A/S/D 이동, C 클릭, U/J/L/R 스와이프(SWIPE_UP/DOWN/LEFT/RIGHT), ? 상태 조회 (115200 baud).
+// BLE 광고 이름은 SmartRing-PoC이며, Android 쪽은 Custom GATT 구독으로 스와이프 알림을 받는다.
+// 한 번에 한 개 연결만 지원하고, 연결이 끊기면 광고를 자동 재시작한다.
+
 #include <Adafruit_TinyUSB.h>
 #include <bluefruit.h>
 
-// Smart Ring prototype: one peripheral connection, HID + custom GATT.
 BLEHidAdafruit hid;
 BLEService telemetry("b27a1000-8c5e-4b62-9a21-33dd714e9001");
 BLECharacteristic counter("b27a1001-8c5e-4b62-9a21-33dd714e9001");

@@ -2,18 +2,9 @@
 
 'use strict';
 
-// Records 3-second, 100 Hz, 6-axis IMU samples straight from the
-// imu_capture firmware's serial CSV output ("accX,accY,accZ,gyrX,gyrY,gyrZ")
-// into local files shaped like the existing Edge Impulse raw_* samples:
-// "timestamp,accX,accY,accZ,gyrX,gyrY,gyrZ" with 300 rows at a 10 ms step.
-//
-// Controls (after the port opens):
-//   u / d / l / r   start a 3 s recording for that direction
-//   o                start a 10 s "other" recording (small/odd movements)
-//   i                start a 10 s "idle" recording (no movement)
-//   q                quit
-//
-// Nothing is uploaded. Files are written under --out (default: data/sessions/<session>/).
+// Reads the imu_capture firmware's serial CSV output ("accX,accY,accZ,gyrX,gyrY,gyrZ")
+// and writes local files shaped like the existing Edge Impulse raw_* samples:
+// "timestamp,accX,accY,accZ,gyrX,gyrY,gyrZ" with 300 rows at a 10 ms step. See printHelp().
 
 const fs = require('fs');
 const os = require('os');
@@ -196,6 +187,6 @@ async function main() {
 }
 
 main().catch(error => {
-  process.stderr.write(`${error.message}\n`);
-  process.exit(1);
+  process.stderr.write(`${error.stack || error.message}\n`);
+  process.exitCode = 1;
 });

@@ -1,3 +1,8 @@
+// IMU 원시 데이터 수집용 펌웨어. 보드 내장 LSM6DS3TR-C 가속도·자이로를 100 Hz로 읽어
+// "accX,accY,accZ,gyrX,gyrY,gyrZ" CSV 한 줄씩 USB 시리얼(115200)로 출력한다.
+// 가속도는 g에서 m/s^2로 환산하고, 자이로는 deg/s 그대로 보낸다.
+// Edge Impulse Data Forwarder와 tools/record-gesture-samples.js가 이 출력 형식을 그대로 읽는다.
+
 #include <LSM6DS3.h>
 #include <Wire.h>
 
