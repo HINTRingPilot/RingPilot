@@ -28,6 +28,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ImuMonitorActivity"
+            android:exported="false"
+            android:label="RingPilot IMU 측정" />
+
         <service
             android:name=".SwipeAccessibilityService"
             android:exported="false"

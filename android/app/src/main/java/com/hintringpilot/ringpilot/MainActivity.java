@@ -64,6 +64,8 @@ public final class MainActivity extends Activity {
         layout.addView(button("4. 3초 후 왼쪽으로 스와이프 시험", view -> scheduleSwipe("LEFT")), matchWidth());
         layout.addView(button("5. 3초 후 오른쪽으로 스와이프 시험", view -> scheduleSwipe("RIGHT")), matchWidth());
         layout.addView(button("6. SmartRing-PoC BLE 연결", view -> connectRing()), matchWidth());
+        layout.addView(button("7. RingPilot-IMU 수신·재연결 측정", view ->
+                startActivity(new Intent(this, ImuMonitorActivity.class))), matchWidth());
 
         TextView help = new TextView(this);
         help.setText("BLE 연결 후 PC 시리얼에서 U/J/L/R=위/아래/왼쪽/오른쪽 스와이프입니다.\n" +
