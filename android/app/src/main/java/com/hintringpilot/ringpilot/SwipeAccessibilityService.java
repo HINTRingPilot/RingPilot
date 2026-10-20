@@ -8,6 +8,10 @@ import android.view.accessibility.AccessibilityEvent;
 
 import java.lang.ref.WeakReference;
 
+/**
+ * 화면에 위·아래·좌·우 스와이프를 주입한다. 제스처 인식 결과를 화면 조작으로 바꾸는 출력 경로로 보존하며,
+ * 현재 수집 화면에서는 호출하지 않는다. 다시 쓰려면 접근성 설정에서 'RingPilot 스와이프'를 켜야 한다.
+ */
 public final class SwipeAccessibilityService extends AccessibilityService {
     private static WeakReference<SwipeAccessibilityService> current = new WeakReference<>(null);
 

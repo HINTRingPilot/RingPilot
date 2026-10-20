@@ -31,7 +31,9 @@ PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
 2. [ble_poc.ino](firmware/ble_poc/ble_poc.ino)를 Sense 보드에 업로드합니다.
 3. Android에서 `SmartRing-PoC`를 페어링합니다.
 4. USB 시리얼 모니터(115200 baud)에서 WASD로 이동, C로 클릭, U/J/L/R로 위·아래·왼쪽·오른쪽 스와이프 명령, ?로 상태를 조회합니다.
-5. 스와이프 시험은 [Android 앱 안내](android/README.md), 전체 통신 시험은 [BLE 테스트 안내](docs/BLE테스트.md)를 따릅니다.
+5. 전체 통신 시험은 [BLE 테스트 안내](docs/BLE테스트.md)를 따릅니다. 당시의 스와이프 시험 화면은 현재 앱에서 제거됐습니다.
+
+제스처 데이터를 무선으로 모을 때는 [imu_ble_stream.ino](firmware/imu_ble_stream/imu_ble_stream.ino)를 업로드하고 [Android 수집 앱](android/README.md)을 사용합니다.
 
 제스처 학습을 시작할 때는 [Edge Impulse 데이터 수집 안내](docs/EdgeImpulse.md)에 따라 별도 IMU 수집 펌웨어를 업로드합니다.
 
@@ -40,7 +42,7 @@ PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
 - [기획서 원안](기획서%20원안.txt)
 - [진행 기록 및 검증 근거](docs/진행기록.md)
 - [Windows 개발환경 설치](docs/설치안내.md)
-- [Android 스와이프 앱](android/README.md)
+- [Android 수집 앱](android/README.md)
 - [BLE 테스트 안내](docs/BLE테스트.md)
 - [Edge Impulse 제스처 데이터 수집](docs/EdgeImpulse.md)
 - [제스처 인식 구조 제안](docs/제스처인식구조안.md)

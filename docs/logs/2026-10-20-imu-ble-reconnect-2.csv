@@ -1,0 +1,23 @@
+wall_time,phone_ms,event,detail
+15:40:46.527,368590392,monitor_start,/storage/emulated/0/Android/data/com.hintringpilot.ringpilot/files/imu_reconnect_log.csv
+15:40:47.401,368591270,connect_failed,status=133
+15:40:48.283,368592151,connected,
+15:40:49.236,368593104,mtu,mtu=247 status=0
+15:40:49.408,368593276,status_subscribed,state=STREAMING device_uptime_ms=121463
+15:40:49.550,368593418,subscribed,
+15:40:49.557,368593425,first_data_after_subscribe,
+15:41:05.739,368609606,paused,state=PAUSED device_uptime_ms=137861
+15:41:24.981,368628847,resumed,state=STREAMING device_uptime_ms=157054
+15:41:24.995,368628862,RESULT_pause_resume,device_release_to_first_data_ms=21 phone_resumed_status_to_now_ms=15
+15:41:30.457,368634325,paused,state=PAUSED device_uptime_ms=162609
+15:41:35.224,368639089,resumed,state=STREAMING device_uptime_ms=167291
+15:41:35.236,368639104,RESULT_pause_resume,device_release_to_first_data_ms=21 phone_resumed_status_to_now_ms=15
+15:41:43.790,368647657,disconnected,status=0
+15:41:47.761,368651629,connected,since_disconnect_ms=3972
+15:41:48.000,368651866,mtu,mtu=247 status=0
+15:41:48.496,368652363,status_subscribed,state=STREAMING device_uptime_ms=1388
+15:41:48.508,368652375,RESULT_boot_reconnect,device_boot_to_first_data_ms=1393 phone_disconnect_to_now_ms=4718
+15:41:48.581,368652449,subscribed,since_disconnect_ms=4792
+15:41:48.592,368652460,first_data_after_subscribe,since_disconnect_ms=4803
+15:41:57.908,368661775,disconnected,status=0
+15:41:59.819,368663687,monitor_stop,
