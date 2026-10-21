@@ -2,10 +2,10 @@
 #
 # 일괄 설치: PowerShell에서  .\setup.ps1  (이 목록의 도구를 winget/npm/arduino-cli로 설치)
 #
-# 이 저장소에는 Python 코드가 없다. tools/*.js는 Node.js, 펌웨어는 Arduino(C++),
-# 앱은 Android(Java/Gradle)다. 그래서 pip로 설치할 패키지는 없고, 아래는 직접 받아서
-# 설치할 도구 목록이다. (주석이 아닌 줄만 pip 문법이라 `pip install -r`은 쓰지 않는다.)
-# 상세 절차: docs/설치안내.md, docs/EdgeImpulse.md
+# tools/*.js는 Node.js, 펌웨어는 Arduino(C++), 앱은 Android(Java/Gradle), 모델 학습은
+# Python(ml/)이다. 아래는 직접 받아서 설치할 도구 목록이다. Python 패키지는 ml/requirements.txt에
+# 따로 고정돼 있다. (주석이 아닌 줄만 pip 문법이라 이 파일로 `pip install -r`은 쓰지 않는다.)
+# 상세 절차: docs/설치안내.md
 #
 # ---------------------------------------------------------------------------
 # [A] 펌웨어 (firmware/*.ino) - 필수
@@ -14,7 +14,7 @@
 # 추가 보드 URL                         https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
 # 보드 코어 "Seeed nRF52 Boards" 1.1.13  (non-mbed. "mbed-enabled"와 혼동 금지)
 #                                       보드: Seeed XIAO nRF52840 Sense
-# 라이브러리 "Seeed Arduino LSM6DS3" 2.0.7  (imu_ble_stream, imu_capture에서 사용)
+# 라이브러리 "Seeed Arduino LSM6DS3" 2.0.7  (imu_ble_stream에서 사용)
 # 코어에 포함(별도 설치 불필요)        Adafruit_TinyUSB, bluefruit(Adafruit nRF52 BLE), Wire
 # USB 드라이버                          XIAO가 COM 포트로 잡혀야 함 (업로드 실패 시 RST 두 번 눌러 부트로더)
 #
@@ -23,10 +23,6 @@
 # ---------------------------------------------------------------------------
 # Node.js                      24.18.0   https://nodejs.org/  (npm 11.16.0 포함)
 #   - tools/*.js는 Node 내장 모듈만 사용(fs, path, os, crypto, readline, child_process). npm 패키지 설치 없음.
-# Edge Impulse CLI             1.40.0    npm.cmd install --global edge-impulse-cli
-#   - tools/record-gesture-samples.js가 CLI에 번들된 serialport(v8)를 재사용한다.
-#   - tools/start-edge-impulse.cmd는 %APPDATA%\npm\edge-impulse-data-forwarder.cmd를 호출한다.
-# Edge Impulse 계정(웹)                 https://studio.edgeimpulse.com/  (모델 학습/배포, 비밀번호는 기록하지 않음)
 #
 # ---------------------------------------------------------------------------
 # [C] Android 앱 (android/) - 앱 수정/빌드 시에만 필요

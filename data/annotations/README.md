@@ -38,7 +38,7 @@
 node tools/suggest-gesture-completions.js --local-dir data/sessions/<세션> --format csv > data/annotations/gesture-completions-session-<세션>.csv
 ```
 
-출력 결과를 검토하지 않고 기존 CSV 위에 자동 반영하지 않는다. 윈도우를 만들 때는 `tools/export-gesture-windows.js --annotations <주석 CSV들>`로 사용할 주석을 명시한다(기본값 `gesture-completions.csv`는 삭제됐다).
+출력 결과를 검토하지 않고 기존 CSV 위에 자동 반영하지 않는다. 학습 창은 `ml/`의 학습 코드가 `data/splits/`의 분할과 `data/annotations/ble-v1/` 주석으로 만든다.
 
 - `sample_id`는 세션마다 9000000000부터 다시 시작한다. export는 파일 이름을 내부 순번으로 만들고 manifest에 `source_path`를 함께 남기므로 겹쳐도 덮어쓰지 않는다. 구분이 필요하면 `--id-start`로 세션별 범위를 준다.
 - export는 주석에 나온 세션 폴더(및 `--sessions`로 준 폴더)의 `idle.N.csv`, `other.N.csv`를 NONE 출처로 읽는다. NONE 상한은 동작 클립 배경, idle, other에서 번갈아 고르게 채운다.

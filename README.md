@@ -35,7 +35,7 @@ PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
 
 제스처 데이터를 무선으로 모을 때는 [imu_ble_stream.ino](firmware/imu_ble_stream/imu_ble_stream.ino)를 업로드하고 [Android 수집 앱](android/README.md)을 사용합니다.
 
-제스처 학습을 시작할 때는 [Edge Impulse 데이터 수집 안내](docs/EdgeImpulse.md)에 따라 별도 IMU 수집 펌웨어를 업로드합니다.
+모델 학습·평가는 로컬 Python(`ml/`)에서 진행합니다. 계획은 [학습 계획](docs/TrainingPlan.md), 실험 기록은 [BLE v1 실험](docs/experiments/ble-v1/README.md)에 있습니다.
 
 ## 문서
 
@@ -44,13 +44,12 @@ PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
 - [Windows 개발환경 설치](docs/설치안내.md)
 - [Android 수집 앱](android/README.md)
 - [BLE 테스트 안내](docs/BLE테스트.md)
-- [Edge Impulse 제스처 데이터 수집](docs/EdgeImpulse.md)
 - [제스처 인식 구조 제안](docs/제스처인식구조안.md)
-- [Windowing 설계 검토](docs/Windowing검토.md)
-- [Causal Window 길이 1차 비교](docs/WindowLengthComparison.md)
-- [제스처 분류 모델 실험 기록](docs/ModelExperiments.md)
+- [모델 아키텍처](docs/ModelArchitecture.md)
+- [학습·평가 계획](docs/TrainingPlan.md)
+- [BLE v1 모델 실험 기록](docs/experiments/ble-v1/README.md)
 - [하드웨어 제작 보고서](docs/HardwareBuild.md)
 - [시리얼 테스트 로그](docs/logs/)
 
-다음 단계는 IMU 원시 데이터의 실물 출력을 확인하고 Edge Impulse에서 제스처 데이터셋을 수집하는 것입니다.
+현재 개발 후보는 2층 CNN+증강(B)이며 최종 선정 전입니다. 남은 단계는 연속 자료 검증(실험 7b)과 int8·보드 검증(실험 8)입니다.
 펌웨어 `.build/`, Android 빌드 결과와 로컬 SDK `.tools/`는 저장소에서 제외합니다.

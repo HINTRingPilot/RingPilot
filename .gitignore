@@ -6,8 +6,7 @@ android/build/
 android/app/build/
 .tools/
 
-# Regeneratable window CSVs (tools/export-gesture-windows.js,
-# tools/augment-gesture-windows.js). Raw sessions and annotations are kept.
+# Window CSVs from the removed Edge Impulse exporter. Raw sessions and annotations are kept.
 data/windows/
 data/windows-augmented-5x/
 

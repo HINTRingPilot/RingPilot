@@ -10,7 +10,6 @@ $ErrorActionPreference = 'Stop'
 $BoardIndexUrl = 'https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json'
 $BoardCore     = 'Seeeduino:nrf52@1.1.13'   # non-mbed 코어
 $ImuLibrary    = 'Seeed Arduino LSM6DS3@2.0.7'
-$EdgeImpulse   = 'edge-impulse-cli@1.40.0'
 
 function Has($cmd) { [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
 
@@ -41,15 +40,7 @@ if (-not $SkipAndroid) {
 }
 Refresh-Path
 
-# 2) Edge Impulse CLI (npm.cmd: PowerShell 실행 정책을 건드리지 않기 위해)
-Write-Host "==> $EdgeImpulse"
-if (Has 'npm.cmd') {
-    npm.cmd install --global $EdgeImpulse
-} else {
-    Write-Warning 'npm을 찾지 못했습니다. 새 PowerShell 창을 열고 다시 실행하세요.'
-}
-
-# 3) 보드 코어 + 라이브러리
+# 2) 보드 코어 + 라이브러리
 if (Has 'arduino-cli') {
     Write-Host "==> Arduino 보드 코어 $BoardCore"
     arduino-cli config init --overwrite 2>$null | Out-Null
@@ -66,4 +57,3 @@ Write-Host ''
 Write-Host '완료. 수동으로 남은 것:'
 Write-Host ' - Android Studio를 한 번 실행해 SDK Manager에서 Platform 35, Build-Tools 36.0.0, Platform-Tools 설치'
 Write-Host ' - 휴대폰: 개발자 옵션 > USB 디버깅, 앱 설치 후 접근성 > RingPilot 스와이프 사용'
-Write-Host ' - Edge Impulse 계정 로그인 (edge-impulse-data-forwarder 최초 실행 시)'

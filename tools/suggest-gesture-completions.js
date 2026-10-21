@@ -56,8 +56,8 @@ function printHelp() {
     '  node tools/suggest-gesture-completions.js [--project-id 1122630] [--format json|csv]',
     '',
     'Usage (local session files, same raw_up/down/left/right.N.csv layout as',
-    'tools/record-gesture-samples.js writes):',
-    '  node tools/suggest-gesture-completions.js --local-dir data/sessions/2026-10-06T04-12-41 --format csv',
+    'the Android collection app writes):',
+    '  node tools/suggest-gesture-completions.js --local-dir data/sessions/phone-20261021-094346 --format csv',
     '',
     'Options:',
     '  --local-dir PATH   Read raw_*.csv files from this directory instead of Edge Impulse',
@@ -309,7 +309,7 @@ function formatCsv(annotations) {
 function loadLocalCsv(filePath, clipSamples) {
   const lines = fs.readFileSync(filePath, 'utf8').trim().split(/\r?\n/);
   const rows = lines.slice(1).map(line => line.split(',').slice(1).map(Number));
-  // record-gesture-samples.js times recordings with setTimeout, so row counts
+  // The old USB recorder timed recordings with setTimeout, so row counts
   // land at 300-304 instead of exactly 300. Trim that small serial-timing excess
   // so every clip in a session has the same length.
   if (rows.length < clipSamples) throw new Error(`${filePath}: only ${rows.length} rows, expected at least ${clipSamples}`);
