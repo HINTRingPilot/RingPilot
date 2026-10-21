@@ -48,6 +48,7 @@ PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
 - [모델 아키텍처](docs/ModelArchitecture.md)
 - [학습·평가 계획](docs/TrainingPlan.md)
 - [BLE v1 모델 실험 기록](docs/experiments/ble-v1/README.md)
+- [모델 개발·실험 기록 (조현준)](docs/진행기록_조현준.md)
 - [하드웨어 제작 보고서](docs/HardwareBuild.md)
 - [시리얼 테스트 로그](docs/logs/)
 

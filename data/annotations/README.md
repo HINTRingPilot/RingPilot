@@ -5,6 +5,11 @@
 | 파일 | 대상 |
 |---|---|
 | `gesture-completions-session-2026-10-21-phone.csv` | `data/sessions/phone-20261021-091621/` (휴대폰 앱 수집, 20개) |
+| `ble-v1/phone-20261021-091621-candidates.json` | BLE 실험 1용 첫 세션 자동 후보 20개 재계산, 기존 CSV 보존 |
+| `ble-v1/phone-20261021-094346-candidates.json` | BLE 실험 1용 추가 세션 자동 후보 40개 |
+| `ble-v1/review-decisions.json` | 66개 원본의 센서 파형 기반 채택/보류/제외 판단 및 분할 |
+
+BLE 실험 1의 실제 주석 검토와 시간 제약은 [데이터 검토 기록](../../docs/experiments/ble-v1/01-data-review.md)을 따른다. 자동 후보와 검토 결정을 구분하며, 영상·사용자 확인으로 완료 정답을 확정한 것은 아니다. 새 로컬 학습은 [고정 분할표](../splits/ble-v1.json)와 `ml/baseline.py`를 사용한다.
 
 2026-10-21에 이전 데이터(Edge Impulse 1차 세션 46개, USB 2차 세션 40개, 학습 윈도우)와 그 주석을 사용자 요청으로 모두 삭제했다. 경과는 `docs/진행기록.md`에 있다.
 
