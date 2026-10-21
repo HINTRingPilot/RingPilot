@@ -1,0 +1,53 @@
+wall_time,phone_ms,event,detail
+13:44:16.992,275198368,monitor_start,/storage/emulated/0/Android/data/com.hintringpilot.ringpilot/files/imu_reconnect_log.csv
+13:44:17.014,275198393,connected,
+13:44:17.094,275198472,mtu,mtu=247 status=0
+13:44:17.435,275198814,status_subscribed,state=STREAMING device_uptime_ms=207398
+13:44:17.482,275198860,subscribed,
+13:44:17.530,275198909,first_data_after_subscribe,
+13:44:17.534,275198913,RESULT_boot_reconnect,device_boot_to_first_data_ms=207696
+13:44:31.676,275213052,paused,state=PAUSED device_uptime_ms=221875
+13:44:42.946,275224324,disconnected,status=0
+13:44:43.570,275224948,connected,since_disconnect_ms=624
+13:44:48.600,275229977,mtu,mtu=23 status=133
+13:44:48.633,275230012,disconnected,status=0
+13:44:49.416,275230794,connected,since_disconnect_ms=782
+13:44:49.788,275231165,mtu,mtu=247 status=0
+13:44:50.185,275231562,status_subscribed,state=STREAMING device_uptime_ms=3882
+13:44:50.197,275231575,RESULT_boot_reconnect,device_boot_to_first_data_ms=3890 phone_disconnect_to_now_ms=1563
+13:44:50.272,275231649,subscribed,since_disconnect_ms=1637
+13:44:50.281,275231659,first_data_after_subscribe,since_disconnect_ms=1647
+13:44:55.056,275236432,paused,state=PAUSED device_uptime_ms=8799
+13:45:02.739,275244116,resumed,state=STREAMING device_uptime_ms=16489
+13:45:02.940,275244315,RESULT_pause_resume,device_release_to_first_data_ms=93 phone_resumed_status_to_now_ms=200
+13:45:13.658,275255035,disconnected,status=0
+13:45:19.090,275260468,connect_failed,status=133
+13:45:19.601,275260979,connected,since_disconnect_ms=5944
+13:45:20.401,275261777,mtu,mtu=247 status=0
+13:45:20.549,275261927,status_subscribed,state=STREAMING device_uptime_ms=1669
+13:45:20.596,275261974,subscribed,since_disconnect_ms=6939
+13:45:20.741,275262118,first_data_after_subscribe,since_disconnect_ms=7083
+13:45:23.167,275264546,monitor_stop,
+wall_time,phone_ms,event,detail
+15:40:46.527,368590392,monitor_start,/storage/emulated/0/Android/data/com.hintringpilot.ringpilot/files/imu_reconnect_log.csv
+15:40:47.401,368591270,connect_failed,status=133
+15:40:48.283,368592151,connected,
+15:40:49.236,368593104,mtu,mtu=247 status=0
+15:40:49.408,368593276,status_subscribed,state=STREAMING device_uptime_ms=121463
+15:40:49.550,368593418,subscribed,
+15:40:49.557,368593425,first_data_after_subscribe,
+15:41:05.739,368609606,paused,state=PAUSED device_uptime_ms=137861
+15:41:24.981,368628847,resumed,state=STREAMING device_uptime_ms=157054
+15:41:24.995,368628862,RESULT_pause_resume,device_release_to_first_data_ms=21 phone_resumed_status_to_now_ms=15
+15:41:30.457,368634325,paused,state=PAUSED device_uptime_ms=162609
+15:41:35.224,368639089,resumed,state=STREAMING device_uptime_ms=167291
+15:41:35.236,368639104,RESULT_pause_resume,device_release_to_first_data_ms=21 phone_resumed_status_to_now_ms=15
+15:41:43.790,368647657,disconnected,status=0
+15:41:47.761,368651629,connected,since_disconnect_ms=3972
+15:41:48.000,368651866,mtu,mtu=247 status=0
+15:41:48.496,368652363,status_subscribed,state=STREAMING device_uptime_ms=1388
+15:41:48.508,368652375,RESULT_boot_reconnect,device_boot_to_first_data_ms=1393 phone_disconnect_to_now_ms=4718
+15:41:48.581,368652449,subscribed,since_disconnect_ms=4792
+15:41:48.592,368652460,first_data_after_subscribe,since_disconnect_ms=4803
+15:41:57.908,368661775,disconnected,status=0
+15:41:59.819,368663687,monitor_stop,

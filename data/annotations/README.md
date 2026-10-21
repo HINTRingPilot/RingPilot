@@ -1,6 +1,12 @@
 # 제스처 완료 시점 주석
 
-`gesture-completions.csv`는 Edge Impulse 프로젝트 `1122630`의 방향별 3초 원시 샘플에 대한 자연 복귀 완료 시점 후보표다. 원시 센서 값이나 Edge Impulse 인증 정보는 저장하지 않는다.
+세션별 방향 샘플(`raw_*.N.csv`, 3초)에 대한 자연 복귀 완료 시점 후보표다. 원시 센서 값이나 인증 정보는 저장하지 않는다.
+
+| 파일 | 대상 |
+|---|---|
+| `gesture-completions-session-2026-10-21-phone.csv` | `data/sessions/phone-20261021-091621/` (휴대폰 앱 수집, 20개) |
+
+2026-10-21에 이전 데이터(Edge Impulse 1차 세션 46개, USB 2차 세션 40개, 학습 윈도우)와 그 주석을 사용자 요청으로 모두 삭제했다. 경과는 `docs/진행기록.md`에 있다.
 
 ## 현재 계약
 
@@ -18,16 +24,15 @@
 - `REVIEW`: 완료 시점 후보는 기록했지만 파형을 다시 확인해야 하는 샘플. 첫 모델의 기본 학습 목록에서는 제외한다.
 - `early_motion`: 첫 0.5초 안에 유의미한 동작 에너지가 존재
 - `late_completion`: 완료 시점이 2.5초 이후
-- `return_pose_offset`: 처음과 끝의 중력 방향 차이가 12도 이상
+- `no_180ms_settle`, `second_motion_cluster`, `near_gyro_limit`: 안정 구간 없음, 두 번째 동작 덩어리, 자이로 한계 근접
+- `return_pose_offset`은 2026-10-19부터 판정에 쓰지 않는다(최종 자세가 시작 자세와 같을 필요가 없음). 각도 값은 `return_angle_deg`로 참고용 기록만 한다.
 
-현재 40개 중 `AUTO` 30개, `REVIEW` 10개다. `REVIEW`를 삭제한다는 뜻은 아니며, 어려운 사례 및 연속 replay 평가 자료로 보존한다.
+`REVIEW`를 삭제한다는 뜻은 아니며, 어려운 사례 및 연속 replay 평가 자료로 보존한다.
 
 ## 다시 계산
 
-Edge Impulse CLI 로그인이 유지된 환경에서 다음을 실행한다.
-
 ```powershell
-node tools/suggest-gesture-completions.js --project-id 1122630 --format csv
+node tools/suggest-gesture-completions.js --local-dir data/sessions/<세션> --format csv > data/annotations/gesture-completions-session-<세션>.csv
 ```
 
-이 명령은 원격 데이터를 읽기만 하며 샘플과 라벨을 수정하지 않는다. 출력 결과를 검토하지 않고 기존 CSV 위에 자동 반영하지 않는다.
+출력 결과를 검토하지 않고 기존 CSV 위에 자동 반영하지 않는다. 윈도우를 만들 때는 `tools/export-gesture-windows.js --annotations <주석 CSV들>`로 사용할 주석을 명시한다(기본값 `gesture-completions.csv`는 삭제됐다).
