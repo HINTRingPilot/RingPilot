@@ -15,6 +15,7 @@ function parseArgs(argv) {
   const args = {
     projectId: 1122630,
     annotations: [path.join('data', 'annotations', 'gesture-completions.csv')],
+    sessions: [],
     out: path.join('data', 'windows'),
     windowMs: 1600,
     continuousStrideMs: 200,
@@ -28,6 +29,7 @@ function parseArgs(argv) {
     const arg = argv[ix];
     if (arg === '--project-id') args.projectId = Number(argv[++ix]);
     else if (arg === '--annotations') args.annotations = argv[++ix].split(',').map(value => value.trim());
+    else if (arg === '--sessions') args.sessions = argv[++ix].split(',').map(value => value.trim()).filter(Boolean);
     else if (arg === '--out') args.out = argv[++ix];
     else if (arg === '--window-ms') args.windowMs = Number(argv[++ix]);
     else if (arg === '--continuous-stride-ms') args.continuousStrideMs = Number(argv[++ix]);
@@ -61,6 +63,8 @@ function printHelp() {
     '  --project-id N              Edge Impulse project ID (default: 1122630)',
     '  --annotations PATH[,PATH2]  Completion CSV path(s); rows with a source_path column',
     '                               are read from that local file instead of Edge Impulse',
+    '  --sessions DIR[,DIR2]       Extra local session folders to read idle/other from. Folders of',
+    '                               local annotation rows are always included.',
     '  --out DIR                   Output directory (default: data/windows)',
     '  --window-ms N               Window length in ms (default: 1600)',
     '  --continuous-stride-ms N    Stride for idle/other windows (default: 200)',
@@ -69,8 +73,13 @@ function printHelp() {
     '  --max-none-training N       NONE windows kept in training; testing keeps N * test-fraction (default: 30)',
     '  --include-review           Also export REVIEW samples (category "review", never uploaded by default)',
     '',
-    'Remote samples are read only. Nothing is uploaded; the output directory holds',
-    'training/ and testing/ CSV files plus manifest.csv.',
+    'NONE windows are capped and drawn evenly from three sources: the non-target parts of',
+    'gesture clips, idle recordings and other recordings, so non-command data is always',
+    'represented when it exists.',
+    '',
+    'Edge Impulse is contacted only when an annotation row has no source_path. Remote samples',
+    'are read only. Nothing is uploaded; the output directory holds training/ and testing/',
+    'CSV files plus manifest.csv.',
     '',
   ].join('\n'));
 }
@@ -109,7 +118,7 @@ function assignCategories(records, testFraction, seed) {
   }
   const random = makeRng(seed);
   for (const group of byLabel.values()) {
-    const ordered = [...group].sort((a, b) => a.sampleId - b.sampleId);
+    const ordered = [...group].sort((a, b) => a.uid - b.uid);
     shuffle(ordered, random);
     const testCount = Math.max(1, Math.round(ordered.length * testFraction));
     ordered.forEach((record, ix) => {
@@ -157,11 +166,83 @@ async function fetchRows(api, projectId, sampleId, filename) {
 
 function loadLocalRows(sourcePath) {
   const lines = fs.readFileSync(path.resolve(sourcePath), 'utf8').trim().split(/\r?\n/);
-  const rows = lines.slice(1).map(line => line.split(',').slice(1).map(Number));
+  const parsed = lines.slice(1).map(line => line.split(',').map(Number));
+  // A window must not span missing samples, so reject files whose timestamps skip.
+  if (parsed.some((row, ix) => row[0] !== ix * SAMPLE_INTERVAL_MS)) {
+    throw new Error(`${sourcePath}: timestamps are not continuous ${SAMPLE_INTERVAL_MS} ms steps`);
+  }
+  const rows = parsed.map(row => row.slice(1));
   if (rows.some(row => row.length !== 6 || row.some(value => !Number.isFinite(value)))) {
     throw new Error(`${sourcePath}: invalid six-axis payload`);
   }
   return rows;
+}
+
+// idle.N.csv / other.N.csv written by the phone app (10 s, no gaps).
+function listLocalContinuous(sessionDir) {
+  return fs.readdirSync(sessionDir)
+    .map(name => ({ name, match: name.match(/^(idle|other)\.(\d+)\.csv$/) }))
+    .filter(entry => entry.match)
+    .sort((left, right) => left.match[1].localeCompare(right.match[1]) || Number(left.match[2]) - Number(right.match[2]))
+    .map(entry => ({ label: entry.match[1], sourcePath: path.join(sessionDir, entry.name) }));
+}
+
+function relativePath(filePath) {
+  return path.relative(process.cwd(), path.resolve(filePath)).replaceAll('\\', '/');
+}
+
+// NONE windows come from three kinds of source. Draw them round-robin across kinds
+// first and across recordings second, so a long list of gesture clips cannot use up
+// the cap before any idle/other recording is reached.
+function noneSourceKind(record) {
+  return record.kind === 'gesture' ? 'gesture_background' : record.groupLabel;
+}
+
+function pickNone(records, windowMs, continuousStrideMs, cap, random) {
+  const byKind = new Map();
+  for (const record of records) {
+    const none = makeWindows(record, windowMs, continuousStrideMs).filter(window => window.label === 'NONE');
+    if (none.length === 0) continue;
+    shuffle(none, random);
+    const kind = noneSourceKind(record);
+    if (!byKind.has(kind)) byKind.set(kind, []);
+    byKind.get(kind).push(none);
+  }
+  const kinds = [...byKind.keys()].sort().map(kind => {
+    const pools = byKind.get(kind);
+    shuffle(pools, random);
+    return { pools, round: 0, poolIx: 0 };
+  });
+
+  const next = kind => {
+    // Visit this kind's recordings in turn, taking each one's next window.
+    while (kind.pools.some(pool => kind.round < pool.length)) {
+      const pool = kind.pools[kind.poolIx];
+      const window = kind.round < pool.length ? pool[kind.round] : null;
+      kind.poolIx += 1;
+      if (kind.poolIx === kind.pools.length) {
+        kind.poolIx = 0;
+        kind.round += 1;
+      }
+      if (window) return window;
+    }
+    return null;
+  };
+
+  const picked = [];
+  while (picked.length < cap) {
+    let any = false;
+    for (const kind of kinds) {
+      if (picked.length >= cap) break;
+      const window = next(kind);
+      if (window) {
+        picked.push(window);
+        any = true;
+      }
+    }
+    if (!any) break;
+  }
+  return picked;
 }
 
 async function main() {
@@ -181,23 +262,32 @@ async function main() {
     status: row.status,
   })));
 
-  const cliApiPath = process.env.EDGE_IMPULSE_CLI_API || path.join(
-    process.env.APPDATA || '', 'npm', 'node_modules', 'edge-impulse-cli', 'build', 'sdk', 'studio', 'api.js',
-  );
-  const configPath = process.env.EDGE_IMPULSE_CONFIG || path.join(os.homedir(), 'edge-impulse-config.json');
-  const { EdgeImpulseApi } = require(cliApiPath);
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  if (!config.jwtToken) throw new Error('Edge Impulse CLI config has no JWT token');
-  const api = new EdgeImpulseApi({ endpoint: 'https://studio.edgeimpulse.com' });
-  await api.authenticate({ method: 'jwtToken', jwtToken: config.jwtToken });
+  // Only annotations without a local source_path need the Edge Impulse project.
+  const usesRemote = annotations.some(annotation => !annotation.sourcePath);
+  let api = null;
+  if (usesRemote) {
+    const cliApiPath = process.env.EDGE_IMPULSE_CLI_API || path.join(
+      process.env.APPDATA || '', 'npm', 'node_modules', 'edge-impulse-cli', 'build', 'sdk', 'studio', 'api.js',
+    );
+    const configPath = process.env.EDGE_IMPULSE_CONFIG || path.join(os.homedir(), 'edge-impulse-config.json');
+    const { EdgeImpulseApi } = require(cliApiPath);
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    if (!config.jwtToken) throw new Error('Edge Impulse CLI config has no JWT token');
+    api = new EdgeImpulseApi({ endpoint: 'https://studio.edgeimpulse.com' });
+    await api.authenticate({ method: 'jwtToken', jwtToken: config.jwtToken });
+  }
 
+  // sample_id restarts at 9000000000 in every local annotation file, so records are
+  // keyed by uid (export order) for file names and the split; sample_id and
+  // source_path stay in the manifest for tracing.
   const records = [];
+  const addRecord = record => records.push({ ...record, uid: records.length });
   for (const annotation of annotations) {
     if (annotation.status === 'REVIEW' && !args.includeReview) continue;
     const rows = annotation.sourcePath
       ? loadLocalRows(annotation.sourcePath)
       : await fetchRows(api, args.projectId, annotation.sampleId, annotation.filename);
-    records.push({
+    addRecord({
       ...annotation,
       kind: 'gesture',
       groupLabel: annotation.status === 'REVIEW' ? `review_${annotation.direction}` : annotation.direction,
@@ -205,17 +295,38 @@ async function main() {
     });
   }
 
-  const listed = await api.rawData.listSamples(args.projectId, { category: 'training' });
-  for (const sample of listed.samples) {
-    if (!CONTINUOUS_LABELS.includes(sample.label)) continue;
-    records.push({
-      sampleId: sample.id,
-      filename: sample.filename,
-      kind: 'continuous',
-      groupLabel: sample.label,
-      source: sample.label,
-      rows: await fetchRows(api, args.projectId, sample.id, sample.filename),
-    });
+  if (usesRemote) {
+    const listed = await api.rawData.listSamples(args.projectId, { category: 'training' });
+    for (const sample of listed.samples) {
+      if (!CONTINUOUS_LABELS.includes(sample.label)) continue;
+      addRecord({
+        sampleId: sample.id,
+        filename: sample.filename,
+        sourcePath: '',
+        kind: 'continuous',
+        groupLabel: sample.label,
+        source: sample.label,
+        rows: await fetchRows(api, args.projectId, sample.id, sample.filename),
+      });
+    }
+  }
+
+  const sessionDirs = [...new Set([
+    ...annotations.filter(annotation => annotation.sourcePath).map(annotation => path.dirname(path.resolve(annotation.sourcePath))),
+    ...args.sessions.map(dir => path.resolve(dir)),
+  ])].sort();
+  for (const sessionDir of sessionDirs) {
+    for (const entry of listLocalContinuous(sessionDir)) {
+      addRecord({
+        sampleId: '',
+        filename: path.basename(entry.sourcePath),
+        sourcePath: relativePath(entry.sourcePath),
+        kind: 'continuous',
+        groupLabel: entry.label,
+        source: entry.label,
+        rows: loadLocalRows(entry.sourcePath),
+      });
+    }
   }
 
   assignCategories(records, args.testFraction, args.seed);
@@ -225,8 +336,9 @@ async function main() {
 
   const outDir = path.resolve(args.out);
   if (path.basename(outDir) === 'windows') fs.rmSync(outDir, { recursive: true, force: true });
-  const manifest = [['file', 'category', 'label', 'sample_id', 'source', 'window_end_ms'].join(',')];
+  const manifest = [['file', 'category', 'label', 'sample_id', 'source', 'source_path', 'window_end_ms'].join(',')];
   const counts = {};
+  const noneSources = {};
   const context = { skippedShort: 0 };
 
   const selected = [];
@@ -241,27 +353,9 @@ async function main() {
   };
   const random = makeRng(args.seed + 1);
   for (const category of ['training', 'testing', 'review']) {
-    const pools = records
-      .filter(record => record.category === category)
-      .map(record => {
-        const none = makeWindows(record, args.windowMs, args.continuousStrideMs).filter(window => window.label === 'NONE');
-        shuffle(none, random);
-        return none;
-      });
-    // Round-robin across source samples so NONE covers every recording instead of one long clip.
+    const categoryRecords = records.filter(record => record.category === category);
     const cap = noneCaps[category] ?? Infinity;
-    let taken = 0;
-    for (let round = 0; taken < cap; round += 1) {
-      let any = false;
-      for (const pool of pools) {
-        if (round < pool.length && taken < cap) {
-          selected.push(pool[round]);
-          taken += 1;
-          any = true;
-        }
-      }
-      if (!any) break;
-    }
+    selected.push(...pickNone(categoryRecords, args.windowMs, args.continuousStrideMs, cap, random));
   }
 
   {
@@ -270,11 +364,17 @@ async function main() {
       const dir = path.join(outDir, record.category);
       fs.mkdirSync(dir, { recursive: true });
       const source = record.source || record.direction;
-      const file = `${window.label}.s${record.sampleId}.e${window.endMs}.csv`;
+      const file = `${window.label}.r${String(record.uid).padStart(4, '0')}.e${window.endMs}.csv`;
       fs.writeFileSync(path.join(dir, file), toCsv(window.rows));
-      manifest.push([`${record.category}/${file}`, record.category, window.label, record.sampleId, source, window.endMs].join(','));
+      manifest.push([
+        `${record.category}/${file}`, record.category, window.label, record.sampleId, source, record.sourcePath, window.endMs,
+      ].join(','));
       const key = `${record.category}/${window.label}`;
       counts[key] = (counts[key] || 0) + 1;
+      if (window.label === 'NONE') {
+        const sourceKey = `${record.category}/${noneSourceKind(record)}`;
+        noneSources[sourceKey] = (noneSources[sourceKey] || 0) + 1;
+      }
     }
   }
   fs.writeFileSync(path.join(outDir, 'manifest.csv'), `${manifest.join('\n')}\n`);
@@ -290,6 +390,7 @@ async function main() {
     positive_target_ms: 150,
     source_samples: sources,
     windows: Object.fromEntries(Object.entries(counts).sort()),
+    none_sources: Object.fromEntries(Object.entries(noneSources).sort()),
     sources_without_window: context.skippedShort,
   }, null, 2)}\n`);
 }

@@ -28,6 +28,9 @@ function parseArgs(argv) {
     else if (arg === '--exclude') {
       args.exclude = argv[++ix].split(',').map(value => value.trim()).filter(Boolean);
     }
+    else if (arg === '--id-start') {
+      args.localIdStart = Number(argv[++ix]);
+    }
     else if (arg === '--help' || arg === '-h') {
       args.help = true;
     }
@@ -59,6 +62,10 @@ function printHelp() {
     'Options:',
     '  --local-dir PATH   Read raw_*.csv files from this directory instead of Edge Impulse',
     '  --exclude A,B      Filenames (within --local-dir) to skip, e.g. raw_up.1.csv',
+    '  --id-start N       First local sample_id (default: 9000000000). Give each session its own range.',
+    '',
+    'Local clip length, cue time and gyro range come from session_info.txt when present',
+    '(phone app sessions); otherwise 300 rows, 500 ms and ±1000 dps are assumed.',
     '',
     'Remote mode reads the existing Edge Impulse CLI login and does not modify remote samples.',
     '',
@@ -165,15 +172,22 @@ function findQuietStart(quietMask, startIndex, holdSamples) {
   return null;
 }
 
-function analyzeSample(label, sample, response) {
+// Recording conditions differ by collector: Edge Impulse/USB clips are 3 s with
+// motion allowed after 0.5 s and a ±1000 dps gyro; the phone app writes them to
+// session_info.txt (4 s clips, 1 s cue, ±2000 dps from 2026-10-21).
+const DEFAULT_RECORDING = { clipSamples: 300, preRollMs: 500, gyroRangeDps: 1000 };
+
+function analyzeSample(label, sample, response, recording = DEFAULT_RECORDING) {
   const rows = response.payload.values;
   const intervalMs = response.sample.intervalMs;
   if (intervalMs !== SAMPLE_INTERVAL_MS) {
     throw new Error(`${sample.filename}: expected ${SAMPLE_INTERVAL_MS} ms interval, got ${intervalMs}`);
   }
-  if (rows.length !== 300 || rows.some(row => row.length !== 6 || row.some(value => !Number.isFinite(value)))) {
-    throw new Error(`${sample.filename}: expected 300 finite six-axis rows`);
+  if (rows.length !== recording.clipSamples
+    || rows.some(row => row.length !== 6 || row.some(value => !Number.isFinite(value)))) {
+    throw new Error(`${sample.filename}: expected ${recording.clipSamples} finite six-axis rows`);
   }
+  const clipMs = rows.length * intervalMs;
 
   const gyroBias = vectorMedian(rows, 3);
   const gyroMagnitude = rows.map(row => magnitude(subtract(row.slice(3, 6), gyroBias)));
@@ -195,8 +209,13 @@ function analyzeSample(label, sample, response) {
   const secondaryEnergyRatio = rankedRuns.length > 1
     ? rankedRuns[1].energy / rankedRuns[0].energy
     : 0;
-  const energyStart = energyIndex(gyroEnergy, 0.01);
-  const energyEnd = energyIndex(gyroEnergy, 0.99);
+  // Count only samples above the active threshold when taking the 1%/99% energy
+  // points. Otherwise the worn-sensor noise of the still head and tail (10-30 dps)
+  // adds up with clip length and pulls the start earlier and the end (and so
+  // completion) later, e.g. when clips grew from 3 s to 4 s.
+  const motionEnergy = gyroEnergy.map((value, ix) => (smoothGyro[ix] >= activeThreshold ? value : 0));
+  const energyStart = energyIndex(motionEnergy, 0.01);
+  const energyEnd = energyIndex(motionEnergy, 0.99);
 
   const finalStart = rows.length - 40;
   const finalGyro = vectorMean(rows, finalStart, rows.length, 3);
@@ -213,8 +232,10 @@ function analyzeSample(label, sample, response) {
     rows.map(row => magnitude(subtract(row.slice(0, 3), finalAccel))),
     5,
   );
+  // A noisy worn tail can loosen quietGyroThreshold to ~50 dps, so also require
+  // the gyro to be below the active threshold that defines motion runs.
   const quietMask = settledGyro.map((value, ix) => (
-    value <= quietGyroThreshold && settledAccel[ix] <= quietAccelThreshold
+    value <= quietGyroThreshold && smoothGyro[ix] < activeThreshold && settledAccel[ix] <= quietAccelThreshold
   ));
   const holdSamples = Math.round(QUIET_HOLD_MS / intervalMs);
   // A quiet pause at the farthest point is not completion. Search only after
@@ -225,21 +246,21 @@ function analyzeSample(label, sample, response) {
     : quietStart;
 
   const initialAccel = vectorMean(rows, 0, 50, 0);
-  const finalAccelMean = vectorMean(rows, 250, 300, 0);
+  const finalAccelMean = vectorMean(rows, rows.length - 50, rows.length, 0);
   const returnAngle = angleDegrees(initialAccel, finalAccelMean);
   const maximumGyro = Math.max(...rows.flatMap(row => row.slice(3, 6).map(value => Math.abs(value))));
   const flags = [];
 
   if (quietStart === null) flags.push('no_180ms_settle');
-  if (energyStart < 50) flags.push('early_motion');
+  if (energyStart * intervalMs < recording.preRollMs) flags.push('early_motion');
   if (secondaryEnergyRatio >= 0.15) flags.push('second_motion_cluster');
-  if (completionIndex * intervalMs >= 2500) flags.push('late_completion');
+  if (completionIndex * intervalMs >= clipMs - 500) flags.push('late_completion');
   // return_pose_offset (start vs. end gravity angle >= 12 deg) was dropped as
   // an AUTO/REVIEW signal: a gesture's final pose is not required to match
   // its starting pose, so this measured only incidental variation, not a
   // defect in the completion-time estimate. return_angle_deg is still
   // reported for reference.
-  if (maximumGyro >= 900) flags.push('near_gyro_limit');
+  if (maximumGyro >= recording.gyroRangeDps * 0.9) flags.push('near_gyro_limit');
 
   return {
     sample_id: sample.id,
@@ -285,21 +306,38 @@ function formatCsv(annotations) {
   ].join('\n');
 }
 
-function loadLocalCsv(filePath) {
+function loadLocalCsv(filePath, clipSamples) {
   const lines = fs.readFileSync(filePath, 'utf8').trim().split(/\r?\n/);
   const rows = lines.slice(1).map(line => line.split(',').slice(1).map(Number));
   // record-gesture-samples.js times recordings with setTimeout, so row counts
-  // land at 300-304 instead of exactly 300. analyzeSample() assumes a fixed
-  // 300-row/3000 ms clip (hardcoded final-window indices), so trim the small
-  // serial-timing excess rather than generalizing that logic.
-  if (rows.length < 300) throw new Error(`${filePath}: only ${rows.length} rows, expected at least 300`);
-  return rows.slice(0, 300);
+  // land at 300-304 instead of exactly 300. Trim that small serial-timing excess
+  // so every clip in a session has the same length.
+  if (rows.length < clipSamples) throw new Error(`${filePath}: only ${rows.length} rows, expected at least ${clipSamples}`);
+  return rows.slice(0, clipSamples);
 }
 
-function analyzeLocalDir(localDir, exclude) {
+// Phone sessions record their clip length, cue time and gyro range in
+// session_info.txt; older USB sessions have none and use the 3 s defaults.
+function readRecording(localDir) {
+  const infoPath = path.join(localDir, 'session_info.txt');
+  if (!fs.existsSync(infoPath)) return DEFAULT_RECORDING;
+  const info = fs.readFileSync(infoPath, 'utf8');
+  const field = (name, fallback) => {
+    const match = info.match(new RegExp(`(?:^|\\s)${name}=(\\d+)`, 'm'));
+    return match ? Number(match[1]) : fallback;
+  };
+  return {
+    clipSamples: field('gesture_samples', DEFAULT_RECORDING.clipSamples),
+    preRollMs: field('pre_roll_cue_ms', DEFAULT_RECORDING.preRollMs),
+    gyroRangeDps: field('gyro_range_dps', DEFAULT_RECORDING.gyroRangeDps),
+  };
+}
+
+function analyzeLocalDir(localDir, exclude, idStart) {
   const excludeSet = new Set(exclude);
   const annotations = [];
-  let nextId = 9000000000;
+  const recording = readRecording(localDir);
+  let nextId = idStart;
 
   for (const label of LABELS) {
     const files = fs.readdirSync(localDir)
@@ -309,11 +347,11 @@ function analyzeLocalDir(localDir, exclude) {
 
     for (const filename of files) {
       const fullPath = path.join(localDir, filename);
-      const rows = loadLocalCsv(fullPath);
+      const rows = loadLocalCsv(fullPath, recording.clipSamples);
       const sample = { id: nextId, filename, sourcePath: path.relative(process.cwd(), fullPath).replaceAll('\\', '/') };
       nextId += 1;
       const response = { payload: { values: rows }, sample: { intervalMs: SAMPLE_INTERVAL_MS } };
-      annotations.push(analyzeSample(label, sample, response));
+      annotations.push(analyzeSample(label, sample, response, recording));
     }
   }
   return annotations;
@@ -327,7 +365,7 @@ async function main() {
   }
 
   if (args.localDir) {
-    const annotations = analyzeLocalDir(path.resolve(args.localDir), args.exclude);
+    const annotations = analyzeLocalDir(path.resolve(args.localDir), args.exclude, args.localIdStart);
     if (args.format === 'csv') {
       process.stdout.write(`${formatCsv(annotations)}\n`);
     }

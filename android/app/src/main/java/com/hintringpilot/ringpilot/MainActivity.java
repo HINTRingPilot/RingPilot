@@ -38,21 +38,22 @@ import java.util.concurrent.Executors;
 
 /**
  * 링 IMU 데이터 수집 화면.
- * 안내 수집: 방향별 N회를 섞은 순서로 음성·소리 안내에 맞춰 3초씩 자동 기록한다.
+ * 안내 수집: 방향별 N회를 섞은 순서로 음성·소리 안내에 맞춰 4초씩 자동 기록한다.
  * 수동 기록: idle/other 10초, 길이 제한 없는 연속 기록.
  * 세션마다 폴더(files/sessions/날짜-시각)에 저장하며, PC로 옮기고 지우는 일은 tools/pull-phone-sessions.js가 맡는다.
  */
 public final class MainActivity extends Activity {
     private static final int REQUEST_BLUETOOTH_CONNECT = 100;
 
-    // 원시값 환산(펌웨어 ±4 g, ±1000 dps 설정, LSM6DS3 라이브러리 calcAccel/calcGyro와 동일)
+    // 원시값 환산(펌웨어 ±4 g, ±2000 dps 설정, LSM6DS3 라이브러리 calcAccel/calcGyro와 동일)
     private static final double ACC_MS2_PER_LSB = 0.061 * 2 / 1000.0 * 9.80665;
-    private static final double GYRO_DPS_PER_LSB = 4.375 * 8 / 1000.0;
+    private static final double GYRO_DPS_PER_LSB = 4.375 * 16 / 1000.0;
+    private static final int GYRO_RANGE_DPS = 2000;
 
-    private static final int GESTURE_SAMPLES = 300;     // 3초. 기존 raw_* 파일과 분석 도구가 300행을 가정한다
+    private static final int GESTURE_SAMPLES = 400;     // 4초. 1초 대기 뒤 동작·자연 복귀·안정 구간까지 담는다
     private static final int FIXED_LONG_SAMPLES = 1000; // idle/other 10초
     private static final long PROMPT_MS = 1200;         // 방향 안내 후 기록 시작까지
-    private static final long PRE_ROLL_MS = 500;        // 기록 시작 후 "지금" 신호까지(가만히 있는 구간)
+    private static final long PRE_ROLL_MS = 1000;       // 기록 시작 후 "지금" 신호까지(가만히 있는 구간)
     private static final long REST_MS = 1000;           // 저장 후 다음 안내까지
     private static final long TIMEOUT_EXTRA_MS = 2500;  // 정해진 길이 기록이 이만큼 더 늦으면 실패 처리
     private static final String SESSION_DONE_MARKER = "SESSION_DONE";
@@ -195,7 +196,7 @@ public final class MainActivity extends Activity {
         layout.addView(row3, matchWidth());
 
         TextView help = text(13);
-        help.setText("방향 안내: 방향 음성 → '삑'(기록 시작, 가만히) → '삐빅'(지금 동작) → 3초 후 자동 저장.\n"
+        help.setText("방향 안내: 방향 음성 → '삑'(기록 시작, 가만히) → '삐빅'(1초 뒤, 지금 동작) → 4초 후 자동 저장.\n"
                 + "잘못했으면 '방금 것 다시'. 링 일시정지·연결 끊김 중에는 안내가 기다립니다.\n"
                 + "세션을 끝내야 PC로 옮길 수 있습니다(tools/pull-phone-sessions.js, 옮긴 뒤 휴대폰에서 삭제).");
         layout.addView(help, matchWidth());
@@ -360,7 +361,8 @@ public final class MainActivity extends Activity {
                 + "started=" + timestamp() + "\n"
                 + "memo=" + memoInput.getText().toString().replace('\n', ' ') + "\n"
                 + "device=" + ImuBleClient.DEVICE_NAME + "\n"
-                + "csv=timestamp ms, accX/Y/Z m/s^2 (raw x 0.122 mg), gyrX/Y/Z deg/s (raw x 0.035)\n"
+                + "csv=timestamp ms, accX/Y/Z m/s^2 (raw x 0.122 mg), gyrX/Y/Z deg/s (raw x " + GYRO_DPS_PER_LSB + ")\n"
+                + "gyro_range_dps=" + GYRO_RANGE_DPS + "\n"
                 + "gesture_samples=" + GESTURE_SAMPLES + " pre_roll_cue_ms=" + PRE_ROLL_MS + "\n";
         File infoFile = new File(sessionDir, "session_info.txt");
         fileWriter.execute(() -> writeText(infoFile, info, false));

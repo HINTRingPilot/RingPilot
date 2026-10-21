@@ -16,8 +16,8 @@
 
 1. 방향을 음성으로 알려준다("위" 등).
 2. **삑**: 기록이 시작된다. 가만히 있는다.
-3. **삐빅**(0.5초 뒤): 이때 동작한다. 이동 후 자연스럽게 원위치로 돌아온다.
-4. 3초가 지나면 자동으로 저장하고 다음 회차로 넘어간다.
+3. **삐빅**(1초 뒤): 이때 동작한다. 이동 후 자연스럽게 원위치로 돌아온다.
+4. 4초가 지나면 자동으로 저장하고 다음 회차로 넘어간다.
 
 - 동작을 잘못했으면 **방금 것 다시**를 누른다. 방금 파일을 지우고 같은 방향을 다시 한다.
 - 샘플이 하나라도 빠진 회차는 저장하지 않고 자동으로 다시 한다.
@@ -52,13 +52,13 @@ node tools/pull-phone-sessions.js
 
 세션 폴더 `files/sessions/<yyyyMMdd-HHmmss>/`에 다음 파일이 생긴다.
 
-- `raw_up.N.csv`, `raw_down.N.csv`, `raw_left.N.csv`, `raw_right.N.csv`: 3초, 300행
+- `raw_up.N.csv`, `raw_down.N.csv`, `raw_left.N.csv`, `raw_right.N.csv`: 4초, 400행 (2026-10-21 첫 세션은 3초, 300행)
 - `idle.N.csv`, `other.N.csv`: 10초, 1000행
 - `continuous.N.csv`: 길이 제한 없음
-- `session_info.txt`: 시작·종료 시각, 메모, 라벨별 개수
+- `session_info.txt`: 시작·종료 시각, 메모, 라벨별 개수, 자이로 범위(`gyro_range_dps`), 클립 길이(`gesture_samples`), 동작 신호 시각(`pre_roll_cue_ms`). 분석 도구가 이 값을 읽는다.
 - `SESSION_DONE`: 세션 종료 표시
 
-CSV 열은 `timestamp,accX,accY,accZ,gyrX,gyrY,gyrZ`(ms, m/s², deg/s)로, 기존 USB 수집 파일과 분석 도구(`tools/suggest-gesture-completions.js --local-dir`)가 그대로 읽을 수 있다. 펌웨어는 센서 원시값을 보내고, 앱이 가속도 0.122 mg/LSB, 자이로 0.035 dps/LSB로 환산한다.
+CSV 열은 `timestamp,accX,accY,accZ,gyrX,gyrY,gyrZ`(ms, m/s², deg/s)로, 기존 USB 수집 파일과 분석 도구(`tools/suggest-gesture-completions.js --local-dir`)가 그대로 읽을 수 있다. 펌웨어는 센서 원시값을 보내고, 앱이 가속도 0.122 mg/LSB(±4 g), 자이로 0.070 dps/LSB(±2000 dps)로 환산한다. 환산 계수는 펌웨어 범위와 맞아야 하므로 **펌웨어와 앱은 함께 업데이트한다.** 옛 펌웨어(±1000 dps)에 새 앱을 쓰면 자이로 값이 2배로 기록된다. 2026-10-21 첫 세션은 ±1000 dps(0.035 dps/LSB)로 수집됐고 CSV에는 이미 deg/s로 환산돼 있다.
 
 연결·일시정지·재개 이벤트와 재연결 시간은 `files/connection_log.csv`에 남는다.
 
