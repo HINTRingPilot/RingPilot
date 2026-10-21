@@ -10,3 +10,8 @@ android/app/build/
 # tools/augment-gesture-windows.js). Raw sessions and annotations are kept.
 data/windows/
 data/windows-augmented-5x/
+
+# Local training runs (results copied to docs/experiments) and Python caches
+ml/runs/
+ml/.venv/
+__pycache__/

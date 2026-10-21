@@ -1,0 +1,43 @@
+{
+  "experiment": "BLE-06-cal",
+  "created_before_training_kst": "2026-10-21T12:57:11.834106+09:00",
+  "folds_sha256": "13cf117243c15b7c358c218a0a6a235d7e1eeb2a3bbfba7ed6f9d445cdcb527c",
+  "manifest_sha256": "69714f3db4fd7d16d89307c6de94f618062dcbb67a9017e02af27592f23698f2",
+  "candidate": "A: 2-layer Conv, Flatten readout, 160 rows, 150 ms positive width, no augmentation, no class weight",
+  "epochs": [
+    10,
+    20,
+    30,
+    40,
+    60
+  ],
+  "seeds": [
+    20261021,
+    20261022,
+    20261023,
+    20261024,
+    20261025
+  ],
+  "n_folds": 5,
+  "optimizer": "Adam .001",
+  "batch_size": 16,
+  "early_stopping": null,
+  "checkpoint_selection": null,
+  "evaluation_note": "one run per (seed,fold) scored at every E; equivalent to separate fixed-E runs",
+  "per_fold_recomputed": [
+    "normalization (fold training sources only)",
+    "NONE selection (baseline.choose_training)"
+  ],
+  "postprocessing": "baseline.issue_events (score>=.8, margin>=.2, 2 consecutive, rearm after 2 NONE>=.8); event window [e, e+500ms]",
+  "selection_rule": "per-seed sum over folds of (correct events - unmatched emissions); choose E with the largest mean over seeds; ties go to the smaller E",
+  "unmatched_definition": [
+    "early",
+    "wrong_direction",
+    "duplicate",
+    "late_unmatched",
+    "background_false"
+  ],
+  "background_note": "the same 20 s validation background is replayed in every fold with a different model; not added to observation time",
+  "decision_thresholds_for_2x2": "NOT fixed yet; set in the BLE-06 protocol after seeing the A seed range from this calibration",
+  "final_test_inference": false
+}

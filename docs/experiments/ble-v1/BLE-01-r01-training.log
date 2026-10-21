@@ -1,0 +1,11 @@
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+Traceback (most recent call last):
+  File "C:\Users\hyunj\Desktop\������Ʈ\RingPilot\ml\baseline.py", line 367, in <module>
+    prepare() if args.prepare else train()
+                                   ^^^^^^^
+  File "C:\Users\hyunj\Desktop\������Ʈ\RingPilot\ml\baseline.py", line 302, in train
+    (RUN / "environment.txt").write_bytes(subprocess.run([sys.executable, "-m", "pip", "freeze"], capture_output=True, check=True).stdout)
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hyunj\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['C:\\Users\\hyunj\\Desktop\\������Ʈ\\RingPilot\\ml\\.venv\\Scripts\\python.exe', '-m', 'pip', 'freeze']' returned non-zero exit status 1.

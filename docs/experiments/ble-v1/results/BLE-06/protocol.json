@@ -1,0 +1,56 @@
+{
+  "experiment": "BLE-06",
+  "created_before_training_kst": "2026-10-21T13:25:37.308419+09:00",
+  "E": 10,
+  "calibration_summary_sha256": "293d59f93b9ddd2070919b74a548cbe8b0916c67afd3e22906025a05d7721890",
+  "folds_sha256": "13cf117243c15b7c358c218a0a6a235d7e1eeb2a3bbfba7ed6f9d445cdcb527c",
+  "manifest_sha256": "69714f3db4fd7d16d89307c6de94f618062dcbb67a9017e02af27592f23698f2",
+  "seeds": [
+    20261021,
+    20261022,
+    20261023,
+    20261024,
+    20261025
+  ],
+  "conditions": {
+    "A": {
+      "depth": 2,
+      "augmentation": false
+    },
+    "B": {
+      "depth": 2,
+      "augmentation": true
+    },
+    "C": {
+      "depth": 3,
+      "augmentation": false
+    },
+    "D": {
+      "depth": 3,
+      "augmentation": true
+    }
+  },
+  "depth3": "Conv16k5-Pool2-Drop.2 -> Conv32k5-Pool2-Drop.25 -> Conv32k3-Pool2 -> Flatten(640) -> Drop.3 -> Dense5 (no hidden Dense)",
+  "augmentation": {
+    "variants_per_training_source": 4,
+    "scope": "direction training sources only (not background, not validation)",
+    "rigid_rotation_deg": "uniform +-5.0, random axis, one per variant, applied to acc and gyro",
+    "noise_std": {
+      "acc": 0.02,
+      "gyro": 0.2
+    },
+    "noise_clip": "3 sigma",
+    "normalization": "mean/std from original (unaugmented) training sources of the fold",
+    "none_selection": "baseline.choose_training over all training windows (matches positive count)"
+  },
+  "caveat": "augmentation raises the number of positive windows and hence the selected NONE count; steps per epoch differ across conditions at the same E",
+  "judgement": {
+    "pairing": "each of B, C, D versus A, same seed and folds",
+    "metrics": "per-seed sum over folds of correct events and unmatched emissions",
+    "candidate": "mean correct delta >= +2 AND correct delta > 0 in >=4 of 5 seeds AND mean unmatched delta <= 0",
+    "worse": "mean correct delta <= -2 AND correct delta < 0 in >=4 of 5 seeds AND mean unmatched delta >= 0",
+    "otherwise": "undecidable (keep A)",
+    "margin_basis": "+-2 events is about one seed-spread sd of A at E=10 (range 13~19 in calibration)"
+  },
+  "final_test_inference": false
+}
