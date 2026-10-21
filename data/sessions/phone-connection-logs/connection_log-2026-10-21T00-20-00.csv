@@ -1,0 +1,13 @@
+wall_time,phone_ms,event,detail
+2026-10-21 09:15:34.180,431878055,client_start,
+2026-10-21 09:15:39.264,431883150,connect_failed,status=133
+2026-10-21 09:15:44.676,431888552,connect_failed,status=133
+2026-10-21 09:15:50.092,431893968,connect_failed,status=133
+2026-10-21 09:15:53.131,431897002,client_start,
+2026-10-21 09:15:58.167,431902044,connect_failed,status=133
+2026-10-21 09:16:03.569,431907446,connect_failed,status=133
+2026-10-21 09:16:08.330,431912204,connected,
+2026-10-21 09:16:08.524,431912400,mtu,mtu=247 status=0
+2026-10-21 09:16:09.010,431912888,initial_first_data,device_since_boot_ms=1199
+2026-10-21 09:16:09.026,431912899,status_subscribed,state=STREAMING device_uptime_ms=1204
+2026-10-21 09:16:09.107,431912981,subscribed,

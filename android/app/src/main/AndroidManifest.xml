@@ -28,11 +28,7 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ImuMonitorActivity"
-            android:exported="false"
-            android:label="RingPilot IMU 측정" />
-
+        <!-- 제스처 → 화면 스와이프 출력 경로로 보존한다. 현재 화면에서는 호출하지 않는다. -->
         <service
             android:name=".SwipeAccessibilityService"
             android:exported="false"

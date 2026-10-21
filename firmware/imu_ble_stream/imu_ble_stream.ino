@@ -2,7 +2,8 @@
 // 여러 샘플을 한 알림에 묶어 보낸다. USB 없이 배터리만으로 무선 수집을 시험하기 위한 것이다.
 // 센터 스위치(D1): 짧게(1초 미만) = 클릭(일시정지 중이면 재개), 1~3초 = 일시정지(연결 유지), 3초 이상 = System OFF.
 // System OFF에서는 센터를 누르면 재부팅한다. 일시정지는 BLE 연결을 유지한 채 IMU를 끄고 연결 간격을 늘린다.
-// 데이터 패킷: [첫 샘플 슬롯 uint32 LE][샘플 수 uint8] + 샘플마다 accX,accY,accZ(mg), gyrX,gyrY,gyrZ(0.1 dps) int16 LE.
+// 데이터 패킷: [첫 샘플 슬롯 uint32 LE][샘플 수 uint8] + 샘플마다 accX,accY,accZ,gyrX,gyrY,gyrZ 센서 원시값 int16 LE.
+// 원시값 환산(±4 g, ±1000 dps 설정): 가속도 1 LSB = 0.122 mg, 자이로 1 LSB = 0.035 dps (LSM6DS3 라이브러리 calcAccel/calcGyro와 동일).
 // 상태 패킷: [상태 uint8][이벤트 uint8][부팅 후 ms uint32 LE][트리거 후 ms uint32 LE] (재개·재연결 지연 측정용).
 
 #include <Adafruit_TinyUSB.h>  // 업로드 시 자동 리셋(1200bps)을 유지하려고 포함
@@ -68,12 +69,6 @@ static void ledsOff() {
   digitalWrite(LED_RED, HIGH);  // 이 보드의 LED는 LOW에서 켜짐
   digitalWrite(LED_GREEN, HIGH);
   digitalWrite(LED_BLUE, HIGH);
-}
-
-static int16_t toInt16(float value) {
-  if (value > 32767.0f) return 32767;
-  if (value < -32768.0f) return -32768;
-  return static_cast<int16_t>(lroundf(value));
 }
 
 static bool connected() {
@@ -187,12 +182,13 @@ static void takeSample(uint32_t slot) {
   }
   Sample& s = ring[ringHead % kRingSize];
   s.slot = slot;
-  s.v[0] = toInt16(imu.readFloatAccelX() * 1000.0f);
-  s.v[1] = toInt16(imu.readFloatAccelY() * 1000.0f);
-  s.v[2] = toInt16(imu.readFloatAccelZ() * 1000.0f);
-  s.v[3] = toInt16(imu.readFloatGyroX() * 10.0f);
-  s.v[4] = toInt16(imu.readFloatGyroY() * 10.0f);
-  s.v[5] = toInt16(imu.readFloatGyroZ() * 10.0f);
+  // 단위 환산 없이 센서 원시값을 보낸다. 반올림 손실이 없고 크기(샘플당 12바이트)는 같다.
+  s.v[0] = imu.readRawAccelX();
+  s.v[1] = imu.readRawAccelY();
+  s.v[2] = imu.readRawAccelZ();
+  s.v[3] = imu.readRawGyroX();
+  s.v[4] = imu.readRawGyroY();
+  s.v[5] = imu.readRawGyroZ();
   ringHead++;
 }
 
