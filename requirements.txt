@@ -1,0 +1,62 @@
+# RingPilot 개발환경 요구사항 (Windows 11)
+#
+# 일괄 설치: PowerShell에서  .\setup.ps1  (이 목록의 도구를 winget/npm/arduino-cli로 설치)
+#
+# 이 저장소에는 Python 코드가 없다. tools/*.js는 Node.js, 펌웨어는 Arduino(C++),
+# 앱은 Android(Java/Gradle)다. 그래서 pip로 설치할 패키지는 없고, 아래는 직접 받아서
+# 설치할 도구 목록이다. (주석이 아닌 줄만 pip 문법이라 `pip install -r`은 쓰지 않는다.)
+# 상세 절차: docs/설치안내.md, docs/EdgeImpulse.md
+#
+# ---------------------------------------------------------------------------
+# [A] 펌웨어 (firmware/*.ino) - 필수
+# ---------------------------------------------------------------------------
+# Arduino IDE                  2.3.10   https://www.arduino.cc/en/software/
+# 추가 보드 URL                         https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+# 보드 코어 "Seeed nRF52 Boards" 1.1.13  (non-mbed. "mbed-enabled"와 혼동 금지)
+#                                       보드: Seeed XIAO nRF52840 Sense
+# 라이브러리 "Seeed Arduino LSM6DS3" 2.0.7  (imu_ble_stream, imu_capture에서 사용)
+# 코어에 포함(별도 설치 불필요)        Adafruit_TinyUSB, bluefruit(Adafruit nRF52 BLE), Wire
+# USB 드라이버                          XIAO가 COM 포트로 잡혀야 함 (업로드 실패 시 RST 두 번 눌러 부트로더)
+#
+# ---------------------------------------------------------------------------
+# [B] 데이터 수집/가공 스크립트 (tools/*.js) - 필수
+# ---------------------------------------------------------------------------
+# Node.js                      24.18.0   https://nodejs.org/  (npm 11.16.0 포함)
+#   - tools/*.js는 Node 내장 모듈만 사용(fs, path, os, crypto, readline, child_process). npm 패키지 설치 없음.
+# Edge Impulse CLI             1.40.0    npm.cmd install --global edge-impulse-cli
+#   - tools/record-gesture-samples.js가 CLI에 번들된 serialport(v8)를 재사용한다.
+#   - tools/start-edge-impulse.cmd는 %APPDATA%\npm\edge-impulse-data-forwarder.cmd를 호출한다.
+# Edge Impulse 계정(웹)                 https://studio.edgeimpulse.com/  (모델 학습/배포, 비밀번호는 기록하지 않음)
+#
+# ---------------------------------------------------------------------------
+# [C] Android 앱 (android/) - 앱 수정/빌드 시에만 필요
+# ---------------------------------------------------------------------------
+# Android Studio              2026.1.4.7   https://developer.android.com/studio
+#   - SDK Platform 35 (compileSdk/targetSdk 35, minSdk 31 = Android 12 이상)
+#   - SDK Build-Tools 36.0.0
+#   - SDK Platform-Tools (adb 포함)
+#   - JDK 17 이상: Android Studio 내장 JDK 사용 (소스 호환 레벨 Java 17)
+# Android Gradle Plugin       9.4.0        (android/build.gradle에 고정)
+# Gradle                      9.6.0        (Wrapper가 자동 다운로드. 별도 설치 불필요)
+#   빌드: cd android; .\gradlew.bat :app:assembleDebug
+#   로컬 전용(Git 제외): .tools/, android/local.properties
+#
+# ---------------------------------------------------------------------------
+# [D] adb (Android Debug Bridge) - 휴대폰 세션 가져오기에 필수
+# ---------------------------------------------------------------------------
+# Android SDK Platform-Tools   https://developer.android.com/tools/releases/platform-tools
+#   위치 1) .tools/android-sdk/platform-tools/adb.exe  (tools/pull-phone-sessions.js 기본값)
+#   위치 2) PATH의 adb                                  (또는 --adb <경로> 옵션)
+#   확인: adb version / adb devices -l  (상태가 device여야 함, unauthorized면 휴대폰 승인)
+# 휴대폰(Galaxy S10) 설정: 개발자 옵션 -> USB 디버깅 켜기, 데이터 통신 가능한 USB 케이블
+# 앱 설치 후: 설정 -> 접근성 -> 'RingPilot 스와이프' 사용
+#
+# ---------------------------------------------------------------------------
+# [E] Python 3.11 - 모델 학습(ml/) 전용
+# ---------------------------------------------------------------------------
+# Python                       3.11      https://www.python.org/downloads/
+# 패키지(TensorFlow 2.21.0, Keras 3.15.1, NumPy 2.5.4, pandas 3.0.6, scikit-learn 1.9.1,
+#   SciPy 1.18.1 등)는 ml/requirements.txt에 고정돼 있다. 가상환경 만들고 한 번에 설치:
+#     py -3.11 -m venv ml\.venv
+#     ml\.venv\Scripts\pip install -r mlequirements.txt
+#   (ml/.venv는 로컬 전용이라 Git에 올리지 않는다.)
