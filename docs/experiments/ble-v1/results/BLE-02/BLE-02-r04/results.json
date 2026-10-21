@@ -1,0 +1,318 @@
+{
+  "validation_window_accuracy": 0.7982456140350878,
+  "confusion_matrix": [
+    [
+      444,
+      12,
+      16,
+      18,
+      60
+    ],
+    [
+      0,
+      1,
+      3,
+      0,
+      0
+    ],
+    [
+      2,
+      0,
+      4,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      0,
+      3,
+      0
+    ],
+    [
+      3,
+      0,
+      0,
+      0,
+      3
+    ]
+  ],
+  "class_report": {
+    "NONE": {
+      "precision": 0.9866666666666667,
+      "recall": 0.8072727272727273,
+      "f1-score": 0.888,
+      "support": 550.0
+    },
+    "UP": {
+      "precision": 0.07692307692307693,
+      "recall": 0.25,
+      "f1-score": 0.11764705882352941,
+      "support": 4.0
+    },
+    "DOWN": {
+      "precision": 0.17391304347826086,
+      "recall": 0.6666666666666666,
+      "f1-score": 0.27586206896551724,
+      "support": 6.0
+    },
+    "LEFT": {
+      "precision": 0.14285714285714285,
+      "recall": 0.75,
+      "f1-score": 0.24,
+      "support": 4.0
+    },
+    "RIGHT": {
+      "precision": 0.047619047619047616,
+      "recall": 0.5,
+      "f1-score": 0.08695652173913043,
+      "support": 6.0
+    },
+    "accuracy": 0.7982456140350878,
+    "macro avg": {
+      "precision": 0.285595795508839,
+      "recall": 0.5947878787878788,
+      "f1-score": 0.3216931299056354,
+      "support": 570.0
+    },
+    "weighted avg": {
+      "precision": 0.9559210177059148,
+      "recall": 0.7982456140350878,
+      "f1-score": 0.8631710522447755,
+      "support": 570.0
+    }
+  },
+  "per_file": [
+    {
+      "source_path": "data/sessions/phone-20261021-093345/idle.1.csv",
+      "completion_ms": null,
+      "positive_windows": 0,
+      "counts": {
+        "correct": 0,
+        "missed": 0,
+        "wrong_direction": 0,
+        "duplicate": 0,
+        "early": 0,
+        "late_unmatched": 0,
+        "background_false": 0
+      },
+      "events": []
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-093345/other.1.csv",
+      "completion_ms": null,
+      "positive_windows": 0,
+      "counts": {
+        "correct": 0,
+        "missed": 0,
+        "wrong_direction": 0,
+        "duplicate": 0,
+        "early": 0,
+        "late_unmatched": 0,
+        "background_false": 0
+      },
+      "events": []
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_down.1.csv",
+      "completion_ms": 1830,
+      "positive_windows": 3,
+      "counts": {
+        "correct": 0,
+        "missed": 1,
+        "wrong_direction": 0,
+        "duplicate": 0,
+        "early": 1,
+        "late_unmatched": 0,
+        "background_false": 0
+      },
+      "events": [
+        {
+          "timestamp_ms": 1740,
+          "class_index": 2,
+          "score": 0.9725772142410278,
+          "kind": "early"
+        }
+      ]
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_down.4.csv",
+      "completion_ms": 1710,
+      "positive_windows": 3,
+      "counts": {
+        "correct": 0,
+        "missed": 1,
+        "wrong_direction": 0,
+        "duplicate": 0,
+        "early": 1,
+        "late_unmatched": 0,
+        "background_false": 0
+      },
+      "events": [
+        {
+          "timestamp_ms": 1640,
+          "class_index": 2,
+          "score": 0.9559168219566345,
+          "kind": "early"
+        }
+      ]
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_left.2.csv",
+      "completion_ms": 1490,
+      "positive_windows": 1,
+      "counts": {
+        "correct": 1,
+        "missed": 0,
+        "wrong_direction": 0,
+        "duplicate": 0,
+        "early": 0,
+        "late_unmatched": 1,
+        "background_false": 0
+      },
+      "events": [
+        {
+          "timestamp_ms": 1690,
+          "class_index": 3,
+          "score": 0.9982728958129883,
+          "kind": "correct"
+        },
+        {
+          "timestamp_ms": 2290,
+          "class_index": 3,
+          "score": 0.8162693977355957,
+          "kind": "late_unmatched"
+        }
+      ]
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_left.8.csv",
+      "completion_ms": 1890,
+      "positive_windows": 3,
+      "counts": {
+        "correct": 0,
+        "missed": 1,
+        "wrong_direction": 0,
+        "duplicate": 0,
+        "early": 0,
+        "late_unmatched": 0,
+        "background_false": 0
+      },
+      "events": []
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_right.1.csv",
+      "completion_ms": 2220,
+      "positive_windows": 3,
+      "counts": {
+        "correct": 1,
+        "missed": 0,
+        "wrong_direction": 0,
+        "duplicate": 0,
+        "early": 0,
+        "late_unmatched": 0,
+        "background_false": 0
+      },
+      "events": [
+        {
+          "timestamp_ms": 2340,
+          "class_index": 4,
+          "score": 0.9022546410560608,
+          "kind": "correct"
+        }
+      ]
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_right.10.csv",
+      "completion_ms": 1760,
+      "positive_windows": 3,
+      "counts": {
+        "correct": 0,
+        "missed": 1,
+        "wrong_direction": 1,
+        "duplicate": 0,
+        "early": 0,
+        "late_unmatched": 0,
+        "background_false": 0
+      },
+      "events": [
+        {
+          "timestamp_ms": 2040,
+          "class_index": 3,
+          "score": 0.9609864950180054,
+          "kind": "wrong_direction"
+        }
+      ]
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_up.3.csv",
+      "completion_ms": 1700,
+      "positive_windows": 3,
+      "counts": {
+        "correct": 0,
+        "missed": 1,
+        "wrong_direction": 0,
+        "duplicate": 0,
+        "early": 1,
+        "late_unmatched": 0,
+        "background_false": 0
+      },
+      "events": [
+        {
+          "timestamp_ms": 1640,
+          "class_index": 1,
+          "score": 0.997115969657898,
+          "kind": "early"
+        }
+      ]
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_up.8.csv",
+      "completion_ms": 1480,
+      "positive_windows": 1,
+      "counts": {
+        "correct": 0,
+        "missed": 1,
+        "wrong_direction": 1,
+        "duplicate": 0,
+        "early": 0,
+        "late_unmatched": 0,
+        "background_false": 0
+      },
+      "events": [
+        {
+          "timestamp_ms": 1840,
+          "class_index": 2,
+          "score": 0.8961655497550964,
+          "kind": "wrong_direction"
+        }
+      ]
+    }
+  ],
+  "final_test_inference": false,
+  "event_totals": {
+    "correct": 2,
+    "missed": 6,
+    "wrong_direction": 2,
+    "duplicate": 0,
+    "early": 3,
+    "late_unmatched": 1,
+    "background_false": 0
+  },
+  "latency_ms": {
+    "n": 2,
+    "median": 160.0,
+    "p95": 196.0
+  },
+  "gesture_count": 8,
+  "background_recording_seconds": 20.0,
+  "background_inference_exposure_seconds": 16.82,
+  "run_id": "BLE-02-r04",
+  "condition": "balanced",
+  "seed": 20261022,
+  "end_kst": "2026-10-21T10:50:25.371365+09:00",
+  "epochs": 21,
+  "best_epoch": 9,
+  "best_val_loss": 0.6601341366767883,
+  "saved_model_predictions_verified": true
+}

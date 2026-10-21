@@ -1,0 +1,160 @@
+{
+  "experiment": "BLE-03",
+  "stage": "clip_pilot_only",
+  "created_kst": "2026-10-21T11:00:11.251342+09:00",
+  "protocol_sha256": "8209449a9752401a1e4584dd2b507601da476d50b9912f6ce05c5b2737a238af",
+  "paired": [
+    {
+      "seed": 20261021,
+      "150ms": {
+        "correct_events": 0,
+        "missed_events": 8,
+        "unmatched_emissions": 0,
+        "early_emissions": 0,
+        "macro_f1": 0.1956989247311828,
+        "window_accuracy": 0.9578947368421052
+      },
+      "300ms": {
+        "correct_events": 1,
+        "missed_events": 7,
+        "unmatched_emissions": 6,
+        "early_emissions": 4,
+        "macro_f1": 0.3551166606296609,
+        "window_accuracy": 0.8280701754385965
+      },
+      "delta300_minus150": {
+        "correct_events": 1,
+        "missed_events": -1,
+        "unmatched_emissions": 6,
+        "early_emissions": 4,
+        "macro_f1": 0.1594177358984781,
+        "window_accuracy": -0.12982456140350873
+      }
+    },
+    {
+      "seed": 20261022,
+      "150ms": {
+        "correct_events": 0,
+        "missed_events": 8,
+        "unmatched_emissions": 0,
+        "early_emissions": 0,
+        "macro_f1": 0.2395839583958396,
+        "window_accuracy": 0.9526315789473684
+      },
+      "300ms": {
+        "correct_events": 1,
+        "missed_events": 7,
+        "unmatched_emissions": 4,
+        "early_emissions": 3,
+        "macro_f1": 0.3160850862703986,
+        "window_accuracy": 0.7789473684210526
+      },
+      "delta300_minus150": {
+        "correct_events": 1,
+        "missed_events": -1,
+        "unmatched_emissions": 4,
+        "early_emissions": 3,
+        "macro_f1": 0.07650112787455901,
+        "window_accuracy": -0.17368421052631577
+      }
+    },
+    {
+      "seed": 20261023,
+      "150ms": {
+        "correct_events": 2,
+        "missed_events": 6,
+        "unmatched_emissions": 1,
+        "early_emissions": 1,
+        "macro_f1": 0.2415750915750916,
+        "window_accuracy": 0.9192982456140351
+      },
+      "300ms": {
+        "correct_events": 3,
+        "missed_events": 5,
+        "unmatched_emissions": 5,
+        "early_emissions": 3,
+        "macro_f1": 0.3365136132607666,
+        "window_accuracy": 0.7719298245614035
+      },
+      "delta300_minus150": {
+        "correct_events": 1,
+        "missed_events": -1,
+        "unmatched_emissions": 4,
+        "early_emissions": 2,
+        "macro_f1": 0.09493852168567501,
+        "window_accuracy": -0.1473684210526316
+      }
+    }
+  ],
+  "condition_summary": {
+    "150": {
+      "correct_events": {
+        "mean": 0.6666666666666666,
+        "min": 0.0,
+        "max": 2.0
+      },
+      "missed_events": {
+        "mean": 7.333333333333333,
+        "min": 6.0,
+        "max": 8.0
+      },
+      "unmatched_emissions": {
+        "mean": 0.3333333333333333,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "early_emissions": {
+        "mean": 0.3333333333333333,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "macro_f1": {
+        "mean": 0.22561932490070466,
+        "min": 0.1956989247311828,
+        "max": 0.2415750915750916
+      },
+      "window_accuracy": {
+        "mean": 0.9432748538011696,
+        "min": 0.9192982456140351,
+        "max": 0.9578947368421052
+      }
+    },
+    "300": {
+      "correct_events": {
+        "mean": 1.6666666666666667,
+        "min": 1.0,
+        "max": 3.0
+      },
+      "missed_events": {
+        "mean": 6.333333333333333,
+        "min": 5.0,
+        "max": 7.0
+      },
+      "unmatched_emissions": {
+        "mean": 5.0,
+        "min": 4.0,
+        "max": 6.0
+      },
+      "early_emissions": {
+        "mean": 3.3333333333333335,
+        "min": 3.0,
+        "max": 4.0
+      },
+      "macro_f1": {
+        "mean": 0.33590512005360873,
+        "min": 0.3160850862703986,
+        "max": 0.3551166606296609
+      },
+      "window_accuracy": {
+        "mean": 0.792982456140351,
+        "min": 0.7719298245614035,
+        "max": 0.8280701754385965
+      }
+    }
+  },
+  "retain_as_pilot_candidate": false,
+  "final_label_policy_adopted": false,
+  "continuous_validation_completed": false,
+  "final_test_inference": false,
+  "limits": "Same eight sensor-annotated validation gestures, not independent 24 gestures. Both policies use an expanded 221-input train pool, unlike BLE-01/02's 144 inputs."
+}

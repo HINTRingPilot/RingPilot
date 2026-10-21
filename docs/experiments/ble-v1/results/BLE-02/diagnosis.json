@@ -1,0 +1,126 @@
+{
+  "source_run": "BLE-01-r03",
+  "created_kst": "2026-10-21T10:49:53.574362+09:00",
+  "regions": {
+    "idle": {
+      "n": 169,
+      "argmax_errors": 0,
+      "predicted_NONE": 169
+    },
+    "other": {
+      "n": 169,
+      "argmax_errors": 0,
+      "predicted_NONE": 169
+    },
+    "pre_completion": {
+      "n": 34,
+      "argmax_errors": 7,
+      "predicted_NONE": 27
+    },
+    "positive": {
+      "n": 20,
+      "argmax_errors": 19,
+      "predicted_NONE": 19
+    },
+    "post_positive": {
+      "n": 178,
+      "argmax_errors": 19,
+      "predicted_NONE": 159
+    }
+  },
+  "positive_bins": {
+    "0-49ms": {
+      "n": 6,
+      "correct_direction": 0,
+      "to_NONE": 6
+    },
+    "50-99ms": {
+      "n": 6,
+      "correct_direction": 0,
+      "to_NONE": 6
+    },
+    "100-149ms": {
+      "n": 8,
+      "correct_direction": 1,
+      "to_NONE": 7
+    }
+  },
+  "per_file": [
+    {
+      "source_path": "data/sessions/phone-20261021-093345/idle.1.csv",
+      "positive_windows": 0,
+      "argmax_errors": 0
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-093345/other.1.csv",
+      "positive_windows": 0,
+      "argmax_errors": 0
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_down.1.csv",
+      "completion_ms": 1830,
+      "positive_windows": 3,
+      "correct_positive_argmax": 0,
+      "max_expected_score_in_positive": 0.031143847852945328,
+      "candidate_pass_count_all_times": 0
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_down.4.csv",
+      "completion_ms": 1710,
+      "positive_windows": 3,
+      "correct_positive_argmax": 0,
+      "max_expected_score_in_positive": 0.16210855543613434,
+      "candidate_pass_count_all_times": 0
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_left.2.csv",
+      "completion_ms": 1490,
+      "positive_windows": 1,
+      "correct_positive_argmax": 0,
+      "max_expected_score_in_positive": 0.056758906692266464,
+      "candidate_pass_count_all_times": 0
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_left.8.csv",
+      "completion_ms": 1890,
+      "positive_windows": 3,
+      "correct_positive_argmax": 0,
+      "max_expected_score_in_positive": 0.16194555163383484,
+      "candidate_pass_count_all_times": 0
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_right.1.csv",
+      "completion_ms": 2220,
+      "positive_windows": 3,
+      "correct_positive_argmax": 0,
+      "max_expected_score_in_positive": 0.15085262060165405,
+      "candidate_pass_count_all_times": 0
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_right.10.csv",
+      "completion_ms": 1760,
+      "positive_windows": 3,
+      "correct_positive_argmax": 0,
+      "max_expected_score_in_positive": 0.08301322907209396,
+      "candidate_pass_count_all_times": 0
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_up.3.csv",
+      "completion_ms": 1700,
+      "positive_windows": 3,
+      "correct_positive_argmax": 1,
+      "max_expected_score_in_positive": 0.34419846534729004,
+      "candidate_pass_count_all_times": 0
+    },
+    {
+      "source_path": "data/sessions/phone-20261021-094346/raw_up.8.csv",
+      "completion_ms": 1480,
+      "positive_windows": 1,
+      "correct_positive_argmax": 0,
+      "max_expected_score_in_positive": 0.1244896724820137,
+      "candidate_pass_count_all_times": 0
+    }
+  ],
+  "final_test_inference": false,
+  "conclusion": "Positive-to-NONE errors span all three 50ms positive bins; background idle/other argmax errors are zero. No boundary-ignore or NONE resampling justified in this experiment."
+}

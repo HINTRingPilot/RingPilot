@@ -1,0 +1,652 @@
+{
+  "run_id": "BLE-04-r06",
+  "seed": 20261023,
+  "window_samples": 120,
+  "end_kst": "2026-10-21T11:07:35.731298+09:00",
+  "epochs": 28,
+  "best_epoch": 16,
+  "best_val_loss": 0.5460640788078308,
+  "parameters": 7893,
+  "common": {
+    "validation_window_accuracy": 0.868421052631579,
+    "confusion_matrix": [
+      [
+        488,
+        8,
+        8,
+        16,
+        30
+      ],
+      [
+        3,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        3,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        0,
+        2
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        3
+      ]
+    ],
+    "class_report": {
+      "NONE": {
+        "precision": 0.9779559118236473,
+        "recall": 0.8872727272727273,
+        "f1-score": 0.9304099142040038,
+        "support": 550.0
+      },
+      "UP": {
+        "precision": 0.1111111111111111,
+        "recall": 0.25,
+        "f1-score": 0.15384615384615385,
+        "support": 4.0
+      },
+      "DOWN": {
+        "precision": 0.2727272727272727,
+        "recall": 0.5,
+        "f1-score": 0.35294117647058826,
+        "support": 6.0
+      },
+      "LEFT": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 4.0
+      },
+      "RIGHT": {
+        "precision": 0.08571428571428572,
+        "recall": 0.5,
+        "f1-score": 0.14634146341463414,
+        "support": 6.0
+      },
+      "accuracy": 0.868421052631579,
+      "macro avg": {
+        "precision": 0.28950171627526333,
+        "recall": 0.4274545454545454,
+        "f1-score": 0.316707741587076,
+        "support": 570.0
+      },
+      "weighted avg": {
+        "precision": 0.9481944654352628,
+        "recall": 0.868421052631579,
+        "f1-score": 0.9040991811699967,
+        "support": 570.0
+      }
+    },
+    "per_file": [
+      {
+        "source_path": "data/sessions/phone-20261021-093345/idle.1.csv",
+        "completion_ms": null,
+        "positive_windows": 0,
+        "counts": {
+          "correct": 0,
+          "missed": 0,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": []
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-093345/other.1.csv",
+        "completion_ms": null,
+        "positive_windows": 0,
+        "counts": {
+          "correct": 0,
+          "missed": 0,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": []
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_down.1.csv",
+        "completion_ms": 1830,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 0,
+          "missed": 1,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 1,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 1740,
+            "class_index": 2,
+            "score": 0.8280991315841675,
+            "kind": "early"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_down.4.csv",
+        "completion_ms": 1710,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 1,
+          "missed": 0,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 1790,
+            "class_index": 2,
+            "score": 0.9281650185585022,
+            "kind": "correct"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_left.2.csv",
+        "completion_ms": 1490,
+        "positive_windows": 1,
+        "counts": {
+          "correct": 1,
+          "missed": 0,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 1,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 1740,
+            "class_index": 3,
+            "score": 0.9977697134017944,
+            "kind": "correct"
+          },
+          {
+            "timestamp_ms": 2290,
+            "class_index": 3,
+            "score": 0.9729106426239014,
+            "kind": "late_unmatched"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_left.8.csv",
+        "completion_ms": 1890,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 0,
+          "missed": 1,
+          "wrong_direction": 1,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 2040,
+            "class_index": 4,
+            "score": 0.9356030821800232,
+            "kind": "wrong_direction"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_right.1.csv",
+        "completion_ms": 2220,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 0,
+          "missed": 1,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 1,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 2090,
+            "class_index": 3,
+            "score": 0.894527018070221,
+            "kind": "early"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_right.10.csv",
+        "completion_ms": 1760,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 0,
+          "missed": 1,
+          "wrong_direction": 1,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 2040,
+            "class_index": 3,
+            "score": 0.9987301230430603,
+            "kind": "wrong_direction"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_up.3.csv",
+        "completion_ms": 1700,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 1,
+          "missed": 0,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 1,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 1640,
+            "class_index": 1,
+            "score": 0.9966301321983337,
+            "kind": "early"
+          },
+          {
+            "timestamp_ms": 2090,
+            "class_index": 1,
+            "score": 0.9439964294433594,
+            "kind": "correct"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_up.8.csv",
+        "completion_ms": 1480,
+        "positive_windows": 1,
+        "counts": {
+          "correct": 0,
+          "missed": 1,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": []
+      }
+    ],
+    "final_test_inference": false,
+    "event_totals": {
+      "correct": 3,
+      "missed": 5,
+      "wrong_direction": 2,
+      "duplicate": 0,
+      "early": 3,
+      "late_unmatched": 1,
+      "background_false": 0
+    },
+    "latency_ms": {
+      "n": 3,
+      "median": 250.0,
+      "p95": 376.0
+    },
+    "gesture_count": 8,
+    "background_recording_seconds": 20.0,
+    "background_inference_exposure_seconds": 16.82,
+    "warmup_ms": 1590
+  },
+  "native": {
+    "validation_window_accuracy": 0.86,
+    "confusion_matrix": [
+      [
+        551,
+        18,
+        8,
+        16,
+        33
+      ],
+      [
+        4,
+        2,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        3,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        0,
+        0,
+        2
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        3
+      ]
+    ],
+    "class_report": {
+      "NONE": {
+        "precision": 0.9752212389380531,
+        "recall": 0.8801916932907349,
+        "f1-score": 0.9252728799328296,
+        "support": 626.0
+      },
+      "UP": {
+        "precision": 0.1,
+        "recall": 0.3333333333333333,
+        "f1-score": 0.15384615384615385,
+        "support": 6.0
+      },
+      "DOWN": {
+        "precision": 0.2727272727272727,
+        "recall": 0.5,
+        "f1-score": 0.35294117647058826,
+        "support": 6.0
+      },
+      "LEFT": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 6.0
+      },
+      "RIGHT": {
+        "precision": 0.07894736842105263,
+        "recall": 0.5,
+        "f1-score": 0.13636363636363635,
+        "support": 6.0
+      },
+      "accuracy": 0.86,
+      "macro avg": {
+        "precision": 0.2853791760172757,
+        "recall": 0.4427050053248136,
+        "f1-score": 0.3136847693226416,
+        "support": 650.0
+      },
+      "weighted avg": {
+        "precision": 0.9433823744955557,
+        "recall": 0.86,
+        "f1-score": 0.8970457363662057,
+        "support": 650.0
+      }
+    },
+    "per_file": [
+      {
+        "source_path": "data/sessions/phone-20261021-093345/idle.1.csv",
+        "completion_ms": null,
+        "positive_windows": 0,
+        "counts": {
+          "correct": 0,
+          "missed": 0,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": []
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-093345/other.1.csv",
+        "completion_ms": null,
+        "positive_windows": 0,
+        "counts": {
+          "correct": 0,
+          "missed": 0,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": []
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_down.1.csv",
+        "completion_ms": 1830,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 0,
+          "missed": 1,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 1,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 1740,
+            "class_index": 2,
+            "score": 0.8280991315841675,
+            "kind": "early"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_down.4.csv",
+        "completion_ms": 1710,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 0,
+          "missed": 1,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 1,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 1340,
+            "class_index": 1,
+            "score": 0.9464123249053955,
+            "kind": "early"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_left.2.csv",
+        "completion_ms": 1490,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 1,
+          "missed": 0,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 1,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 1740,
+            "class_index": 3,
+            "score": 0.9977697134017944,
+            "kind": "correct"
+          },
+          {
+            "timestamp_ms": 2290,
+            "class_index": 3,
+            "score": 0.9729106426239014,
+            "kind": "late_unmatched"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_left.8.csv",
+        "completion_ms": 1890,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 0,
+          "missed": 1,
+          "wrong_direction": 1,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 2040,
+            "class_index": 4,
+            "score": 0.9356030821800232,
+            "kind": "wrong_direction"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_right.1.csv",
+        "completion_ms": 2220,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 0,
+          "missed": 1,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 1,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 2090,
+            "class_index": 3,
+            "score": 0.894527018070221,
+            "kind": "early"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_right.10.csv",
+        "completion_ms": 1760,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 0,
+          "missed": 1,
+          "wrong_direction": 1,
+          "duplicate": 0,
+          "early": 1,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 1490,
+            "class_index": 4,
+            "score": 0.9670294523239136,
+            "kind": "early"
+          },
+          {
+            "timestamp_ms": 2040,
+            "class_index": 3,
+            "score": 0.9987301230430603,
+            "kind": "wrong_direction"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_up.3.csv",
+        "completion_ms": 1700,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 1,
+          "missed": 0,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 1,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": [
+          {
+            "timestamp_ms": 1540,
+            "class_index": 1,
+            "score": 0.9996452331542969,
+            "kind": "early"
+          },
+          {
+            "timestamp_ms": 2090,
+            "class_index": 1,
+            "score": 0.9439964294433594,
+            "kind": "correct"
+          }
+        ]
+      },
+      {
+        "source_path": "data/sessions/phone-20261021-094346/raw_up.8.csv",
+        "completion_ms": 1480,
+        "positive_windows": 3,
+        "counts": {
+          "correct": 0,
+          "missed": 1,
+          "wrong_direction": 0,
+          "duplicate": 0,
+          "early": 0,
+          "late_unmatched": 0,
+          "background_false": 0
+        },
+        "events": []
+      }
+    ],
+    "final_test_inference": false,
+    "event_totals": {
+      "correct": 2,
+      "missed": 6,
+      "wrong_direction": 2,
+      "duplicate": 0,
+      "early": 5,
+      "late_unmatched": 1,
+      "background_false": 0
+    },
+    "latency_ms": {
+      "n": 2,
+      "median": 320.0,
+      "p95": 383.0
+    },
+    "gesture_count": 8,
+    "background_recording_seconds": 20.0,
+    "background_inference_exposure_seconds": 17.62,
+    "warmup_ms": 1190
+  },
+  "saved_model_predictions_verified": true,
+  "final_test_inference": false
+}

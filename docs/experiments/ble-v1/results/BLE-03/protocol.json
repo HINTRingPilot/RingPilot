@@ -1,0 +1,66 @@
+{
+  "experiment": "BLE-03",
+  "stage": "clip_pilot_only",
+  "created_before_training_kst": "2026-10-21T10:59:03.490832+09:00",
+  "user_target": "emit only after natural return is complete",
+  "user_constraint": "cannot collect continuous data now",
+  "not_done": [
+    "continuous policy validation",
+    "new annotation confirmation",
+    "final test",
+    "board inference"
+  ],
+  "changed_factor": "training positive width after existing completion e: 150ms vs 300ms",
+  "training_widths_ms": [
+    150,
+    300
+  ],
+  "seeds": [
+    20261021,
+    20261022,
+    20261023
+  ],
+  "class_order": [
+    "NONE",
+    "UP",
+    "DOWN",
+    "LEFT",
+    "RIGHT"
+  ],
+  "shared_train_inputs": 221,
+  "original_train_inputs": 144,
+  "additional_shared_inputs": 77,
+  "train_counts_150": [
+    149,
+    14,
+    19,
+    21,
+    18
+  ],
+  "train_counts_300": [
+    68,
+    32,
+    43,
+    42,
+    36
+  ],
+  "relabelled_inputs": 81,
+  "class_weight": null,
+  "augmentation": false,
+  "pool_rule": "union of original 144 train windows and all 300ms train positives; same inputs and order for both policies",
+  "validation_rule": "original 570 windows and canonical 150ms targets unchanged; unweighted val_loss for checkpoint selection in both",
+  "event_rule": "same direction in [e,e+500ms], one-to-one; any emission before e remains early, not a success",
+  "return_label": "NONE until e (including outbound and return motion), direction for chosen width, then NONE",
+  "model": "same 9493-parameter 160x6 CNN",
+  "optimizer": "Adam .001",
+  "batch_size": 16,
+  "max_epochs": 100,
+  "early_stopping": "unweighted canonical val_loss; patience12; restore best",
+  "postprocessing": "score .8, margin .2, 2 same direction, 2 NONE for rearm",
+  "input_sha256": "d1b0ca43f79df94cc06f822026cecacd145d979a3e996d32b3d446c9849911f2",
+  "manifest_sha256": "69714f3db4fd7d16d89307c6de94f618062dcbb67a9017e02af27592f23698f2",
+  "normalization_sha256": "28012f47b20be18feea593ff339744071996ce6cfe6d5ea5d603dbceeac0a1b7",
+  "source_baseline_inputs_sha256": "9c1ac3183133bc531f397e02cdafcbc39e29d388a6704edc712a177729bde6f5",
+  "decision_rule": "Pilot candidate only if mean correct events increases, mean unmatched emissions does not increase, and neither metric regresses in any seed; no final policy adoption without continuous data.",
+  "final_test_inference": false
+}

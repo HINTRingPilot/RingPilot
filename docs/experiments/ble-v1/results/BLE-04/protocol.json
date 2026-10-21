@@ -1,0 +1,91 @@
+{
+  "experiment": "BLE-04",
+  "stage": "clip_comparison_only",
+  "created_before_training_kst": "2026-10-21T11:06:34.517226+09:00",
+  "source_run": "BLE-01-r03",
+  "lengths_samples": [
+    160,
+    120
+  ],
+  "seeds": [
+    20261021,
+    20261022,
+    20261023
+  ],
+  "changed_factor": "input history length; flatten/dense size changes necessarily",
+  "training": "same 144 windows and 150ms targets; short input is last 120 rows of each 160-row input",
+  "common_validation": "same 570 times (t>=1590ms), same labels; reset postprocessing per file; also used for val_loss checkpoint selection",
+  "native_validation": "160: t>=1590ms, 570 windows; 120: t>=1190ms, 650 windows; replay from native start so earlier emissions affect locking",
+  "native_120_extra_windows": 80,
+  "train_class_counts": [
+    72,
+    14,
+    19,
+    21,
+    18
+  ],
+  "common_class_counts": [
+    550,
+    4,
+    6,
+    4,
+    6
+  ],
+  "native120_class_counts": [
+    626,
+    6,
+    6,
+    6,
+    6
+  ],
+  "normalization_sha256": "28012f47b20be18feea593ff339744071996ce6cfe6d5ea5d603dbceeac0a1b7",
+  "manifest_sha256": "69714f3db4fd7d16d89307c6de94f618062dcbb67a9017e02af27592f23698f2",
+  "source_input_sha256": "9c1ac3183133bc531f397e02cdafcbc39e29d388a6704edc712a177729bde6f5",
+  "input_sha256": "c3ac9d77db1d423d4ba028cdbc9d7f89eb783be0afee8c004e53f52bd54824dd",
+  "model": {
+    "conv_filters": [
+      16,
+      32
+    ],
+    "kernels": [
+      5,
+      5
+    ],
+    "pool": 2,
+    "dropout": [
+      0.2,
+      0.3
+    ],
+    "parameters": {
+      "160": 9493,
+      "120": 7893
+    },
+    "macs": {
+      "160": 288000,
+      "120": 216000
+    },
+    "input_bytes_float32": {
+      "160": 3840,
+      "120": 2880
+    }
+  },
+  "optimizer": "Adam .001",
+  "batch_size": 16,
+  "max_epochs": 100,
+  "early_stopping": "common val_loss, patience12, restore best",
+  "class_weight": null,
+  "augmentation": false,
+  "training_positive_width_ms": 150,
+  "output": "score .8, margin .2, same direction twice; NONE .8 twice to rearm",
+  "user_target": "after natural return",
+  "event_rule": "same direction in [e,e+500ms], one-to-one; early remains a failure",
+  "decision_rule": "Retain 120 only as development candidate if correct events are noninferior and unmatched/early emissions do not increase in every paired seed in BOTH common and native replay, while analytical MACs decrease. No final deployment claim.",
+  "limitations": [
+    "fixed small sensor-annotated clips",
+    "no independent continuous data",
+    "120 native early windows not added to training",
+    "same excluded raw files kept excluded",
+    "no board timing/RAM measurement"
+  ],
+  "final_test_inference": false
+}

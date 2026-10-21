@@ -1,0 +1,82 @@
+[
+  {
+    "source_path": "data/sessions/phone-20261021-094346/raw_down.1.csv",
+    "completion_ms": 1830,
+    "positive_windows": {
+      "160": 3,
+      "120": 3
+    },
+    "less_than_two_160": false,
+    "less_than_two_120": false
+  },
+  {
+    "source_path": "data/sessions/phone-20261021-094346/raw_down.4.csv",
+    "completion_ms": 1710,
+    "positive_windows": {
+      "160": 3,
+      "120": 3
+    },
+    "less_than_two_160": false,
+    "less_than_two_120": false
+  },
+  {
+    "source_path": "data/sessions/phone-20261021-094346/raw_left.2.csv",
+    "completion_ms": 1490,
+    "positive_windows": {
+      "160": 1,
+      "120": 3
+    },
+    "less_than_two_160": true,
+    "less_than_two_120": false
+  },
+  {
+    "source_path": "data/sessions/phone-20261021-094346/raw_left.8.csv",
+    "completion_ms": 1890,
+    "positive_windows": {
+      "160": 3,
+      "120": 3
+    },
+    "less_than_two_160": false,
+    "less_than_two_120": false
+  },
+  {
+    "source_path": "data/sessions/phone-20261021-094346/raw_right.1.csv",
+    "completion_ms": 2220,
+    "positive_windows": {
+      "160": 3,
+      "120": 3
+    },
+    "less_than_two_160": false,
+    "less_than_two_120": false
+  },
+  {
+    "source_path": "data/sessions/phone-20261021-094346/raw_right.10.csv",
+    "completion_ms": 1760,
+    "positive_windows": {
+      "160": 3,
+      "120": 3
+    },
+    "less_than_two_160": false,
+    "less_than_two_120": false
+  },
+  {
+    "source_path": "data/sessions/phone-20261021-094346/raw_up.3.csv",
+    "completion_ms": 1700,
+    "positive_windows": {
+      "160": 3,
+      "120": 3
+    },
+    "less_than_two_160": false,
+    "less_than_two_120": false
+  },
+  {
+    "source_path": "data/sessions/phone-20261021-094346/raw_up.8.csv",
+    "completion_ms": 1480,
+    "positive_windows": {
+      "160": 1,
+      "120": 3
+    },
+    "less_than_two_160": true,
+    "less_than_two_120": false
+  }
+]

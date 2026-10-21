@@ -1,0 +1,27 @@
+{
+  "run_id": "BLE-02-r04",
+  "condition": "balanced",
+  "seed": 20261022,
+  "start_kst": "2026-10-21T10:50:22.840321+09:00",
+  "class_weight": {
+    "NONE": 0.4,
+    "UP": 2.057142857142857,
+    "DOWN": 1.5157894736842106,
+    "LEFT": 1.3714285714285714,
+    "RIGHT": 1.6
+  },
+  "protocol_sha256": "e7986aaf09be3656e74d742c4d01460026ae5b379f50b1dc68b22aa7c30d1476",
+  "input_sha256": "9c1ac3183133bc531f397e02cdafcbc39e29d388a6704edc712a177729bde6f5",
+  "normalization_sha256": "28012f47b20be18feea593ff339744071996ce6cfe6d5ea5d603dbceeac0a1b7",
+  "model_code_sha256": "5755eb4d94252ab662c8ebfae818ea6c9355da42ac500f3484388d93757a2865",
+  "runner_sha256": "d3d5df1ef7961a5fe08bda5a46305fece35a81f62eb3253d25df99815352e046",
+  "python": "3.12.15 (main, Oct 14 2026, 01:08:45) [MSC v.1944 64 bit (AMD64)]",
+  "tensorflow": "2.21.0",
+  "keras": "3.15.1",
+  "numpy": "2.5.4",
+  "devices": [
+    "PhysicalDevice(name='/physical_device:CPU:0', device_type='CPU')"
+  ],
+  "initial_weights_identical_within_seed": true,
+  "final_test_inference": false
+}

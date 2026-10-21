@@ -1,0 +1,23 @@
+{
+  "run_id": "BLE-05-r06",
+  "readout": "gap",
+  "seed": 20261023,
+  "start_kst": "2026-10-21T11:15:16.348846+09:00",
+  "parameters": 3253,
+  "readout_features": 32,
+  "conv_dense_macs": 281760,
+  "protocol_sha256": "1d84729538f256ac11397c6b0a483749058df8b13f435084089efe0e006e68dc",
+  "input_sha256": "9c1ac3183133bc531f397e02cdafcbc39e29d388a6704edc712a177729bde6f5",
+  "normalization_sha256": "28012f47b20be18feea593ff339744071996ce6cfe6d5ea5d603dbceeac0a1b7",
+  "manifest_sha256": "69714f3db4fd7d16d89307c6de94f618062dcbb67a9017e02af27592f23698f2",
+  "model_code_sha256": "2bc34c5a70acbd9bcf19d9627343ef6bd75ee9814d397bddfdfafebf329f7474",
+  "runner_sha256": "1a885ac50fd9224ac52ea2c382eeed124014e35c4175fea6d0fea0acc09d191a",
+  "evaluator_sha256": "d3d5df1ef7961a5fe08bda5a46305fece35a81f62eb3253d25df99815352e046",
+  "convolution_initial_weights_equal_within_seed": true,
+  "dense_initial_weights_equal": false,
+  "python": "3.12.15 (main, Oct 14 2026, 01:08:45) [MSC v.1944 64 bit (AMD64)]",
+  "tensorflow": "2.21.0",
+  "keras": "3.15.1",
+  "numpy": "2.5.4",
+  "final_test_inference": false
+}
