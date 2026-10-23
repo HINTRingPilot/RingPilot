@@ -18,8 +18,7 @@ static float readBatteryVolt(int* rawOut) {
   digitalWrite(VBAT_ENABLE, LOW);  // 분압 회로 켜기
   delay(5);
   int raw = analogRead(PIN_VBAT);
-  digitalWrite(VBAT_ENABLE, HIGH);  // 분압 회로 끄기(누설 방지)
-  *rawOut = raw;
+  *rawOut = raw;  // 분압 회로는 LOW(켬)로 유지. 충전 중 HIGH 금지(Seeed 문서)
   return raw * (kAdcRefVolt / 4095.0f) * kDividerRatio;
 }
 
@@ -28,7 +27,7 @@ void setup() {
   pinMode(LED_BLUE, OUTPUT);
   digitalWrite(LED_BLUE, HIGH);  // 이 보드의 LED는 LOW에서 켜짐
   pinMode(VBAT_ENABLE, OUTPUT);
-  digitalWrite(VBAT_ENABLE, HIGH);
+  digitalWrite(VBAT_ENABLE, LOW);
   analogReference(AR_INTERNAL_3_0);
   analogReadResolution(12);
 }

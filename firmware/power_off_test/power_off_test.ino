@@ -50,6 +50,8 @@ void setup() {
   pinMode(LED_BLUE, OUTPUT);
   ledsOff();
   pinMode(kCenterPin, INPUT_PULLUP);
+  pinMode(VBAT_ENABLE, OUTPUT);
+  digitalWrite(VBAT_ENABLE, LOW);  // 충전 중 HIGH 금지(Seeed 문서). 꺼질 때만 HIGH
 
   // 깨우는 누름이 아직 눌려 있으면 놓을 때까지 대기(바로 다시 꺼지는 것 방지).
   waitForRelease();

@@ -297,6 +297,7 @@ static void powerOff() {
     delay(100);
   }
   digitalWrite(PIN_LSM6DS3TR_C_POWER, LOW);  // IMU 전원 차단. System OFF 중 실제 소모 전류는 미측정
+  digitalWrite(VBAT_ENABLE, HIGH);  // 분압 회로 끄기(누설 방지). USB를 꽂으면 깨어나 부팅하면서 다시 LOW가 된다
   waitForRelease();
   systemOff(kCenterPin, 0);
 }
@@ -362,6 +363,10 @@ void setup() {
   ledsOff();
   pinMode(kCenterPin, INPUT_PULLUP);
   pinMode(kChargeCurrentPin, INPUT);  // 기본값과 같은 상태를 명시. 실제 충전 전류는 미측정
+  // USB를 꽂으면 System OFF에서 깨어나 충전 중에도 동작한다. Seeed 문서는 충전 중 P0.14를 HIGH로 두면
+  // P0.31이 3.6V 한계에 닿을 수 있다고 경고하므로, 켜져 있는 동안은 LOW(분압 회로 켬)로 둔다.
+  pinMode(VBAT_ENABLE, OUTPUT);
+  digitalWrite(VBAT_ENABLE, LOW);
   waitForRelease();
 
   if (!imuStart()) {
