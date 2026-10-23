@@ -1,8 +1,0 @@
-session=20261021-093345
-started=2026-10-21 09:33:45
-memo=
-device=RingPilot-IMU
-csv=timestamp ms, accX/Y/Z m/s^2 (raw x 0.122 mg), gyrX/Y/Z deg/s (raw x 0.035)
-gesture_samples=300 pre_roll_cue_ms=500
-ended=2026-10-21 09:34:57
-counts=idle:2 other:2 
