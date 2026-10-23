@@ -5,9 +5,9 @@
 
 ## 현재 구현
 
-XIAO nRF52840 Sense의 Arduino/Bluefruit 펌웨어로 BLE HID 마우스와 Custom GATT 서비스를 제공합니다.
-Android 최소 앱은 AccessibilityService로 다른 앱 위에 스와이프를 전달하고, Custom GATT의 `SWIPE_UP` / `SWIPE_DOWN` 명령을 수신합니다.
-현재 스와이프 입력은 USB 시리얼 명령으로 대체합니다. Edge Impulse용 100 Hz IMU 6축 출력과 Studio 장치 연결까지 검증했으며, 라벨 데이터 수집·학습·TinyML 통합은 아직 진행 전입니다.
+XIAO nRF52840 Sense의 Arduino/Bluefruit 펌웨어로 BLE HID 마우스와 Custom GATT 서비스를 제공합니다(`ble_poc`).
+제스처 데이터 수집용 펌웨어(`imu_ble_stream`)는 IMU 6축 원시값을 100 Hz로 BLE 스트리밍하고, Android 앱이 이를 세션 단위로 기록합니다. 앱의 AccessibilityService(화면 스와이프 주입)는 이후 인식 결과 출력용으로 코드만 남아 있습니다.
+하드웨어는 SKRHACE010 5방향 스위치(D0·D1·D2·D3·D6, 공통 GND)와 55mAh Li-Po를 연결했습니다. 센터(D1)를 길게 누르면 System OFF로 꺼지고 다시 누르면 켜집니다.
 
 ```text
 PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
@@ -22,6 +22,7 @@ PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
 - 확인 완료: 4방향 이동·클릭, HID와 GATT 알림 동시 동작, USB 전원 재연결 및 휴대폰 Bluetooth OFF/ON 후 기능 복구
 - nRF Connect 강제 종료·재실행: 수동 CONNECT 후 별도 알림 버튼 조작 없이 수신 복구
 - Android 앱: Galaxy S10에서 접근성 앱 자체 스와이프와 BLE 상하좌우 스와이프 명령을 실동작 확인
+- 하드웨어: 스위치 5개 입력 모두 반응, 배터리 단독 구동, 센터 길게 눌러 System OFF·센터와 USB 연결로 깨어남 (2026-10-18~23)
 
 짧은 기능 시험 결과이며, 장시간 안정성·복구 시간·패킷 누락률·소비전력은 측정하지 않았습니다.
 
@@ -52,5 +53,5 @@ PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
 - [하드웨어 제작 보고서](docs/HardwareBuild.md)
 - [시리얼 테스트 로그](docs/logs/)
 
-현재 개발 후보는 2층 CNN+증강(B)이며 최종 선정 전입니다. 남은 단계는 연속 자료 검증(실험 7b)과 int8·보드 검증(실험 8)입니다.
+BLE v1 실험(1~7a)은 테스트용 세션으로 진행했고, 2026-10-23에 그 세션과 주석·분할·결과 파일을 삭제했습니다(문서는 보존). 자이로 ±2000 dps 펌웨어와 맞춘 새 앱으로 데이터를 다시 수집하는 단계이며, 학습용 데이터는 현재 없습니다.
 펌웨어 `.build/`, Android 빌드 결과와 로컬 SDK `.tools/`는 저장소에서 제외합니다.

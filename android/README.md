@@ -52,13 +52,15 @@ node tools/pull-phone-sessions.js
 
 세션 폴더 `files/sessions/<yyyyMMdd-HHmmss>/`에 다음 파일이 생긴다.
 
-- `raw_up.N.csv`, `raw_down.N.csv`, `raw_left.N.csv`, `raw_right.N.csv`: 4초, 400행 (2026-10-21 첫 세션은 3초, 300행)
+- `raw_up.N.csv`, `raw_down.N.csv`, `raw_left.N.csv`, `raw_right.N.csv`: 4초, 400행
 - `idle.N.csv`, `other.N.csv`: 10초, 1000행
 - `continuous.N.csv`: 길이 제한 없음
 - `session_info.txt`: 시작·종료 시각, 메모, 라벨별 개수, 자이로 범위(`gyro_range_dps`), 클립 길이(`gesture_samples`), 동작 신호 시각(`pre_roll_cue_ms`). 분석 도구가 이 값을 읽는다.
 - `SESSION_DONE`: 세션 종료 표시
 
-CSV 열은 `timestamp,accX,accY,accZ,gyrX,gyrY,gyrZ`(ms, m/s², deg/s)로, 기존 USB 수집 파일과 분석 도구(`tools/suggest-gesture-completions.js --local-dir`)가 그대로 읽을 수 있다. 펌웨어는 센서 원시값을 보내고, 앱이 가속도 0.122 mg/LSB(±4 g), 자이로 0.070 dps/LSB(±2000 dps)로 환산한다. 환산 계수는 펌웨어 범위와 맞아야 하므로 **펌웨어와 앱은 함께 업데이트한다.** 옛 펌웨어(±1000 dps)에 새 앱을 쓰면 자이로 값이 2배로 기록된다. 2026-10-21 첫 세션은 ±1000 dps(0.035 dps/LSB)로 수집됐고 CSV에는 이미 deg/s로 환산돼 있다.
+CSV 열은 `timestamp,accX,accY,accZ,gyrX,gyrY,gyrZ`(ms, m/s², deg/s)로, 분석 도구(`tools/suggest-gesture-completions.js --local-dir`)가 그대로 읽을 수 있다. 펌웨어는 센서 원시값을 보내고, 앱이 가속도 0.122 mg/LSB(±4 g), 자이로 0.070 dps/LSB(±2000 dps)로 환산한다. 환산 계수는 펌웨어 범위와 맞아야 하므로 **펌웨어와 앱은 함께 업데이트한다.** 옛 펌웨어(±1000 dps)에 새 앱을 쓰면 자이로 값이 2배로, 새 펌웨어에 옛 앱(0.035 dps/LSB)을 쓰면 절반으로 기록된다. 새 앱으로 기록한 세션은 `session_info.txt`에 `gyro_range_dps=2000` 줄이 있으므로, 수집 뒤 이 줄로 앱 버전을 확인한다.
+
+디버그 APK는 PC마다 서명 키가 달라서, 다른 PC에서 설치한 앱 위에는 덮어쓸 수 없다(`INSTALL_FAILED_UPDATE_INCOMPATIBLE`). 이때는 앱을 지우고 다시 설치해야 하며, 휴대폰에 남은 세션도 함께 지워지므로 먼저 `node tools/pull-phone-sessions.js`로 옮긴다.
 
 연결·일시정지·재개 이벤트와 재연결 시간은 `files/connection_log.csv`에 남는다.
 
@@ -71,6 +73,8 @@ cd android
 $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 .\gradlew.bat :app:assembleDebug
 ```
+
+Android Studio 없이 빌드할 때는 JDK 17(예: Temurin 17)을 `JAVA_HOME`으로 두고, 명령줄 SDK를 `.tools/android-sdk`에 설치한 뒤 `android/local.properties`에 `sdk.dir=C:/<저장소 경로>/.tools/android-sdk`를 적는다(경로는 `/`로 쓴다. `\`를 쓰면 `\u`가 유니코드 이스케이프로 읽혀 빌드가 실패한다).
 
 ## 보존한 기능
 

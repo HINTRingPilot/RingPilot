@@ -2,16 +2,12 @@
 
 세션별 방향 샘플(`raw_*.N.csv`, 3초 또는 4초)에 대한 자연 복귀 완료 시점 후보표다. 원시 센서 값이나 인증 정보는 저장하지 않는다.
 
-| 파일 | 대상 |
-|---|---|
-| `gesture-completions-session-2026-10-21-phone.csv` | `data/sessions/phone-20261021-091621/` (휴대폰 앱 수집, 20개) |
-| `ble-v1/phone-20261021-091621-candidates.json` | BLE 실험 1용 첫 세션 자동 후보 20개 재계산, 기존 CSV 보존 |
-| `ble-v1/phone-20261021-094346-candidates.json` | BLE 실험 1용 추가 세션 자동 후보 40개 |
-| `ble-v1/review-decisions.json` | 66개 원본의 센서 파형 기반 채택/보류/제외 판단 및 분할 |
+현재 주석 파일은 없다. 새 세션을 수집한 뒤 아래 "다시 계산"으로 만든다.
 
-BLE 실험 1의 실제 주석 검토와 시간 제약은 [데이터 검토 기록](../../docs/experiments/ble-v1/01-data-review.md)을 따른다. 자동 후보와 검토 결정을 구분하며, 영상·사용자 확인으로 완료 정답을 확정한 것은 아니다. 새 로컬 학습은 [고정 분할표](../splits/ble-v1.json)와 `ml/baseline.py`를 사용한다.
+- 2026-10-21: 이전 데이터(Edge Impulse 1차 세션 46개, USB 2차 세션 40개, 학습 윈도우)와 그 주석을 사용자 요청으로 삭제했다.
+- 2026-10-23: BLE v1 실험에 쓴 테스트 세션(`phone-20261021-*`, `phone-20261023-*`)과 그 주석(`ble-v1/`, `gesture-completions-session-2026-10-21-phone.csv`)·분할(`data/splits/`)을 사용자 요청으로 삭제했다. 필요하면 `git checkout c892ec8 -- <경로>`로 복원한다.
 
-2026-10-21에 이전 데이터(Edge Impulse 1차 세션 46개, USB 2차 세션 40개, 학습 윈도우)와 그 주석을 사용자 요청으로 모두 삭제했다. 경과는 `docs/진행기록.md`에 있다.
+경과는 `docs/진행기록.md`에 있다. 당시 주석 검토 방식은 [데이터 검토 기록](../../docs/experiments/ble-v1/01-data-review.md)에 남아 있다. 자동 후보와 검토 결정을 구분하며, 영상·사용자 확인으로 완료 정답을 확정한 것은 아니다.
 
 ## 현재 계약
 
@@ -43,7 +39,6 @@ BLE 실험 1의 실제 주석 검토와 시간 제약은 [데이터 검토 기�
 node tools/suggest-gesture-completions.js --local-dir data/sessions/<세션> --format csv > data/annotations/gesture-completions-session-<세션>.csv
 ```
 
-출력 결과를 검토하지 않고 기존 CSV 위에 자동 반영하지 않는다. 학습 창은 `ml/`의 학습 코드가 `data/splits/`의 분할과 `data/annotations/ble-v1/` 주석으로 만든다.
+출력 결과를 검토하지 않고 기존 CSV 위에 자동 반영하지 않는다. 학습 창은 `ml/`의 학습 코드가 `data/splits/`의 분할과 `data/annotations/ble-v1/` 주석으로 만든다. 단, 현재 `ml/baseline.py`는 삭제된 테스트 세션 이름을 코드에 고정하고 있어 새 데이터에 맞게 고친 뒤 쓴다.
 
-- `sample_id`는 세션마다 9000000000부터 다시 시작한다. export는 파일 이름을 내부 순번으로 만들고 manifest에 `source_path`를 함께 남기므로 겹쳐도 덮어쓰지 않는다. 구분이 필요하면 `--id-start`로 세션별 범위를 준다.
-- export는 주석에 나온 세션 폴더(및 `--sessions`로 준 폴더)의 `idle.N.csv`, `other.N.csv`를 NONE 출처로 읽는다. NONE 상한은 동작 클립 배경, idle, other에서 번갈아 고르게 채운다.
+- `sample_id`는 세션마다 9000000000부터 다시 시작한다. 파일을 구분할 때는 `source_path`를 쓰고, 번호 구분이 필요하면 `--id-start`로 세션별 범위를 준다.

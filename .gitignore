@@ -6,10 +6,6 @@ android/build/
 android/app/build/
 .tools/
 
-# Window CSVs from the removed Edge Impulse exporter. Raw sessions and annotations are kept.
-data/windows/
-data/windows-augmented-5x/
-
 # Local training runs (results copied to docs/experiments) and Python caches
 ml/runs/
 ml/.venv/

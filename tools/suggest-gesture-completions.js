@@ -57,7 +57,7 @@ function printHelp() {
     '',
     'Usage (local session files, same raw_up/down/left/right.N.csv layout as',
     'the Android collection app writes):',
-    '  node tools/suggest-gesture-completions.js --local-dir data/sessions/phone-20261021-094346 --format csv',
+    '  node tools/suggest-gesture-completions.js --local-dir data/sessions/phone-<세션> --format csv',
     '',
     'Options:',
     '  --local-dir PATH   Read raw_*.csv files from this directory instead of Edge Impulse',
