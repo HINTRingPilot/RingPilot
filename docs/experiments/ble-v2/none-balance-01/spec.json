@@ -1,0 +1,39 @@
+{
+  "experiment": "BLE-v2-NONE-BAL-01",
+  "strategy": "session_clip_balanced_v1",
+  "data_role": "development_diagnostic",
+  "single_factor": "NONE 종류 안의 경로순 배분을 세션·클립 층화 배분으로만 변경",
+  "fixed_condition_policy": "inherit_baseline_except_none_allocation",
+  "none_seed": 20261021,
+  "within_clip_window_priority": "기존 선택기의 shuffle/pop 우선순위 유지; 세션·클립에 줄 개수만 변경",
+  "execution_order": ["S-P5", "C", "S-P1", "S-P2", "S-P3", "S-P4"],
+  "run_prefix": "NONE-BAL-01",
+  "code_files": [
+    "ml/model.py",
+    "ml/v2.py",
+    "ml/v2_cal.py",
+    "ml/v2_diag.py",
+    "ml/v2_protected_manifest.py",
+    "ml/v2_none_stratified.py",
+    "ml/v2_protocol.py",
+    "ml/v2_none_cal.py",
+    "ml/v2_none_compare.py"
+  ],
+  "comparison": {
+    "primary": "각 전략에 같은 E 선택 원칙 적용 후 같은 seed끼리 비교",
+    "supporting": "모든 공통 E에서 같은 seed끼리 비교; 세션별 기술 보고",
+    "metrics": ["score", "correct_rate", "early_clip_rate", "unmatched_per_source", "no_emit_rate", "background_false_per_min"],
+    "positive_direction": {"score": "higher", "correct_rate": "higher", "early_clip_rate": "lower", "unmatched_per_source": "lower"},
+    "label_improvement": "평균 score 상승, correct_rate 비감소, early_clip_rate·unmatched_per_source 비증가이면 개발용 개선 관찰",
+    "label_worsening": "평균 score 하락, correct_rate 비증가, early_clip_rate·unmatched_per_source 비감소이면 개발용 악화 관찰",
+    "otherwise": "관측값 동일 또는 지표 간 교환관계로 기술",
+    "seed_reporting": "상승·하락·동일 개수와 차이 평균·범위; 통계적 유의성·동등성 판정 없음",
+    "adoption": "이 결과만으로 기본 선택기를 변경하거나 독립 평가 성능을 주장하지 않음"
+  },
+  "limits": [
+    "원본 336개는 다른 분할 보정·진단에서 관찰된 개발 자료",
+    "선택 방식이 조기 발행을 줄인다는 인과 근거는 아직 없음",
+    "완료 시각·양성 폭·NONE 총량과 종류별 수·모델·후처리·선택 점수는 유지",
+    "영상·사람 주석·최종 평가·보드 추론은 이번 실행 범위 밖"
+  ]
+}
