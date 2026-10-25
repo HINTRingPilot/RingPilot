@@ -1,0 +1,320 @@
+{
+  "run_id": "NONE-BAL-01-S-P4",
+  "runner_version": 3,
+  "split": "S-P4",
+  "created_kst": "2026-10-25T19:19:33+09:00",
+  "protocol_path": "C:\\Users\\zoonc\\Desktop\\RingPilot\\docs\\experiments\\ble-v2\\none-balance-01\\protocol.json",
+  "protocol_sha256": "adf597aa223e18bad49047bee951f4a7ce14c37caaa351e0b614a38f946781c2",
+  "code_sha256": {
+    "ml/model.py": "2bc34c5a70acbd9bcf19d9627343ef6bd75ee9814d397bddfdfafebf329f7474",
+    "ml/v2.py": "49cd234ca9ae27692061b72768d76d9d4ad17d233b6897c992d34938e0ed2a70",
+    "ml/v2_cal.py": "0a701342880582ea6619987307422dee93c9665a8745b5bc1e69b48ec70ff3ad",
+    "ml/v2_diag.py": "b7522abe60ce5dc3ab9b7b51a95b45c8a2a2d67234627d4f34e36feafdf04c33",
+    "ml/v2_protected_manifest.py": "e4f93f98c326cff925436fb626d4cac82cdeb7396c7aece7bc9479c62cca4bb6",
+    "ml/v2_none_stratified.py": "fb1f6e185d5cc795e68093003f96cafe97a6fa8c6a5cd1466180aeb49ec99843",
+    "ml/v2_protocol.py": "2575e33b41984da82ca4430acdef34900f67f52311e73e754ff7a9f5c2e53b5c",
+    "ml/v2_none_cal.py": "814a9c6386582ced025c56d68518846fc42ff20060cfb89ac1419ae6f7be52dc",
+    "ml/v2_none_compare.py": "6f92e92803e87e87180f5e7dc7bb095429a03905315ed4a2beb738f55ce0ee06"
+  },
+  "records_sha256": "d2192aad02b42d5ba19a508bee6347ab01c6dd1a4817310753bf85d3911d4dfa",
+  "split_sha256": "2dcade87146f4d11e524c2eb4197141851095f4581780fcef337124c67e9d3b3",
+  "seeds": [
+    20261021,
+    20261022,
+    20261023,
+    20261024,
+    20261025
+  ],
+  "epoch_candidates": [
+    1,
+    5,
+    10,
+    20,
+    30,
+    40,
+    60
+  ],
+  "n_folds": 4,
+  "folds": [
+    {
+      "fold": 0,
+      "selection_sha256": "6ec7105a2b9f80dd9779ce1ea4115dc83e8c8e73a39252b7b69f6140fff0ff4c",
+      "manifest_sha256": "9f19010886a64e30ec29ad43ea090b4fce36a6dc46a6432756de270c48aa8b2a",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.6659752957983888,
+          -2.2745905247899185,
+          4.2368908215335725,
+          1.9132588235294115,
+          -4.289426470588358,
+          -0.21237058823529736
+        ],
+        "std": [
+          6.086549668260049,
+          5.210085533300712,
+          4.051929941449926,
+          40.58142708653982,
+          66.13958531612691,
+          39.097369895531926
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        534,
+        132,
+        135,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 134,
+        "other": 133,
+        "in_progress": 134,
+        "post_completion": 133
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P2": 44,
+          "P3": 45,
+          "P5": 45
+        },
+        "other": {
+          "P2": 44,
+          "P3": 45,
+          "P5": 44
+        },
+        "in_progress": {
+          "P2": 45,
+          "P3": 45,
+          "P5": 44
+        },
+        "post_completion": {
+          "P2": 44,
+          "P3": 44,
+          "P5": 45
+        }
+      }
+    },
+    {
+      "fold": 1,
+      "selection_sha256": "1ea0531440a1f76b069f446bda3054963480a48a456c3ddf0bc35888f7dd77e3",
+      "manifest_sha256": "36b71af55ab98acc7a5c3ecf34f6137f2b7a113ca97f74c8cd3ab7df111df0bd",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.875023491313604,
+          -3.1853235301906446,
+          4.320265937076257,
+          1.758017372881354,
+          -4.3410210805085985,
+          -0.2243299788135595
+        ],
+        "std": [
+          5.949173054401461,
+          5.006897282693871,
+          3.825548704802272,
+          40.9372202993861,
+          71.57200474931139,
+          38.445298280070794
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        528,
+        126,
+        135,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 132,
+        "other": 132,
+        "in_progress": 132,
+        "post_completion": 132
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P1": 44,
+          "P3": 44,
+          "P5": 44
+        },
+        "other": {
+          "P1": 44,
+          "P3": 44,
+          "P5": 44
+        },
+        "in_progress": {
+          "P1": 44,
+          "P3": 44,
+          "P5": 44
+        },
+        "post_completion": {
+          "P1": 44,
+          "P3": 44,
+          "P5": 44
+        }
+      }
+    },
+    {
+      "fold": 2,
+      "selection_sha256": "49931c812bd825ad6bec0ee2fbbb365422b44a6d8872c49d988a4ab6004b3db2",
+      "manifest_sha256": "8034d4c29238bd8fe88e120813d2bea236f04d47defd31dccc106f030c4f5562",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          3.428206016772095,
+          -4.082451108122355,
+          6.1479387720464365,
+          2.0958465189873134,
+          -4.321205590717436,
+          -0.30931286919831574
+        ],
+        "std": [
+          2.574533426040953,
+          4.0695178869992334,
+          3.954529132237961,
+          39.04360284663342,
+          67.7190191251057,
+          35.745817189759684
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        531,
+        126,
+        135,
+        135,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 133,
+        "other": 133,
+        "in_progress": 133,
+        "post_completion": 132
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P1": 44,
+          "P2": 44,
+          "P5": 45
+        },
+        "other": {
+          "P1": 44,
+          "P2": 45,
+          "P5": 44
+        },
+        "in_progress": {
+          "P1": 44,
+          "P2": 45,
+          "P5": 44
+        },
+        "post_completion": {
+          "P1": 44,
+          "P2": 44,
+          "P5": 44
+        }
+      }
+    },
+    {
+      "fold": 3,
+      "selection_sha256": "3df8dd9b75591740b0a180612dcd439a38be1e5745f562706036da6b260c8415",
+      "manifest_sha256": "814233ef7816b85c1c031f2593919ecb730c581f3ab64332f66012f1d7125309",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.18578504430381598,
+          -0.5215693415611595,
+          6.272357598839683,
+          1.5440656118143206,
+          -4.155062658227864,
+          -0.19884651898734232
+        ],
+        "std": [
+          6.350942904113953,
+          3.232878830682699,
+          3.9735010601601184,
+          38.6446095593964,
+          67.62719203691539,
+          34.9292977290926
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        531,
+        129,
+        135,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 133,
+        "other": 133,
+        "in_progress": 133,
+        "post_completion": 132
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P1": 44,
+          "P2": 44,
+          "P3": 45
+        },
+        "other": {
+          "P1": 44,
+          "P2": 45,
+          "P3": 44
+        },
+        "in_progress": {
+          "P1": 44,
+          "P2": 45,
+          "P3": 44
+        },
+        "post_completion": {
+          "P1": 44,
+          "P2": 44,
+          "P3": 44
+        }
+      }
+    }
+  ],
+  "git_head": "f5dc8eee85e5607a55cb4892807b17015aecf270",
+  "git_status_short": [
+    "?? docs/experiments/ble-v2/none-balance-01/results/"
+  ],
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "versions": {
+    "tensorflow": "2.21.0",
+    "keras": "3.15.1",
+    "numpy": "2.5.4"
+  },
+  "data_role": "development_diagnostic",
+  "eval_in_model_inputs": false
+}

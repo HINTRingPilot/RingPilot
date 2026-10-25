@@ -1,0 +1,1071 @@
+{
+  "per_epoch": {
+    "1": {
+      "mean_score": -0.017721518987341773,
+      "score_min": -0.04219409282700422,
+      "score_max": 0.029535864978902954,
+      "mean_correct": 30.8,
+      "mean_unmatched": 35.0,
+      "mean_background_false_per_min": 0.8026159334126041,
+      "mean_val_loss": 0.588479021191597,
+      "per_seed": {
+        "20261021": {
+          "score": -0.016877637130801686,
+          "correct": 24,
+          "unmatched": 28,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 24,
+            "missed": 213,
+            "wrong_direction": 1,
+            "duplicate": 0,
+            "early": 27,
+            "late_unmatched": 0,
+            "background_false": 2
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 0.44589774078478006,
+          "early_within_100ms": 5,
+          "delay_ms": {
+            "n": 24,
+            "median": 55.0,
+            "p95": 246.99999999999994
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.6377285867929459,
+          "window_accuracy_mean_over_folds": 0.8431541572982698
+        },
+        "20261022": {
+          "score": -0.04219409282700422,
+          "correct": 34,
+          "unmatched": 44,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 34,
+            "missed": 203,
+            "wrong_direction": 3,
+            "duplicate": 0,
+            "early": 40,
+            "late_unmatched": 1,
+            "background_false": 0
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 0.0,
+          "early_within_100ms": 11,
+          "delay_ms": {
+            "n": 34,
+            "median": 120.0,
+            "p95": 304.49999999999983
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5141425430774689,
+          "window_accuracy_mean_over_folds": 0.8685757918222053
+        },
+        "20261023": {
+          "score": -0.03375527426160337,
+          "correct": 29,
+          "unmatched": 37,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 29,
+            "missed": 208,
+            "wrong_direction": 0,
+            "duplicate": 0,
+            "early": 37,
+            "late_unmatched": 0,
+            "background_false": 6
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 1.33769322235434,
+          "early_within_100ms": 12,
+          "delay_ms": {
+            "n": 29,
+            "median": 80.0,
+            "p95": 276.0
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5677803978323936,
+          "window_accuracy_mean_over_folds": 0.8747863781174965
+        },
+        "20261024": {
+          "score": 0.029535864978902954,
+          "correct": 41,
+          "unmatched": 34,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 41,
+            "missed": 196,
+            "wrong_direction": 0,
+            "duplicate": 0,
+            "early": 31,
+            "late_unmatched": 3,
+            "background_false": 4
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 0.8917954815695601,
+          "early_within_100ms": 7,
+          "delay_ms": {
+            "n": 41,
+            "median": 120.0,
+            "p95": 250.0
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5993530452251434,
+          "window_accuracy_mean_over_folds": 0.8544588732564551
+        },
+        "20261025": {
+          "score": -0.02531645569620253,
+          "correct": 26,
+          "unmatched": 32,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 26,
+            "missed": 211,
+            "wrong_direction": 6,
+            "duplicate": 0,
+            "early": 26,
+            "late_unmatched": 0,
+            "background_false": 6
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 1.33769322235434,
+          "early_within_100ms": 6,
+          "delay_ms": {
+            "n": 26,
+            "median": 75.0,
+            "p95": 237.5
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.6233905330300331,
+          "window_accuracy_mean_over_folds": 0.8545582167811959
+        }
+      }
+    },
+    "5": {
+      "mean_score": -0.1240506329113924,
+      "score_min": -0.1940928270042194,
+      "score_max": -0.029535864978902954,
+      "mean_correct": 69.0,
+      "mean_unmatched": 98.4,
+      "mean_background_false_per_min": 2.586206896551724,
+      "mean_val_loss": 0.4774223230779171,
+      "per_seed": {
+        "20261021": {
+          "score": -0.11814345991561181,
+          "correct": 60,
+          "unmatched": 88,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 60,
+            "missed": 177,
+            "wrong_direction": 2,
+            "duplicate": 0,
+            "early": 82,
+            "late_unmatched": 4,
+            "background_false": 10
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 2.2294887039239004,
+          "early_within_100ms": 20,
+          "delay_ms": {
+            "n": 60,
+            "median": 135.0,
+            "p95": 310.5
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.46069779992103577,
+          "window_accuracy_mean_over_folds": 0.8602747198932561
+        },
+        "20261022": {
+          "score": -0.1308016877637131,
+          "correct": 63,
+          "unmatched": 94,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 63,
+            "missed": 174,
+            "wrong_direction": 12,
+            "duplicate": 0,
+            "early": 79,
+            "late_unmatched": 3,
+            "background_false": 14
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 3.1212841854934603,
+          "early_within_100ms": 29,
+          "delay_ms": {
+            "n": 63,
+            "median": 80.0,
+            "p95": 370.0
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.47586681321263313,
+          "window_accuracy_mean_over_folds": 0.8483434978735298
+        },
+        "20261023": {
+          "score": -0.1940928270042194,
+          "correct": 75,
+          "unmatched": 121,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 75,
+            "missed": 162,
+            "wrong_direction": 0,
+            "duplicate": 0,
+            "early": 117,
+            "late_unmatched": 4,
+            "background_false": 9
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 2.00653983353151,
+          "early_within_100ms": 41,
+          "delay_ms": {
+            "n": 75,
+            "median": 110.0,
+            "p95": 391.9999999999999
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.4754863753914833,
+          "window_accuracy_mean_over_folds": 0.8476112647215237
+        },
+        "20261024": {
+          "score": -0.14767932489451477,
+          "correct": 69,
+          "unmatched": 104,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 69,
+            "missed": 168,
+            "wrong_direction": 0,
+            "duplicate": 0,
+            "early": 103,
+            "late_unmatched": 1,
+            "background_false": 16
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 3.5671819262782405,
+          "early_within_100ms": 32,
+          "delay_ms": {
+            "n": 69,
+            "median": 80.0,
+            "p95": 375.99999999999994
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5474498644471169,
+          "window_accuracy_mean_over_folds": 0.841504759125605
+        },
+        "20261025": {
+          "score": -0.029535864978902954,
+          "correct": 78,
+          "unmatched": 85,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 78,
+            "missed": 159,
+            "wrong_direction": 0,
+            "duplicate": 0,
+            "early": 84,
+            "late_unmatched": 1,
+            "background_false": 9
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 2.00653983353151,
+          "early_within_100ms": 32,
+          "delay_ms": {
+            "n": 78,
+            "median": 75.0,
+            "p95": 361.4999999999999
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.42761076241731644,
+          "window_accuracy_mean_over_folds": 0.8674827958962745
+        }
+      }
+    },
+    "10": {
+      "mean_score": -0.13924050632911392,
+      "score_min": -0.18565400843881857,
+      "score_max": -0.03375527426160337,
+      "mean_correct": 68.6,
+      "mean_unmatched": 101.6,
+      "mean_background_false_per_min": 3.4334126040428066,
+      "mean_val_loss": 0.46543976813554766,
+      "per_seed": {
+        "20261021": {
+          "score": -0.16877637130801687,
+          "correct": 73,
+          "unmatched": 113,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 73,
+            "missed": 164,
+            "wrong_direction": 1,
+            "duplicate": 0,
+            "early": 106,
+            "late_unmatched": 6,
+            "background_false": 15
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 3.34423305588585,
+          "early_within_100ms": 32,
+          "delay_ms": {
+            "n": 73,
+            "median": 90.0,
+            "p95": 290.0
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.4703581780195236,
+          "window_accuracy_mean_over_folds": 0.8547689232607586
+        },
+        "20261022": {
+          "score": -0.03375527426160337,
+          "correct": 56,
+          "unmatched": 64,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 56,
+            "missed": 181,
+            "wrong_direction": 7,
+            "duplicate": 1,
+            "early": 54,
+            "late_unmatched": 2,
+            "background_false": 11
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 2.4524375743162903,
+          "early_within_100ms": 16,
+          "delay_ms": {
+            "n": 56,
+            "median": 120.0,
+            "p95": 392.5
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.3069610558450222,
+          "window_accuracy_mean_over_folds": 0.9007512914506403
+        },
+        "20261023": {
+          "score": -0.18565400843881857,
+          "correct": 89,
+          "unmatched": 133,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 89,
+            "missed": 148,
+            "wrong_direction": 0,
+            "duplicate": 0,
+            "early": 126,
+            "late_unmatched": 7,
+            "background_false": 17
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 3.7901307966706304,
+          "early_within_100ms": 45,
+          "delay_ms": {
+            "n": 89,
+            "median": 100.0,
+            "p95": 391.9999999999999
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5415209606289864,
+          "window_accuracy_mean_over_folds": 0.8348899894863429
+        },
+        "20261024": {
+          "score": -0.17721518987341772,
+          "correct": 60,
+          "unmatched": 102,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 60,
+            "missed": 177,
+            "wrong_direction": 1,
+            "duplicate": 0,
+            "early": 100,
+            "late_unmatched": 1,
+            "background_false": 21
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 4.681926278240191,
+          "early_within_100ms": 27,
+          "delay_ms": {
+            "n": 60,
+            "median": 80.0,
+            "p95": 370.99999999999994
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5448588542640209,
+          "window_accuracy_mean_over_folds": 0.8491841476583215
+        },
+        "20261025": {
+          "score": -0.1308016877637131,
+          "correct": 65,
+          "unmatched": 96,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 65,
+            "missed": 172,
+            "wrong_direction": 0,
+            "duplicate": 0,
+            "early": 92,
+            "late_unmatched": 4,
+            "background_false": 13
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 2.8983353151010705,
+          "early_within_100ms": 38,
+          "delay_ms": {
+            "n": 65,
+            "median": 80.0,
+            "p95": 315.9999999999998
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.4634997919201851,
+          "window_accuracy_mean_over_folds": 0.867518461036767
+        }
+      }
+    },
+    "20": {
+      "mean_score": -0.16371308016877636,
+      "score_min": -0.33755274261603374,
+      "score_max": -0.04219409282700422,
+      "mean_correct": 76.4,
+      "mean_unmatched": 115.2,
+      "mean_background_false_per_min": 4.4589774078478,
+      "mean_val_loss": 0.5061080455780029,
+      "per_seed": {
+        "20261021": {
+          "score": -0.04219409282700422,
+          "correct": 81,
+          "unmatched": 91,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 81,
+            "missed": 156,
+            "wrong_direction": 2,
+            "duplicate": 0,
+            "early": 84,
+            "late_unmatched": 5,
+            "background_false": 12
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 2.67538644470868,
+          "early_within_100ms": 19,
+          "delay_ms": {
+            "n": 81,
+            "median": 150.0,
+            "p95": 360.0
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.39830611646175385,
+          "window_accuracy_mean_over_folds": 0.8793838311050122
+        },
+        "20261022": {
+          "score": -0.14767932489451477,
+          "correct": 78,
+          "unmatched": 113,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 78,
+            "missed": 159,
+            "wrong_direction": 17,
+            "duplicate": 0,
+            "early": 83,
+            "late_unmatched": 13,
+            "background_false": 24
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 5.35077288941736,
+          "early_within_100ms": 25,
+          "delay_ms": {
+            "n": 78,
+            "median": 95.0,
+            "p95": 391.4999999999999
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5170344486832619,
+          "window_accuracy_mean_over_folds": 0.8570809716621275
+        },
+        "20261023": {
+          "score": -0.33755274261603374,
+          "correct": 76,
+          "unmatched": 156,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 76,
+            "missed": 161,
+            "wrong_direction": 8,
+            "duplicate": 0,
+            "early": 135,
+            "late_unmatched": 13,
+            "background_false": 25
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 5.57372175980975,
+          "early_within_100ms": 48,
+          "delay_ms": {
+            "n": 76,
+            "median": 85.0,
+            "p95": 330.0
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.6063438206911087,
+          "window_accuracy_mean_over_folds": 0.8339973206967115
+        },
+        "20261024": {
+          "score": -0.16033755274261605,
+          "correct": 69,
+          "unmatched": 107,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 69,
+            "missed": 168,
+            "wrong_direction": 5,
+            "duplicate": 0,
+            "early": 96,
+            "late_unmatched": 6,
+            "background_false": 18
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 4.01307966706302,
+          "early_within_100ms": 24,
+          "delay_ms": {
+            "n": 69,
+            "median": 110.0,
+            "p95": 381.9999999999996
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5121676325798035,
+          "window_accuracy_mean_over_folds": 0.8651069224102532
+        },
+        "20261025": {
+          "score": -0.1308016877637131,
+          "correct": 78,
+          "unmatched": 109,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 78,
+            "missed": 159,
+            "wrong_direction": 3,
+            "duplicate": 0,
+            "early": 96,
+            "late_unmatched": 10,
+            "background_false": 21
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 4.681926278240191,
+          "early_within_100ms": 41,
+          "delay_ms": {
+            "n": 78,
+            "median": 90.0,
+            "p95": 334.4999999999998
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.49668820947408676,
+          "window_accuracy_mean_over_folds": 0.8649243608506445
+        }
+      }
+    },
+    "30": {
+      "mean_score": -0.1350210970464135,
+      "score_min": -0.3080168776371308,
+      "score_max": -0.03375527426160337,
+      "mean_correct": 73.8,
+      "mean_unmatched": 105.8,
+      "mean_background_false_per_min": 4.191438763376932,
+      "mean_val_loss": 0.49659035354852676,
+      "per_seed": {
+        "20261021": {
+          "score": -0.09282700421940929,
+          "correct": 80,
+          "unmatched": 102,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 80,
+            "missed": 157,
+            "wrong_direction": 5,
+            "duplicate": 2,
+            "early": 90,
+            "late_unmatched": 5,
+            "background_false": 13
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 2.8983353151010705,
+          "early_within_100ms": 18,
+          "delay_ms": {
+            "n": 80,
+            "median": 120.0,
+            "p95": 393.4999999999998
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.44603441655635834,
+          "window_accuracy_mean_over_folds": 0.8770511876991288
+        },
+        "20261022": {
+          "score": -0.03375527426160337,
+          "correct": 65,
+          "unmatched": 73,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 65,
+            "missed": 172,
+            "wrong_direction": 14,
+            "duplicate": 2,
+            "early": 49,
+            "late_unmatched": 8,
+            "background_false": 21
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 4.681926278240191,
+          "early_within_100ms": 16,
+          "delay_ms": {
+            "n": 65,
+            "median": 80.0,
+            "p95": 370.0
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.42065758258104324,
+          "window_accuracy_mean_over_folds": 0.8855767322014766
+        },
+        "20261023": {
+          "score": -0.3080168776371308,
+          "correct": 66,
+          "unmatched": 139,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 66,
+            "missed": 171,
+            "wrong_direction": 9,
+            "duplicate": 0,
+            "early": 123,
+            "late_unmatched": 7,
+            "background_false": 18
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 4.01307966706302,
+          "early_within_100ms": 39,
+          "delay_ms": {
+            "n": 66,
+            "median": 120.0,
+            "p95": 387.5
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5660559609532356,
+          "window_accuracy_mean_over_folds": 0.8488448421932177
+        },
+        "20261024": {
+          "score": -0.13924050632911392,
+          "correct": 75,
+          "unmatched": 108,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 75,
+            "missed": 162,
+            "wrong_direction": 8,
+            "duplicate": 1,
+            "early": 84,
+            "late_unmatched": 15,
+            "background_false": 23
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 5.12782401902497,
+          "early_within_100ms": 24,
+          "delay_ms": {
+            "n": 75,
+            "median": 110.0,
+            "p95": 310.0
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5726333111524582,
+          "window_accuracy_mean_over_folds": 0.8608349093265621
+        },
+        "20261025": {
+          "score": -0.10126582278481013,
+          "correct": 83,
+          "unmatched": 107,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 83,
+            "missed": 154,
+            "wrong_direction": 8,
+            "duplicate": 0,
+            "early": 90,
+            "late_unmatched": 9,
+            "background_false": 19
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 4.23602853745541,
+          "early_within_100ms": 31,
+          "delay_ms": {
+            "n": 83,
+            "median": 100.0,
+            "p95": 307.99999999999983
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.4775704964995384,
+          "window_accuracy_mean_over_folds": 0.8763899409800103
+        }
+      }
+    },
+    "40": {
+      "mean_score": -0.16540084388185655,
+      "score_min": -0.2489451476793249,
+      "score_max": -0.10548523206751055,
+      "mean_correct": 67.4,
+      "mean_unmatched": 106.6,
+      "mean_background_false_per_min": 4.503567181926279,
+      "mean_val_loss": 0.49472064077854155,
+      "per_seed": {
+        "20261021": {
+          "score": -0.10548523206751055,
+          "correct": 49,
+          "unmatched": 74,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 49,
+            "missed": 188,
+            "wrong_direction": 4,
+            "duplicate": 1,
+            "early": 63,
+            "late_unmatched": 6,
+            "background_false": 15
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 3.34423305588585,
+          "early_within_100ms": 14,
+          "delay_ms": {
+            "n": 49,
+            "median": 120.0,
+            "p95": 345.99999999999966
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.3703433498740196,
+          "window_accuracy_mean_over_folds": 0.9079930949102221
+        },
+        "20261022": {
+          "score": -0.15611814345991562,
+          "correct": 59,
+          "unmatched": 96,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 59,
+            "missed": 178,
+            "wrong_direction": 14,
+            "duplicate": 1,
+            "early": 62,
+            "late_unmatched": 19,
+            "background_false": 28
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 6.242568370986921,
+          "early_within_100ms": 15,
+          "delay_ms": {
+            "n": 59,
+            "median": 80.0,
+            "p95": 351.9999999999999
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5416801273822784,
+          "window_accuracy_mean_over_folds": 0.8767714432723243
+        },
+        "20261023": {
+          "score": -0.2489451476793249,
+          "correct": 72,
+          "unmatched": 131,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 72,
+            "missed": 165,
+            "wrong_direction": 6,
+            "duplicate": 0,
+            "early": 100,
+            "late_unmatched": 25,
+            "background_false": 19
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 4.23602853745541,
+          "early_within_100ms": 34,
+          "delay_ms": {
+            "n": 72,
+            "median": 120.0,
+            "p95": 384.5
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.4888872876763344,
+          "window_accuracy_mean_over_folds": 0.8699595200607293
+        },
+        "20261024": {
+          "score": -0.2109704641350211,
+          "correct": 72,
+          "unmatched": 122,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 72,
+            "missed": 165,
+            "wrong_direction": 12,
+            "duplicate": 2,
+            "early": 81,
+            "late_unmatched": 27,
+            "background_false": 17
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 3.7901307966706304,
+          "early_within_100ms": 22,
+          "delay_ms": {
+            "n": 72,
+            "median": 115.0,
+            "p95": 314.5
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.567359209060669,
+          "window_accuracy_mean_over_folds": 0.8721117195540773
+        },
+        "20261025": {
+          "score": -0.10548523206751055,
+          "correct": 85,
+          "unmatched": 110,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 85,
+            "missed": 152,
+            "wrong_direction": 9,
+            "duplicate": 3,
+            "early": 79,
+            "late_unmatched": 19,
+            "background_false": 22
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 4.904875148632581,
+          "early_within_100ms": 28,
+          "delay_ms": {
+            "n": 85,
+            "median": 80.0,
+            "p95": 290.0
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5053332298994064,
+          "window_accuracy_mean_over_folds": 0.8782796051057143
+        }
+      }
+    },
+    "60": {
+      "mean_score": -0.14261603375527426,
+      "score_min": -0.24050632911392406,
+      "score_max": -0.004219409282700422,
+      "mean_correct": 75.4,
+      "mean_unmatched": 109.2,
+      "mean_background_false_per_min": 4.503567181926279,
+      "mean_val_loss": 0.554213359951973,
+      "per_seed": {
+        "20261021": {
+          "score": -0.06329113924050633,
+          "correct": 54,
+          "unmatched": 69,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 54,
+            "missed": 183,
+            "wrong_direction": 2,
+            "duplicate": 3,
+            "early": 57,
+            "late_unmatched": 7,
+            "background_false": 17
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 3.7901307966706304,
+          "early_within_100ms": 18,
+          "delay_ms": {
+            "n": 54,
+            "median": 120.0,
+            "p95": 373.49999999999994
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.4233351871371269,
+          "window_accuracy_mean_over_folds": 0.9125932238822674
+        },
+        "20261022": {
+          "score": -0.23628691983122363,
+          "correct": 65,
+          "unmatched": 121,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 65,
+            "missed": 172,
+            "wrong_direction": 19,
+            "duplicate": 3,
+            "early": 68,
+            "late_unmatched": 31,
+            "background_false": 30
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 6.6884661117717,
+          "early_within_100ms": 18,
+          "delay_ms": {
+            "n": 65,
+            "median": 120.0,
+            "p95": 448.0
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.6012226119637489,
+          "window_accuracy_mean_over_folds": 0.8801201803787725
+        },
+        "20261023": {
+          "score": -0.24050632911392406,
+          "correct": 85,
+          "unmatched": 142,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 85,
+            "missed": 152,
+            "wrong_direction": 10,
+            "duplicate": 0,
+            "early": 106,
+            "late_unmatched": 26,
+            "background_false": 18
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 4.01307966706302,
+          "early_within_100ms": 33,
+          "delay_ms": {
+            "n": 85,
+            "median": 140.0,
+            "p95": 455.99999999999994
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5673828348517418,
+          "window_accuracy_mean_over_folds": 0.8678981663816988
+        },
+        "20261024": {
+          "score": -0.16877637130801687,
+          "correct": 78,
+          "unmatched": 118,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 78,
+            "missed": 159,
+            "wrong_direction": 18,
+            "duplicate": 1,
+            "early": 75,
+            "late_unmatched": 24,
+            "background_false": 19
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 4.23602853745541,
+          "early_within_100ms": 27,
+          "delay_ms": {
+            "n": 78,
+            "median": 110.0,
+            "p95": 312.99999999999983
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.6090538576245308,
+          "window_accuracy_mean_over_folds": 0.8761575148997625
+        },
+        "20261025": {
+          "score": -0.004219409282700422,
+          "correct": 95,
+          "unmatched": 96,
+          "direction_sources": 237,
+          "kinds": {
+            "correct": 95,
+            "missed": 142,
+            "wrong_direction": 6,
+            "duplicate": 0,
+            "early": 73,
+            "late_unmatched": 17,
+            "background_false": 17
+          },
+          "background_exposure_s": 269.12,
+          "background_false_per_min": 3.7901307966706304,
+          "early_within_100ms": 26,
+          "delay_ms": {
+            "n": 95,
+            "median": 110.0,
+            "p95": 383.0
+          },
+          "match_horizon_clipped_sources": [
+            "data/sessions/phone-20261025-160407/raw_left.16.csv"
+          ],
+          "val_loss_mean_over_folds": 0.5700723081827164,
+          "window_accuracy_mean_over_folds": 0.8863054070389182
+        }
+      }
+    }
+  },
+  "chosen_E": 1,
+  "tied_epochs": [
+    1
+  ],
+  "run_id": "NONE-BAL-01-S-P5",
+  "split": "S-P5",
+  "created_kst": "2026-10-25T19:20:41+09:00",
+  "protocol_sha256": "adf597aa223e18bad49047bee951f4a7ce14c37caaa351e0b614a38f946781c2",
+  "config_sha256": "9e9c51e711ccbb8f35f52920ec70468861132e63bfe87cd8b90eff408f1459a5",
+  "data_role": "development_diagnostic"
+}

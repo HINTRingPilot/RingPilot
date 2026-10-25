@@ -1,0 +1,427 @@
+{
+  "run_id": "NONE-BAL-01-C",
+  "runner_version": 3,
+  "split": "C",
+  "created_kst": "2026-10-25T19:19:19+09:00",
+  "protocol_path": "C:\\Users\\zoonc\\Desktop\\RingPilot\\docs\\experiments\\ble-v2\\none-balance-01\\protocol.json",
+  "protocol_sha256": "adf597aa223e18bad49047bee951f4a7ce14c37caaa351e0b614a38f946781c2",
+  "code_sha256": {
+    "ml/model.py": "2bc34c5a70acbd9bcf19d9627343ef6bd75ee9814d397bddfdfafebf329f7474",
+    "ml/v2.py": "49cd234ca9ae27692061b72768d76d9d4ad17d233b6897c992d34938e0ed2a70",
+    "ml/v2_cal.py": "0a701342880582ea6619987307422dee93c9665a8745b5bc1e69b48ec70ff3ad",
+    "ml/v2_diag.py": "b7522abe60ce5dc3ab9b7b51a95b45c8a2a2d67234627d4f34e36feafdf04c33",
+    "ml/v2_protected_manifest.py": "e4f93f98c326cff925436fb626d4cac82cdeb7396c7aece7bc9479c62cca4bb6",
+    "ml/v2_none_stratified.py": "fb1f6e185d5cc795e68093003f96cafe97a6fa8c6a5cd1466180aeb49ec99843",
+    "ml/v2_protocol.py": "2575e33b41984da82ca4430acdef34900f67f52311e73e754ff7a9f5c2e53b5c",
+    "ml/v2_none_cal.py": "814a9c6386582ced025c56d68518846fc42ff20060cfb89ac1419ae6f7be52dc",
+    "ml/v2_none_compare.py": "6f92e92803e87e87180f5e7dc7bb095429a03905315ed4a2beb738f55ce0ee06"
+  },
+  "records_sha256": "d2192aad02b42d5ba19a508bee6347ab01c6dd1a4817310753bf85d3911d4dfa",
+  "split_sha256": "bd03a084dcf990f2284390379dd316eb7374eaf4ca5fce281c8f1d06e8bde50c",
+  "seeds": [
+    20261021,
+    20261022,
+    20261023,
+    20261024,
+    20261025
+  ],
+  "epoch_candidates": [
+    1,
+    5,
+    10,
+    20,
+    30,
+    40,
+    60
+  ],
+  "n_folds": 5,
+  "folds": [
+    {
+      "fold": 0,
+      "selection_sha256": "26e117e1f8713c44c9a0135869df08fbf83d30f4fb361ab83a6592340d88771f",
+      "manifest_sha256": "15ab287cea973ae802fbf6852fe2e04bccdca8977aea787b27e91617b03c8d3c",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.8210048377530578,
+          -2.0382023376518292,
+          3.13101836325906,
+          2.2093225708501807,
+          -4.4532072874495725,
+          0.07780344129554696
+        ],
+        "std": [
+          5.933113596092841,
+          4.43758760567563,
+          5.851722582664687,
+          41.783256971707445,
+          70.03084491205108,
+          40.81019473683727
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        561,
+        132,
+        144,
+        141,
+        144
+      ],
+      "train_none_groups": {
+        "idle": 141,
+        "other": 140,
+        "post_completion": 140,
+        "in_progress": 140
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P1": 28,
+          "P2": 28,
+          "P3": 28,
+          "P4": 29,
+          "P5": 28
+        },
+        "other": {
+          "P1": 28,
+          "P2": 28,
+          "P3": 28,
+          "P4": 28,
+          "P5": 28
+        },
+        "post_completion": {
+          "P1": 28,
+          "P2": 28,
+          "P3": 28,
+          "P4": 28,
+          "P5": 28
+        },
+        "in_progress": {
+          "P1": 28,
+          "P2": 28,
+          "P3": 28,
+          "P4": 28,
+          "P5": 28
+        }
+      }
+    },
+    {
+      "fold": 1,
+      "selection_sha256": "fedcaa5e61ff8830a3c8d2999901b69a0e1db017c5984c8f693b81dfba22d331",
+      "manifest_sha256": "5814ff10860e0c32bea93783ce3bdf59531a4c0778080889125bcc3b21f6dd1e",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.910758574799196,
+          -1.9711850923694865,
+          3.0403083827308963,
+          2.1215973895581897,
+          -4.518938554217032,
+          -0.0681122489959826
+        ],
+        "std": [
+          5.96797998056352,
+          4.462063267937578,
+          5.836913137246967,
+          41.25327726784781,
+          71.5226476454744,
+          40.85821399827971
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        567,
+        135,
+        147,
+        141,
+        144
+      ],
+      "train_none_groups": {
+        "idle": 142,
+        "other": 142,
+        "in_progress": 142,
+        "post_completion": 141
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P1": 28,
+          "P2": 28,
+          "P3": 29,
+          "P4": 29,
+          "P5": 28
+        },
+        "other": {
+          "P1": 28,
+          "P2": 29,
+          "P3": 28,
+          "P4": 28,
+          "P5": 29
+        },
+        "in_progress": {
+          "P1": 28,
+          "P2": 29,
+          "P3": 28,
+          "P4": 28,
+          "P5": 29
+        },
+        "post_completion": {
+          "P1": 28,
+          "P2": 28,
+          "P3": 28,
+          "P4": 29,
+          "P5": 28
+        }
+      }
+    },
+    {
+      "fold": 2,
+      "selection_sha256": "269d2240c4f88efc678199d0354c7c4e1ae676fad4688688981ebd3c946f37da",
+      "manifest_sha256": "3091f268d826eace5c88f250609e900f22b17ccc9d8d7979b9f21d9bab8c1fbf",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -1.0774190613453962,
+          -2.005710321485954,
+          3.0859151768071977,
+          2.072828614457779,
+          -4.337170481927903,
+          -0.3801337349397618
+        ],
+        "std": [
+          5.893367455232341,
+          4.55541954808571,
+          5.765844597587847,
+          40.57983204399487,
+          69.81476563595797,
+          39.824698033508454
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        567,
+        135,
+        147,
+        141,
+        144
+      ],
+      "train_none_groups": {
+        "idle": 142,
+        "other": 142,
+        "in_progress": 142,
+        "post_completion": 141
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P1": 28,
+          "P2": 28,
+          "P3": 29,
+          "P4": 29,
+          "P5": 28
+        },
+        "other": {
+          "P1": 28,
+          "P2": 29,
+          "P3": 28,
+          "P4": 29,
+          "P5": 28
+        },
+        "in_progress": {
+          "P1": 28,
+          "P2": 29,
+          "P3": 28,
+          "P4": 28,
+          "P5": 29
+        },
+        "post_completion": {
+          "P1": 28,
+          "P2": 29,
+          "P3": 28,
+          "P4": 28,
+          "P5": 28
+        }
+      }
+    },
+    {
+      "fold": 3,
+      "selection_sha256": "44dc1d9d1a1f010cae23fd966cafc55441aa42ec92f3a2f4ee2bc144e071e229",
+      "manifest_sha256": "38da2d73ae66f7c5a7b9706bc3c4b90807076657f08158e516969fa7ac469e56",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.9033050564257176,
+          -1.9362711195783195,
+          3.0356335392570015,
+          2.1368237951806663,
+          -4.2327552208836465,
+          -0.12668734939759352
+        ],
+        "std": [
+          5.972841095317267,
+          4.32239483847298,
+          5.9507475916512185,
+          40.91200874546928,
+          70.09183921939565,
+          40.63244274935039
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        567,
+        135,
+        147,
+        141,
+        144
+      ],
+      "train_none_groups": {
+        "idle": 142,
+        "other": 142,
+        "post_completion": 141,
+        "in_progress": 142
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P1": 28,
+          "P2": 28,
+          "P3": 29,
+          "P4": 29,
+          "P5": 28
+        },
+        "other": {
+          "P1": 28,
+          "P2": 28,
+          "P3": 28,
+          "P4": 29,
+          "P5": 29
+        },
+        "post_completion": {
+          "P1": 28,
+          "P2": 29,
+          "P3": 28,
+          "P4": 28,
+          "P5": 28
+        },
+        "in_progress": {
+          "P1": 28,
+          "P2": 29,
+          "P3": 28,
+          "P4": 28,
+          "P5": 29
+        }
+      }
+    },
+    {
+      "fold": 4,
+      "selection_sha256": "951f24b5065974d80785b6906ca5f6f751db05fff8ebe0121a1b823019f04e70",
+      "manifest_sha256": "a4974ccb088b8367d9147279e53847a52f25a5aa40816c72e9a344ed073f6132",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.7233901025000365,
+          -1.9565318083000016,
+          3.249854714699997,
+          2.350268899999946,
+          -4.489329600000165,
+          -0.3421446000000055
+        ],
+        "std": [
+          5.912908827786023,
+          4.389476825642602,
+          5.908334881241352,
+          40.06440980736635,
+          71.58052925711382,
+          40.98975920759725
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        570,
+        135,
+        147,
+        144,
+        144
+      ],
+      "train_none_groups": {
+        "idle": 143,
+        "other": 142,
+        "post_completion": 142,
+        "in_progress": 143
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P1": 29,
+          "P2": 28,
+          "P3": 29,
+          "P4": 29,
+          "P5": 28
+        },
+        "other": {
+          "P1": 28,
+          "P2": 28,
+          "P3": 28,
+          "P4": 29,
+          "P5": 29
+        },
+        "post_completion": {
+          "P1": 29,
+          "P2": 29,
+          "P3": 28,
+          "P4": 28,
+          "P5": 28
+        },
+        "in_progress": {
+          "P1": 28,
+          "P2": 29,
+          "P3": 28,
+          "P4": 29,
+          "P5": 29
+        }
+      }
+    }
+  ],
+  "git_head": "f5dc8eee85e5607a55cb4892807b17015aecf270",
+  "git_status_short": [
+    "?? docs/experiments/ble-v2/none-balance-01/results/"
+  ],
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "versions": {
+    "tensorflow": "2.21.0",
+    "keras": "3.15.1",
+    "numpy": "2.5.4"
+  },
+  "data_role": "development_diagnostic",
+  "eval_in_model_inputs": false
+}

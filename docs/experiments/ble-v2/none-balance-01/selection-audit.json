@@ -1,0 +1,332 @@
+{
+  "created_kst": "2026-10-25T19:20:52+09:00",
+  "folds": [
+    {
+      "split": "C",
+      "fold": 0,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 0,
+        "post_completion": 0,
+        "in_progress": 0
+      }
+    },
+    {
+      "split": "C",
+      "fold": 1,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "C",
+      "fold": 2,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "C",
+      "fold": 3,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "post_completion": 1,
+        "in_progress": 1
+      }
+    },
+    {
+      "split": "C",
+      "fold": 4,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "post_completion": 1,
+        "in_progress": 1
+      }
+    },
+    {
+      "split": "S-P1",
+      "fold": 0,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "S-P1",
+      "fold": 1,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 0,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "S-P1",
+      "fold": 2,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "S-P1",
+      "fold": 3,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 0,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "S-P2",
+      "fold": 0,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "S-P2",
+      "fold": 1,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 0
+      }
+    },
+    {
+      "split": "S-P2",
+      "fold": 2,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 0,
+        "other": 0,
+        "in_progress": 0,
+        "post_completion": 0
+      }
+    },
+    {
+      "split": "S-P2",
+      "fold": 3,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 0
+      }
+    },
+    {
+      "split": "S-P3",
+      "fold": 0,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 0,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "S-P3",
+      "fold": 1,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 0
+      }
+    },
+    {
+      "split": "S-P3",
+      "fold": 2,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 0
+      }
+    },
+    {
+      "split": "S-P3",
+      "fold": 3,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "S-P4",
+      "fold": 0,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "S-P4",
+      "fold": 1,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 0,
+        "other": 0,
+        "in_progress": 0,
+        "post_completion": 0
+      }
+    },
+    {
+      "split": "S-P4",
+      "fold": 2,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 0
+      }
+    },
+    {
+      "split": "S-P4",
+      "fold": 3,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 0
+      }
+    },
+    {
+      "split": "S-P5",
+      "fold": 0,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 0,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "S-P5",
+      "fold": 1,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 0
+      }
+    },
+    {
+      "split": "S-P5",
+      "fold": 2,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 1
+      }
+    },
+    {
+      "split": "S-P5",
+      "fold": 3,
+      "counts_equal": true,
+      "no_eval_or_validation_in_training": true,
+      "no_duplicate_windows": true,
+      "session_max_minus_min": {
+        "idle": 1,
+        "other": 1,
+        "in_progress": 1,
+        "post_completion": 0
+      }
+    }
+  ],
+  "folds_checked": 25,
+  "note": "학습 결과를 보기 전 별도 JSON 재집계로 확인. 시간 구간 비율은 고정하지 않았고 종류 안 배분만 변경"
+}

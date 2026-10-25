@@ -1,0 +1,320 @@
+{
+  "run_id": "NONE-BAL-01-S-P1",
+  "runner_version": 3,
+  "split": "S-P1",
+  "created_kst": "2026-10-25T19:19:23+09:00",
+  "protocol_path": "C:\\Users\\zoonc\\Desktop\\RingPilot\\docs\\experiments\\ble-v2\\none-balance-01\\protocol.json",
+  "protocol_sha256": "adf597aa223e18bad49047bee951f4a7ce14c37caaa351e0b614a38f946781c2",
+  "code_sha256": {
+    "ml/model.py": "2bc34c5a70acbd9bcf19d9627343ef6bd75ee9814d397bddfdfafebf329f7474",
+    "ml/v2.py": "49cd234ca9ae27692061b72768d76d9d4ad17d233b6897c992d34938e0ed2a70",
+    "ml/v2_cal.py": "0a701342880582ea6619987307422dee93c9665a8745b5bc1e69b48ec70ff3ad",
+    "ml/v2_diag.py": "b7522abe60ce5dc3ab9b7b51a95b45c8a2a2d67234627d4f34e36feafdf04c33",
+    "ml/v2_protected_manifest.py": "e4f93f98c326cff925436fb626d4cac82cdeb7396c7aece7bc9479c62cca4bb6",
+    "ml/v2_none_stratified.py": "fb1f6e185d5cc795e68093003f96cafe97a6fa8c6a5cd1466180aeb49ec99843",
+    "ml/v2_protocol.py": "2575e33b41984da82ca4430acdef34900f67f52311e73e754ff7a9f5c2e53b5c",
+    "ml/v2_none_cal.py": "814a9c6386582ced025c56d68518846fc42ff20060cfb89ac1419ae6f7be52dc",
+    "ml/v2_none_compare.py": "6f92e92803e87e87180f5e7dc7bb095429a03905315ed4a2beb738f55ce0ee06"
+  },
+  "records_sha256": "d2192aad02b42d5ba19a508bee6347ab01c6dd1a4817310753bf85d3911d4dfa",
+  "split_sha256": "09b2d0ca9f06537502083b04984d911c7c92a8d34baf23480d23fa351a98d101",
+  "seeds": [
+    20261021,
+    20261022,
+    20261023,
+    20261024,
+    20261025
+  ],
+  "epoch_candidates": [
+    1,
+    5,
+    10,
+    20,
+    30,
+    40,
+    60
+  ],
+  "n_folds": 4,
+  "folds": [
+    {
+      "fold": 0,
+      "selection_sha256": "d5b415560d1b7b1e313553729ccf0ce7d892aa390c48218134136b90d072f2b3",
+      "manifest_sha256": "60b1ce48ea5d76a0bc5d90f424b16efe2221239e35530c31992d4da98fb14d8f",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -4.300585400315216,
+          -2.0762521993697614,
+          -0.18182560871846817,
+          2.0330213235294035,
+          -4.429523529411899,
+          -0.1728588235294129
+        ],
+        "std": [
+          5.274359278360546,
+          5.272750399295854,
+          4.783349398383896,
+          40.87925286110083,
+          73.78201609117328,
+          43.98242653810819
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        534,
+        129,
+        138,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 134,
+        "other": 133,
+        "in_progress": 134,
+        "post_completion": 133
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P3": 44,
+          "P4": 45,
+          "P5": 45
+        },
+        "other": {
+          "P3": 44,
+          "P4": 45,
+          "P5": 44
+        },
+        "in_progress": {
+          "P3": 45,
+          "P4": 45,
+          "P5": 44
+        },
+        "post_completion": {
+          "P3": 44,
+          "P4": 44,
+          "P5": 45
+        }
+      }
+    },
+    {
+      "fold": 1,
+      "selection_sha256": "e9d3d3609ae4e2e82b730b75c733abb14bfca50104fb474522b195b766932ee8",
+      "manifest_sha256": "5f21e2b81c39f5514d858e3334d6622a5e83e51a6cc202489d85b87b49bc7f1b",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.019033285983274733,
+          -2.970512899372395,
+          1.6493900960250842,
+          2.366872803347266,
+          -4.409503556485484,
+          -0.25734592050209554
+        ],
+        "std": [
+          5.351850599409995,
+          4.618491793976003,
+          6.340653763119304,
+          38.99699020288394,
+          70.07317681345882,
+          41.64074117751439
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        537,
+        129,
+        138,
+        135,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 135,
+        "other": 134,
+        "in_progress": 134,
+        "post_completion": 134
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P2": 45,
+          "P4": 45,
+          "P5": 45
+        },
+        "other": {
+          "P2": 45,
+          "P4": 45,
+          "P5": 44
+        },
+        "in_progress": {
+          "P2": 45,
+          "P4": 45,
+          "P5": 44
+        },
+        "post_completion": {
+          "P2": 45,
+          "P4": 44,
+          "P5": 45
+        }
+      }
+    },
+    {
+      "fold": 2,
+      "selection_sha256": "6ec7105a2b9f80dd9779ce1ea4115dc83e8c8e73a39252b7b69f6140fff0ff4c",
+      "manifest_sha256": "9f19010886a64e30ec29ad43ea090b4fce36a6dc46a6432756de270c48aa8b2a",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.6659752957983888,
+          -2.2745905247899185,
+          4.2368908215335725,
+          1.9132588235294115,
+          -4.289426470588358,
+          -0.21237058823529736
+        ],
+        "std": [
+          6.086549668260049,
+          5.210085533300712,
+          4.051929941449926,
+          40.58142708653982,
+          66.13958531612691,
+          39.097369895531926
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        534,
+        132,
+        135,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 134,
+        "other": 133,
+        "in_progress": 134,
+        "post_completion": 133
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P2": 44,
+          "P3": 45,
+          "P5": 45
+        },
+        "other": {
+          "P2": 44,
+          "P3": 45,
+          "P5": 44
+        },
+        "in_progress": {
+          "P2": 45,
+          "P3": 45,
+          "P5": 44
+        },
+        "post_completion": {
+          "P2": 44,
+          "P3": 44,
+          "P5": 45
+        }
+      }
+    },
+    {
+      "fold": 3,
+      "selection_sha256": "d1cfc61e62ad4889c01024c969e78e3de8fa38669dc7608b2c4c1b17952822bf",
+      "manifest_sha256": "0412eb934ca71da70af0bef60f2175bbe3085be117b48d717b8b7dfb352a9c4b",
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -3.6027817440377192,
+          0.5605706934100575,
+          1.772767761087848,
+          1.8197093096234023,
+          -4.2447509414226845,
+          -0.1478039748954012
+        ],
+        "std": [
+          6.1210131808622785,
+          2.743109137288351,
+          6.439193336097364,
+          38.60474941305813,
+          69.98539124498923,
+          40.947714760155506
+        ],
+        "ddof": 0
+      },
+      "train_windows_selected": [
+        537,
+        132,
+        138,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 135,
+        "other": 134,
+        "in_progress": 134,
+        "post_completion": 134
+      },
+      "kind_session_counts": {
+        "idle": {
+          "P2": 45,
+          "P3": 45,
+          "P4": 45
+        },
+        "other": {
+          "P2": 45,
+          "P3": 45,
+          "P4": 44
+        },
+        "in_progress": {
+          "P2": 45,
+          "P3": 45,
+          "P4": 44
+        },
+        "post_completion": {
+          "P2": 45,
+          "P3": 44,
+          "P4": 45
+        }
+      }
+    }
+  ],
+  "git_head": "f5dc8eee85e5607a55cb4892807b17015aecf270",
+  "git_status_short": [
+    "?? docs/experiments/ble-v2/none-balance-01/results/"
+  ],
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "versions": {
+    "tensorflow": "2.21.0",
+    "keras": "3.15.1",
+    "numpy": "2.5.4"
+  },
+  "data_role": "development_diagnostic",
+  "eval_in_model_inputs": false
+}
