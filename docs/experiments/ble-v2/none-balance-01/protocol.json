@@ -1,0 +1,199 @@
+{
+  "experiment": "BLE-v2-NONE-BAL-01",
+  "created_before_training_kst": "2026-10-25T19:18:53+09:00",
+  "spec_path": "docs/experiments/ble-v2/none-balance-01/spec.json",
+  "spec_sha256": "4499136f3e6d2d5df1d336de2effe63beb227f193a06a80f098b85023daa9e76",
+  "spec": {
+    "experiment": "BLE-v2-NONE-BAL-01",
+    "strategy": "session_clip_balanced_v1",
+    "data_role": "development_diagnostic",
+    "single_factor": "NONE 종류 안의 경로순 배분을 세션·클립 층화 배분으로만 변경",
+    "fixed_condition_policy": "inherit_baseline_except_none_allocation",
+    "none_seed": 20261021,
+    "within_clip_window_priority": "기존 선택기의 shuffle/pop 우선순위 유지; 세션·클립에 줄 개수만 변경",
+    "execution_order": [
+      "S-P5",
+      "C",
+      "S-P1",
+      "S-P2",
+      "S-P3",
+      "S-P4"
+    ],
+    "run_prefix": "NONE-BAL-01",
+    "code_files": [
+      "ml/model.py",
+      "ml/v2.py",
+      "ml/v2_cal.py",
+      "ml/v2_diag.py",
+      "ml/v2_protected_manifest.py",
+      "ml/v2_none_stratified.py",
+      "ml/v2_protocol.py",
+      "ml/v2_none_cal.py",
+      "ml/v2_none_compare.py"
+    ],
+    "comparison": {
+      "primary": "각 전략에 같은 E 선택 원칙 적용 후 같은 seed끼리 비교",
+      "supporting": "모든 공통 E에서 같은 seed끼리 비교; 세션별 기술 보고",
+      "metrics": [
+        "score",
+        "correct_rate",
+        "early_clip_rate",
+        "unmatched_per_source",
+        "no_emit_rate",
+        "background_false_per_min"
+      ],
+      "positive_direction": {
+        "score": "higher",
+        "correct_rate": "higher",
+        "early_clip_rate": "lower",
+        "unmatched_per_source": "lower"
+      },
+      "label_improvement": "평균 score 상승, correct_rate 비감소, early_clip_rate·unmatched_per_source 비증가이면 개발용 개선 관찰",
+      "label_worsening": "평균 score 하락, correct_rate 비증가, early_clip_rate·unmatched_per_source 비감소이면 개발용 악화 관찰",
+      "otherwise": "관측값 동일 또는 지표 간 교환관계로 기술",
+      "seed_reporting": "상승·하락·동일 개수와 차이 평균·범위; 통계적 유의성·동등성 판정 없음",
+      "adoption": "이 결과만으로 기본 선택기를 변경하거나 독립 평가 성능을 주장하지 않음"
+    },
+    "limits": [
+      "원본 336개는 다른 분할 보정·진단에서 관찰된 개발 자료",
+      "선택 방식이 조기 발행을 줄인다는 인과 근거는 아직 없음",
+      "완료 시각·양성 폭·NONE 총량과 종류별 수·모델·후처리·선택 점수는 유지",
+      "영상·사람 주석·최종 평가·보드 추론은 이번 실행 범위 밖"
+    ]
+  },
+  "records_sha256": "d2192aad02b42d5ba19a508bee6347ab01c6dd1a4817310753bf85d3911d4dfa",
+  "split_sha256": {
+    "C": "bd03a084dcf990f2284390379dd316eb7374eaf4ca5fce281c8f1d06e8bde50c",
+    "S-P1": "09b2d0ca9f06537502083b04984d911c7c92a8d34baf23480d23fa351a98d101",
+    "S-P2": "78d13f694bab7a950bea30f46d47ab771ae8e3742d86c20385e88d9a08920b04",
+    "S-P3": "14f519d829b735f8d5c3c19daf42783e33c75cbc48797adc2ac6132b611528d5",
+    "S-P4": "2dcade87146f4d11e524c2eb4197141851095f4581780fcef337124c67e9d3b3",
+    "S-P5": "83874d9ef555b8049fd7018ece8a3cb653c19f57c7dd2191cae082f82da046a1"
+  },
+  "code_sha256": {
+    "ml/model.py": "2bc34c5a70acbd9bcf19d9627343ef6bd75ee9814d397bddfdfafebf329f7474",
+    "ml/v2.py": "49cd234ca9ae27692061b72768d76d9d4ad17d233b6897c992d34938e0ed2a70",
+    "ml/v2_cal.py": "0a701342880582ea6619987307422dee93c9665a8745b5bc1e69b48ec70ff3ad",
+    "ml/v2_diag.py": "b7522abe60ce5dc3ab9b7b51a95b45c8a2a2d67234627d4f34e36feafdf04c33",
+    "ml/v2_protected_manifest.py": "e4f93f98c326cff925436fb626d4cac82cdeb7396c7aece7bc9479c62cca4bb6",
+    "ml/v2_none_stratified.py": "fb1f6e185d5cc795e68093003f96cafe97a6fa8c6a5cd1466180aeb49ec99843",
+    "ml/v2_protocol.py": "2575e33b41984da82ca4430acdef34900f67f52311e73e754ff7a9f5c2e53b5c",
+    "ml/v2_none_cal.py": "814a9c6386582ced025c56d68518846fc42ff20060cfb89ac1419ae6f7be52dc",
+    "ml/v2_none_compare.py": "6f92e92803e87e87180f5e7dc7bb095429a03905315ed4a2beb738f55ce0ee06"
+  },
+  "baseline_input_sha256": {
+    "docs/experiments/ble-v2/results/protocol.json": "d024381ea6ef8ddfbc102859a7bcca5333199f8934b6122e9afc14663e77d889",
+    "docs/experiments/ble-v2/diagnostics/completion-review-01/protected-manifest.json": "5999d2594405795851db653e8f214321323c660ef3529a3fdc4ecbc7840d1ad8",
+    "docs/experiments/ble-v2/results/V2-S-P5-cal/config.json": "8760d41ee3cc8425d09163091d35e0433f2351d235095f78d41264965020aac3",
+    "docs/experiments/ble-v2/results/V2-S-P5-cal/summary.json": "95df76d5de85b9fe5e05caa3d4aa545775b48bd2f335d214542592c745cbed0d",
+    "docs/experiments/ble-v2/results/V2-S-P5-cal/seed-20261021.json": "c304812f48da60772a54f65ddd4adcf7a46b36fad70b6159aa42cdc4d90d496b",
+    "docs/experiments/ble-v2/results/V2-S-P5-cal/seed-20261022.json": "dd9a21623308132a73593740488204849135315460f8f6a83f35680761770514",
+    "docs/experiments/ble-v2/results/V2-S-P5-cal/seed-20261023.json": "c62b0ed7ba82d859d89343fbddb21c2ac07b07ca6c2ad2a86065bd3be95f307a",
+    "docs/experiments/ble-v2/results/V2-S-P5-cal/seed-20261024.json": "601b56853175cbcce81e4d195f250928a185c8c08d1c7f60a1d14665b0033632",
+    "docs/experiments/ble-v2/results/V2-S-P5-cal/seed-20261025.json": "969a634fc83a83414e98ad658b4b83a3dc6faa13573a634bc3cc2520ae44dc4d",
+    "docs/experiments/ble-v2/results/V2-C-cal/config.json": "c24d7e4c7793bd6c5f754cbde358d11f53fa4860068bb4898c777907ffa6da77",
+    "docs/experiments/ble-v2/results/V2-C-cal/summary.json": "ad54d7084d3455b8e982fcd51a8e0c757459ecfa881f740cd01c02f69f64c73b",
+    "docs/experiments/ble-v2/results/V2-C-cal/seed-20261021.json": "ce463e2d1792e0c5e16d9546eb4d96773e18f19dd47b65de1a51167132eb3afa",
+    "docs/experiments/ble-v2/results/V2-C-cal/seed-20261022.json": "d8d13781d9ef3a0098951f256e45a402bd38103ce681790488dd57383de92473",
+    "docs/experiments/ble-v2/results/V2-C-cal/seed-20261023.json": "ac01ac54cef44ce90e96ef535ae627487bebc8b799c440e9549fa5af8bc5cfbf",
+    "docs/experiments/ble-v2/results/V2-C-cal/seed-20261024.json": "6e4f1d560ea14ff2b4ca73efd1b2eb92a811c6c284e715b228a56f12876f6fc0",
+    "docs/experiments/ble-v2/results/V2-C-cal/seed-20261025.json": "ec10418b9cc77423a0fc4033c6d403337eb2def5b0083bf798418f85a07a0d53",
+    "docs/experiments/ble-v2/results/V2-S-P1-cal/config.json": "c6e749a8d16c94cf39feafb3731fba7ad7d3bd0df7c817525acbd5f0c53eef50",
+    "docs/experiments/ble-v2/results/V2-S-P1-cal/summary.json": "8bee004ba1dcd444c3d346d0fed1bb1777081611bca069a38eed5b8c9c8afe9c",
+    "docs/experiments/ble-v2/results/V2-S-P1-cal/seed-20261021.json": "9ff77840176f7359e9dbaf7c41e4c98bfef98101e1741fa95e5a17304725c604",
+    "docs/experiments/ble-v2/results/V2-S-P1-cal/seed-20261022.json": "152684b24dbb33223e4ce97de00aadbd31ec610f1c85ddbc19ecbc55cdfd3ff9",
+    "docs/experiments/ble-v2/results/V2-S-P1-cal/seed-20261023.json": "3085e1587aa8d99e97b1f4c7486fe0dbc903f8b7275f61d7d58e74fc1b70ab16",
+    "docs/experiments/ble-v2/results/V2-S-P1-cal/seed-20261024.json": "80c5c66ef25819774c596e8eb873a5cd1e2a295f624908c5b3444f1ec7e98b5e",
+    "docs/experiments/ble-v2/results/V2-S-P1-cal/seed-20261025.json": "40cdc03fceddfbba24227df24212719a2627713f375b7d5d820904781404a514",
+    "docs/experiments/ble-v2/results/V2-S-P2-cal/config.json": "cc887f7eb4c36d018ab64d49781f7cb6243914741ea0b253396c470c050e9305",
+    "docs/experiments/ble-v2/results/V2-S-P2-cal/summary.json": "3d143a773089148f44261a845398d80da18567dc514319c2c66ad2321432fa3b",
+    "docs/experiments/ble-v2/results/V2-S-P2-cal/seed-20261021.json": "a330ee1ab8ec6e15fd7035ffe9cffae0984a00ea5f9a3b156dbf70241374c957",
+    "docs/experiments/ble-v2/results/V2-S-P2-cal/seed-20261022.json": "bd1142ed711d092da54fdf25d789e615217e8f0122dd139a0a7046b70fb13af6",
+    "docs/experiments/ble-v2/results/V2-S-P2-cal/seed-20261023.json": "97b87ef984b62179d4f1e2b5f1c99a607b7836de83550f16dbe4d8746e14699d",
+    "docs/experiments/ble-v2/results/V2-S-P2-cal/seed-20261024.json": "2447c0236f9a074aa6e0f1eb322267c25f1d4fde1f60ca4b34c793092a12f29d",
+    "docs/experiments/ble-v2/results/V2-S-P2-cal/seed-20261025.json": "5d82d371e76042ab342767e0c260c49e997c8c44c6a09f1d515c614f8cf9975f",
+    "docs/experiments/ble-v2/results/V2-S-P3-cal/config.json": "e553b29a518206ef3aae3a2ac7f9db8dca534ef5aeff1b7ae0c5dfc434573b6e",
+    "docs/experiments/ble-v2/results/V2-S-P3-cal/summary.json": "df148465b43ff22114cb2e0acc4d880b2324d5bee89115ca9d13345fb898dc2c",
+    "docs/experiments/ble-v2/results/V2-S-P3-cal/seed-20261021.json": "0b920e80c4f67c898307aa721dcced61056e087a43dd26279c3cda4409389bc5",
+    "docs/experiments/ble-v2/results/V2-S-P3-cal/seed-20261022.json": "7d3d48d327a0110e9bcd2b5c86ba5257a63c899fbf30053f5c0657ab9c1203ec",
+    "docs/experiments/ble-v2/results/V2-S-P3-cal/seed-20261023.json": "447ba16639a9545cf1d7a23fc065cd34e125c2cba3e750917b8aa121d3ecc803",
+    "docs/experiments/ble-v2/results/V2-S-P3-cal/seed-20261024.json": "f760bbb1534065951511fe0da44cdad36839328461d0682600cbabc965ad62ce",
+    "docs/experiments/ble-v2/results/V2-S-P3-cal/seed-20261025.json": "74ddb14ebf123db5391b2284734eda6cd249f82b8d2041788bd6e60c21b58ae4",
+    "docs/experiments/ble-v2/results/V2-S-P4-cal/config.json": "f8614f9bc53962e9d1c0623984e08bf380424466c6d604b0da6a13ff278bc5ed",
+    "docs/experiments/ble-v2/results/V2-S-P4-cal/summary.json": "20ca88381ae8dac6df110b13f919500e1bc1871537081c3305b5cb90e4009be1",
+    "docs/experiments/ble-v2/results/V2-S-P4-cal/seed-20261021.json": "6031c425c3f1cee92525d80de347278d840f75461843d694af316367edc98392",
+    "docs/experiments/ble-v2/results/V2-S-P4-cal/seed-20261022.json": "9671b550b2aade677909e84aa6be1ffa25432e2f42dcb754967545b67d572fb7",
+    "docs/experiments/ble-v2/results/V2-S-P4-cal/seed-20261023.json": "451771ecfaa007ef5a0eea5915ef77805710fafd331e48797790dd4a347140d5",
+    "docs/experiments/ble-v2/results/V2-S-P4-cal/seed-20261024.json": "9060529a783186773d8760ff9734f5bf46b728e862d8102849b8944d0ad24a99",
+    "docs/experiments/ble-v2/results/V2-S-P4-cal/seed-20261025.json": "3d9d254ada46ee29b5a6dcd6166e87a052dddac8b0479f207d49ec09b99ae21b"
+  },
+  "fixed_conditions": {
+    "input": "100 Hz 6축, 160행×6, 5행(50 ms)마다 판정, t=창의 마지막 실제 샘플 시각, 첫 판정 1590 ms",
+    "label": "자연 복귀 완료 e에 대해 e <= t < e+150 ms만 방향, 나머지 NONE(복귀 중 포함). idle/other 클립 전체 NONE",
+    "model": "ml/model.py build_model(160) 기본값: Conv16k5-Pool2-Drop.2-Conv32k5-Pool2-Flatten-Drop.3-Dense5, 9,493 파라미터",
+    "training": {
+      "optimizer": "Adam lr=0.001",
+      "loss": "sparse_categorical_crossentropy",
+      "batch_size": 16,
+      "augmentation": null,
+      "class_weight": null,
+      "early_stopping": null,
+      "threads": "intra=1 inter=1, enable_op_determinism, oneDNN off"
+    },
+    "none_selection": "양성·총 NONE·종류별 개수는 원래 선택기 그대로. 각 종류 안에서 고정 seed로 세션→클립→창 배분만 변경",
+    "postprocess": {
+      "score_threshold": 0.8,
+      "margin": 0.2,
+      "consecutive_direction": 2,
+      "consecutive_none_rearm": 2
+    }
+  },
+  "data_processing_order": [
+    "1. 원본 클립을 먼저 나눈다(평가용/학습용, 학습용 안의 fold). 같은 원본의 창은 한쪽에만 둔다",
+    "2. 원본마다 160행 창을 50 ms 간격으로 만든다. 파일 경계를 넘어 붙이지 않는다",
+    "3. 정규화 평균·표준편차는 학습 부분 원본의 행으로만 계산한다. 교차검증은 fold마다 다시 계산한다",
+    "4. NONE 추출은 학습 부분에만 한다. 검증·평가는 모든 판정 시각을 그대로 replay한다",
+    "5. 검증·평가 데이터에서 계산한 값은 학습 설정에 쓰지 않는다"
+  ],
+  "events": {
+    "decision_times": "160행이 찬 1590 ms부터 50 ms마다. 그 전 구간은 판정하지 않음",
+    "emit_time": "발행 조건을 처음 만족한 판정 시각(두 번째 연속 창의 마지막 샘플 시각)",
+    "initial_state": "원본마다 잠금 해제·후보 없음으로 시작. 원본 사이에 상태를 넘기지 않음",
+    "completion_ms_use": "정답 라벨과 사후 채점에만 사용. 발행·재무장에는 사용하지 않음",
+    "classification_order": [
+      "배경 원본 → background_false",
+      "t < e → early",
+      "t > e+500 → late_unmatched",
+      "다른 방향 → wrong_direction",
+      "이미 correct 있음 → duplicate",
+      "그 밖 → correct",
+      "correct 없음 → missed 1"
+    ],
+    "match_horizon_clipped": "e+500 > 3990 (e > 3490)인 원본은 그대로 채점하되 목록을 따로 표시"
+  },
+  "epoch_selection": {
+    "candidates": [
+      1,
+      5,
+      10,
+      20,
+      30,
+      40,
+      60
+    ],
+    "seeds": [
+      20261021,
+      20261022,
+      20261023,
+      20261024,
+      20261025
+    ],
+    "training": "(seed, fold)마다 max(E)=60 epoch까지 한 번 학습하고 후보 epoch가 끝난 시점마다 검증 fold를 replay",
+    "score": "seed마다 모든 fold 예측을 합쳐 (정검출 수 − 방향 원본의 미매칭 발행 수) ÷ 검증 방향 원본 수. 미매칭=wrong_direction+duplicate+early+late_unmatched. 배경 오발행은 점수에 넣지 않고 따로 보고",
+    "rule": "5 seed 점수 평균이 가장 큰 E, 같으면 작은 E. 방식(그리고 S 회전)마다 같은 원칙으로 따로 선택"
+  },
+  "code_check_note": "protocol 이전 단위 검사·짧은 코드 점검 학습은 가능. 새 보정 결과를 보고 규칙을 바꾸지 않는다",
+  "hash_note": "JSON/CSV/Python은 CRLF→LF 후 SHA-256. 이전 NPZ 등 바이너리는 보호 manifest의 raw SHA-256",
+  "git_head": "54115ef9bcdf53de26bd0692d9f190a952e48972",
+  "git_status_short": []
+}
