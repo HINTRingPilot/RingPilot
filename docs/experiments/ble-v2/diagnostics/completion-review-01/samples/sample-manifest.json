@@ -1,0 +1,765 @@
+{
+  "version": "completion-review-01/sample-manifest-v1",
+  "created_kst": "2026-10-25T18:34:46+09:00",
+  "purpose": "완료 시각 e 근처의 파형·점수·발행을 눈으로 확인할 표본 목록(그림을 그리기 전에 저장)",
+  "notice": "이 표본의 비율은 전체 성능이나 대표성의 추정치가 아니다. 이상 사례 점검과 파형 확인을 위한 고정 목록이다(기본 20개는 세션×방향 추첨, 나머지는 이상 사례 점검용).",
+  "notice_e": "완료 시각 e와 main_motion_end_ms는 같은 자동 센서 도구에서 나왔고 실제 자연 복귀 완료의 독립 정답이 아니다. 발행 시점과 e의 관계(조기/구간/늦음)는 어떤 발행도 실제 복귀 완료를 증명하지 않는다.",
+  "rules": {
+    "universe": "records.json의 방향 원본 296개(direction != NONE)",
+    "base": "세션 P1..P5 × 방향 UP,DOWN,LEFT,RIGHT(이 순서)마다 1개; 그룹은 source_path 문자열 오름차순 정렬",
+    "large_gap": "e − main_motion_end_ms가 큰 상위 5개(동점은 source_path 오름차순)",
+    "clipped_horizon": [
+      "data/sessions/phone-20261025-160407/raw_left.16.csv"
+    ],
+    "dedup": "기본 → large_gap → clipped_horizon 순으로 추가하고 중복은 한 번만 두며 tags에 이유를 모두 적는다",
+    "diagnostic_condition": "E=60, seeds=[20261021, 20261022, 20261023, 20261024, 20261025]; P1~P4 원본은 V2-S-P5-cal, P5 원본은 V2-S-P1-cal의 해당 세션 검증 fold"
+  },
+  "rng": {
+    "generator": "numpy.random.default_rng",
+    "bit_generator": "PCG64",
+    "seed": 20261025,
+    "call": "rng.integers(len(group)), 그룹 순서(P1UP,P1DOWN,P1LEFT,P1RIGHT,P2UP,...)대로 연속 20회",
+    "numpy": "2.5.4"
+  },
+  "groups": [
+    {
+      "session": "P1",
+      "direction": "UP",
+      "n_clips": 13,
+      "drawn_index": 2,
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.12.csv"
+    },
+    {
+      "session": "P1",
+      "direction": "DOWN",
+      "n_clips": 15,
+      "drawn_index": 2,
+      "source_path": "data/sessions/phone-20261025-150714/raw_down.11.csv"
+    },
+    {
+      "session": "P1",
+      "direction": "LEFT",
+      "n_clips": 15,
+      "drawn_index": 9,
+      "source_path": "data/sessions/phone-20261025-150714/raw_left.4.csv"
+    },
+    {
+      "session": "P1",
+      "direction": "RIGHT",
+      "n_clips": 15,
+      "drawn_index": 2,
+      "source_path": "data/sessions/phone-20261025-150714/raw_right.11.csv"
+    },
+    {
+      "session": "P2",
+      "direction": "UP",
+      "n_clips": 15,
+      "drawn_index": 9,
+      "source_path": "data/sessions/phone-20261025-154609/raw_up.4.csv"
+    },
+    {
+      "session": "P2",
+      "direction": "DOWN",
+      "n_clips": 15,
+      "drawn_index": 4,
+      "source_path": "data/sessions/phone-20261025-154609/raw_down.13.csv"
+    },
+    {
+      "session": "P2",
+      "direction": "LEFT",
+      "n_clips": 15,
+      "drawn_index": 9,
+      "source_path": "data/sessions/phone-20261025-154609/raw_left.4.csv"
+    },
+    {
+      "session": "P2",
+      "direction": "RIGHT",
+      "n_clips": 15,
+      "drawn_index": 10,
+      "source_path": "data/sessions/phone-20261025-154609/raw_right.5.csv"
+    },
+    {
+      "session": "P3",
+      "direction": "UP",
+      "n_clips": 15,
+      "drawn_index": 4,
+      "source_path": "data/sessions/phone-20261025-155510/raw_up.13.csv"
+    },
+    {
+      "session": "P3",
+      "direction": "DOWN",
+      "n_clips": 15,
+      "drawn_index": 1,
+      "source_path": "data/sessions/phone-20261025-155510/raw_down.10.csv"
+    },
+    {
+      "session": "P3",
+      "direction": "LEFT",
+      "n_clips": 14,
+      "drawn_index": 13,
+      "source_path": "data/sessions/phone-20261025-155510/raw_left.9.csv"
+    },
+    {
+      "session": "P3",
+      "direction": "RIGHT",
+      "n_clips": 15,
+      "drawn_index": 8,
+      "source_path": "data/sessions/phone-20261025-155510/raw_right.3.csv"
+    },
+    {
+      "session": "P4",
+      "direction": "UP",
+      "n_clips": 14,
+      "drawn_index": 0,
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.1.csv"
+    },
+    {
+      "session": "P4",
+      "direction": "DOWN",
+      "n_clips": 16,
+      "drawn_index": 5,
+      "source_path": "data/sessions/phone-20261025-160407/raw_down.14.csv"
+    },
+    {
+      "session": "P4",
+      "direction": "LEFT",
+      "n_clips": 15,
+      "drawn_index": 4,
+      "source_path": "data/sessions/phone-20261025-160407/raw_left.14.csv"
+    },
+    {
+      "session": "P4",
+      "direction": "RIGHT",
+      "n_clips": 15,
+      "drawn_index": 8,
+      "source_path": "data/sessions/phone-20261025-160407/raw_right.3.csv"
+    },
+    {
+      "session": "P5",
+      "direction": "UP",
+      "n_clips": 14,
+      "drawn_index": 8,
+      "source_path": "data/sessions/phone-20261025-161530/raw_up.4.csv"
+    },
+    {
+      "session": "P5",
+      "direction": "DOWN",
+      "n_clips": 15,
+      "drawn_index": 11,
+      "source_path": "data/sessions/phone-20261025-161530/raw_down.6.csv"
+    },
+    {
+      "session": "P5",
+      "direction": "LEFT",
+      "n_clips": 15,
+      "drawn_index": 14,
+      "source_path": "data/sessions/phone-20261025-161530/raw_left.9.csv"
+    },
+    {
+      "session": "P5",
+      "direction": "RIGHT",
+      "n_clips": 15,
+      "drawn_index": 9,
+      "source_path": "data/sessions/phone-20261025-161530/raw_right.4.csv"
+    }
+  ],
+  "large_gap_ranking": [
+    {
+      "rank": 1,
+      "source_path": "data/sessions/phone-20261025-150714/raw_right.3.csv",
+      "gap_ms": 810
+    },
+    {
+      "rank": 2,
+      "source_path": "data/sessions/phone-20261025-155510/raw_left.4.csv",
+      "gap_ms": 770
+    },
+    {
+      "rank": 3,
+      "source_path": "data/sessions/phone-20261025-161530/raw_down.10.csv",
+      "gap_ms": 720
+    },
+    {
+      "rank": 4,
+      "source_path": "data/sessions/phone-20261025-161530/raw_up.13.csv",
+      "gap_ms": 720
+    },
+    {
+      "rank": 5,
+      "source_path": "data/sessions/phone-20261025-160407/raw_down.16.csv",
+      "gap_ms": 680
+    }
+  ],
+  "hashes": {
+    "records_json": {
+      "path": "data/annotations/ble-v2/records.json",
+      "sha256": "d2192aad02b42d5ba19a508bee6347ab01c6dd1a4817310753bf85d3911d4dfa"
+    },
+    "candidate_json": {
+      "phone-20261025-150714-candidates.json": "1f82f69c2d993d37e08623730441a7fa2cf75669cb11d365c181dd01605d6351",
+      "phone-20261025-154609-candidates.json": "edf81db1c520c4b8bf70814edecdfbaab326a95d86a7f485770acdbd4fe659e6",
+      "phone-20261025-155510-candidates.json": "e6ab5ef5909c1c36abc9d34714ca5cc20c3ea734e4e6d5d1c3b53ed67c0f0d77",
+      "phone-20261025-160407-candidates.json": "ded25319bbfc95a5be3042aa8e6720e04649d0e9c3bef6a8f0d0fae6faced59f",
+      "phone-20261025-161530-candidates.json": "834a936cf30498d484562e6fbfbaa6216758ba15ae3172d97f9b8e02e5297a01"
+    },
+    "sha256_definition": "CRLF를 LF로 바꾼 뒤 SHA-256(v2.digest)"
+  },
+  "counts": {
+    "samples": 26,
+    "base": 20,
+    "extra_only": 6,
+    "tag_counts": {
+      "base": 20,
+      "large_gap": 5,
+      "clipped_horizon": 1
+    }
+  },
+  "samples": [
+    {
+      "sample_id": "S01",
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.12.csv",
+      "session": "P1",
+      "direction": "UP",
+      "record_sha256": "5e5c948f4d680b997127157a157ab7e813fe1536bd198e7d9cf6edc3112d489d",
+      "completion_ms": 2460,
+      "main_motion_start_ms": 1590,
+      "main_motion_end_ms": 2150,
+      "gap_ms": 310,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P1×UP 그룹(13개)에서 인덱스 2"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S02",
+      "source_path": "data/sessions/phone-20261025-150714/raw_down.11.csv",
+      "session": "P1",
+      "direction": "DOWN",
+      "record_sha256": "a72b00b760ed4bdfa0a4b1fe683f27521522f12e2a70d4314bc63c6bc3219f67",
+      "completion_ms": 2030,
+      "main_motion_start_ms": 1550,
+      "main_motion_end_ms": 1890,
+      "gap_ms": 140,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P1×DOWN 그룹(15개)에서 인덱스 2"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S03",
+      "source_path": "data/sessions/phone-20261025-150714/raw_left.4.csv",
+      "session": "P1",
+      "direction": "LEFT",
+      "record_sha256": "d09503df759aacd8d58ccf035aa66cd6de52d27109fde62551f324c00a39fd51",
+      "completion_ms": 2020,
+      "main_motion_start_ms": 1420,
+      "main_motion_end_ms": 1940,
+      "gap_ms": 80,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P1×LEFT 그룹(15개)에서 인덱스 9"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S04",
+      "source_path": "data/sessions/phone-20261025-150714/raw_right.11.csv",
+      "session": "P1",
+      "direction": "RIGHT",
+      "record_sha256": "643eeea7a54e85611041025f156d0df6ff42e82c9bc27f1d8cbd3467d69ec69f",
+      "completion_ms": 2750,
+      "main_motion_start_ms": 1820,
+      "main_motion_end_ms": 2320,
+      "gap_ms": 430,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P1×RIGHT 그룹(15개)에서 인덱스 2"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S05",
+      "source_path": "data/sessions/phone-20261025-154609/raw_up.4.csv",
+      "session": "P2",
+      "direction": "UP",
+      "record_sha256": "7e14a4b404ecaf4db6feafa977344dd8ecc43a452da54ff4e522925ac733db02",
+      "completion_ms": 1960,
+      "main_motion_start_ms": 1550,
+      "main_motion_end_ms": 1890,
+      "gap_ms": 70,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P2×UP 그룹(15개)에서 인덱스 9"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S06",
+      "source_path": "data/sessions/phone-20261025-154609/raw_down.13.csv",
+      "session": "P2",
+      "direction": "DOWN",
+      "record_sha256": "ee74afcf7be6b7b2dd2dfb29c30d99d2784e488093c0bf2defcfa8989b052d12",
+      "completion_ms": 2470,
+      "main_motion_start_ms": 1730,
+      "main_motion_end_ms": 2320,
+      "gap_ms": 150,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P2×DOWN 그룹(15개)에서 인덱스 4"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S07",
+      "source_path": "data/sessions/phone-20261025-154609/raw_left.4.csv",
+      "session": "P2",
+      "direction": "LEFT",
+      "record_sha256": "0ae0f81d3e2438040593cb4bcb95d645c50fae11a82c78aade8d0b5aa411fd41",
+      "completion_ms": 2220,
+      "main_motion_start_ms": 1610,
+      "main_motion_end_ms": 2180,
+      "gap_ms": 40,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P2×LEFT 그룹(15개)에서 인덱스 9"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S08",
+      "source_path": "data/sessions/phone-20261025-154609/raw_right.5.csv",
+      "session": "P2",
+      "direction": "RIGHT",
+      "record_sha256": "4b6c04378ab0b61830f483975051c2c0e419027133162d7a1755fe2fc97feb37",
+      "completion_ms": 2520,
+      "main_motion_start_ms": 1490,
+      "main_motion_end_ms": 2400,
+      "gap_ms": 120,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P2×RIGHT 그룹(15개)에서 인덱스 10"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S09",
+      "source_path": "data/sessions/phone-20261025-155510/raw_up.13.csv",
+      "session": "P3",
+      "direction": "UP",
+      "record_sha256": "eb6c1ead917363b7b5c0bdf7cf5c1fd200bd05cfa2f7f8f78111759dc009f5b5",
+      "completion_ms": 2870,
+      "main_motion_start_ms": 2200,
+      "main_motion_end_ms": 2840,
+      "gap_ms": 30,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P3×UP 그룹(15개)에서 인덱스 4"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S10",
+      "source_path": "data/sessions/phone-20261025-155510/raw_down.10.csv",
+      "session": "P3",
+      "direction": "DOWN",
+      "record_sha256": "db71e6bed537322de502534a494fa954b3e18e982928fec3d7e784f43378d003",
+      "completion_ms": 2220,
+      "main_motion_start_ms": 1500,
+      "main_motion_end_ms": 1990,
+      "gap_ms": 230,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P3×DOWN 그룹(15개)에서 인덱스 1"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S11",
+      "source_path": "data/sessions/phone-20261025-155510/raw_left.9.csv",
+      "session": "P3",
+      "direction": "LEFT",
+      "record_sha256": "ece72c6d0341dfa12bd3b0f9b57571d45158a0657622fadd49c55fa7920e504a",
+      "completion_ms": 2690,
+      "main_motion_start_ms": 430,
+      "main_motion_end_ms": 2250,
+      "gap_ms": 440,
+      "flags": "early_motion",
+      "status": "REVIEW",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P3×LEFT 그룹(14개)에서 인덱스 13"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S12",
+      "source_path": "data/sessions/phone-20261025-155510/raw_right.3.csv",
+      "session": "P3",
+      "direction": "RIGHT",
+      "record_sha256": "f053d3aefc35858470538005f183d2f56de0c0f3c98dbe1c7a020cbb7548544b",
+      "completion_ms": 3210,
+      "main_motion_start_ms": 1580,
+      "main_motion_end_ms": 3110,
+      "gap_ms": 100,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P3×RIGHT 그룹(15개)에서 인덱스 8"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S13",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.1.csv",
+      "session": "P4",
+      "direction": "UP",
+      "record_sha256": "beeec1a352f486119f7cd3a38b21077ec4eb4e544e630d7f7afe3485014cf89a",
+      "completion_ms": 2320,
+      "main_motion_start_ms": 1480,
+      "main_motion_end_ms": 2170,
+      "gap_ms": 150,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P4×UP 그룹(14개)에서 인덱스 0"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S14",
+      "source_path": "data/sessions/phone-20261025-160407/raw_down.14.csv",
+      "session": "P4",
+      "direction": "DOWN",
+      "record_sha256": "1b411636725fbb63b371fd554beab1419047a08a647f5caa474e815f6a0687f7",
+      "completion_ms": 2860,
+      "main_motion_start_ms": 1920,
+      "main_motion_end_ms": 2550,
+      "gap_ms": 310,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P4×DOWN 그룹(16개)에서 인덱스 5"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S15",
+      "source_path": "data/sessions/phone-20261025-160407/raw_left.14.csv",
+      "session": "P4",
+      "direction": "LEFT",
+      "record_sha256": "84db8d94992a5b564e18ffeaebd26f996af6d25e824b927c44b5184695ca09f3",
+      "completion_ms": 2640,
+      "main_motion_start_ms": 1550,
+      "main_motion_end_ms": 2290,
+      "gap_ms": 350,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P4×LEFT 그룹(15개)에서 인덱스 4"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S16",
+      "source_path": "data/sessions/phone-20261025-160407/raw_right.3.csv",
+      "session": "P4",
+      "direction": "RIGHT",
+      "record_sha256": "ae0ef1a6f895d2e46ec96665d84a310e4ef12afd0fc354eb5908e3a4e44ba1cc",
+      "completion_ms": 2450,
+      "main_motion_start_ms": 1710,
+      "main_motion_end_ms": 2310,
+      "gap_ms": 140,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P4×RIGHT 그룹(15개)에서 인덱스 8"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S17",
+      "source_path": "data/sessions/phone-20261025-161530/raw_up.4.csv",
+      "session": "P5",
+      "direction": "UP",
+      "record_sha256": "0612b321a38b042f389b6dfab28a0599a023d5a35006dcdfb17c78305ca85044",
+      "completion_ms": 2270,
+      "main_motion_start_ms": 1510,
+      "main_motion_end_ms": 2020,
+      "gap_ms": 250,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P5×UP 그룹(14개)에서 인덱스 8"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S18",
+      "source_path": "data/sessions/phone-20261025-161530/raw_down.6.csv",
+      "session": "P5",
+      "direction": "DOWN",
+      "record_sha256": "2b3f8511810c4ca7e96b60a951bfb96d972000954a2b2e9f9cd770d780c9401a",
+      "completion_ms": 2220,
+      "main_motion_start_ms": 1680,
+      "main_motion_end_ms": 2160,
+      "gap_ms": 60,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P5×DOWN 그룹(15개)에서 인덱스 11"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S19",
+      "source_path": "data/sessions/phone-20261025-161530/raw_left.9.csv",
+      "session": "P5",
+      "direction": "LEFT",
+      "record_sha256": "580fdc3cb36117f2ea69eeb66cf867fb1adce984d7958a295a9cd35fbaa3e3a7",
+      "completion_ms": 2680,
+      "main_motion_start_ms": 1540,
+      "main_motion_end_ms": 2160,
+      "gap_ms": 520,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P5×LEFT 그룹(15개)에서 인덱스 14"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S20",
+      "source_path": "data/sessions/phone-20261025-161530/raw_right.4.csv",
+      "session": "P5",
+      "direction": "RIGHT",
+      "record_sha256": "0035ad66671073407517321a50f63db55631549adaf1c7f5918deb2abc3edd20",
+      "completion_ms": 2790,
+      "main_motion_start_ms": 730,
+      "main_motion_end_ms": 2730,
+      "gap_ms": 60,
+      "flags": "early_motion",
+      "status": "REVIEW",
+      "match_horizon_clipped": false,
+      "tags": [
+        "base"
+      ],
+      "reasons": [
+        "base: P5×RIGHT 그룹(15개)에서 인덱스 9"
+      ],
+      "extra_for_anomaly_check": false
+    },
+    {
+      "sample_id": "S21",
+      "source_path": "data/sessions/phone-20261025-150714/raw_right.3.csv",
+      "session": "P1",
+      "direction": "RIGHT",
+      "record_sha256": "71ab13820ee3cea977835d9f88d12523ba9497a1c1daf6da0dd2168ba57e05a9",
+      "completion_ms": 2790,
+      "main_motion_start_ms": 1490,
+      "main_motion_end_ms": 1980,
+      "gap_ms": 810,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "large_gap"
+      ],
+      "reasons": [
+        "large_gap: e−main_motion_end_ms 810 ms (상위 1위)"
+      ],
+      "extra_for_anomaly_check": true
+    },
+    {
+      "sample_id": "S22",
+      "source_path": "data/sessions/phone-20261025-155510/raw_left.4.csv",
+      "session": "P3",
+      "direction": "LEFT",
+      "record_sha256": "70a80514e92dcff20dce16d7b4309ba28c820e08fa77624e24aae7a3c1db2759",
+      "completion_ms": 3210,
+      "main_motion_start_ms": 880,
+      "main_motion_end_ms": 2440,
+      "gap_ms": 770,
+      "flags": "early_motion",
+      "status": "REVIEW",
+      "match_horizon_clipped": false,
+      "tags": [
+        "large_gap"
+      ],
+      "reasons": [
+        "large_gap: e−main_motion_end_ms 770 ms (상위 2위)"
+      ],
+      "extra_for_anomaly_check": true
+    },
+    {
+      "sample_id": "S23",
+      "source_path": "data/sessions/phone-20261025-161530/raw_down.10.csv",
+      "session": "P5",
+      "direction": "DOWN",
+      "record_sha256": "26f67b12371df91a0a531e1994571d46d9f28db6f67bd860f3e01f81fd104120",
+      "completion_ms": 2740,
+      "main_motion_start_ms": 1510,
+      "main_motion_end_ms": 2020,
+      "gap_ms": 720,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "large_gap"
+      ],
+      "reasons": [
+        "large_gap: e−main_motion_end_ms 720 ms (상위 3위)"
+      ],
+      "extra_for_anomaly_check": true
+    },
+    {
+      "sample_id": "S24",
+      "source_path": "data/sessions/phone-20261025-161530/raw_up.13.csv",
+      "session": "P5",
+      "direction": "UP",
+      "record_sha256": "d639e549b5c8ae8b84fab82d1b7452c5f385eb2deed39928343913844b201b5e",
+      "completion_ms": 2890,
+      "main_motion_start_ms": 1560,
+      "main_motion_end_ms": 2170,
+      "gap_ms": 720,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "large_gap"
+      ],
+      "reasons": [
+        "large_gap: e−main_motion_end_ms 720 ms (상위 4위)"
+      ],
+      "extra_for_anomaly_check": true
+    },
+    {
+      "sample_id": "S25",
+      "source_path": "data/sessions/phone-20261025-160407/raw_down.16.csv",
+      "session": "P4",
+      "direction": "DOWN",
+      "record_sha256": "bec7b4c9a5a23ac20006c60610cbab1c694a82f16cbbbc790001a89156c49532",
+      "completion_ms": 2880,
+      "main_motion_start_ms": 1670,
+      "main_motion_end_ms": 2200,
+      "gap_ms": 680,
+      "flags": "",
+      "status": "AUTO",
+      "match_horizon_clipped": false,
+      "tags": [
+        "large_gap"
+      ],
+      "reasons": [
+        "large_gap: e−main_motion_end_ms 680 ms (상위 5위)"
+      ],
+      "extra_for_anomaly_check": true
+    },
+    {
+      "sample_id": "S26",
+      "source_path": "data/sessions/phone-20261025-160407/raw_left.16.csv",
+      "session": "P4",
+      "direction": "LEFT",
+      "record_sha256": "890a4e6d2a5af372366f534a00851b2fb18df9bc441fdb25826109fb9f43f544",
+      "completion_ms": 3530,
+      "main_motion_start_ms": 2890,
+      "main_motion_end_ms": 3370,
+      "gap_ms": 160,
+      "flags": "late_completion",
+      "status": "REVIEW",
+      "match_horizon_clipped": true,
+      "tags": [
+        "clipped_horizon"
+      ],
+      "reasons": [
+        "clipped_horizon: e+500 ms가 클립 끝(3990 ms)을 넘는 원본(match_horizon_clipped)"
+      ],
+      "extra_for_anomaly_check": true
+    }
+  ]
+}

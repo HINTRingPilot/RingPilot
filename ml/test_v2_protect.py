@@ -2,7 +2,9 @@
 
 짧은 학습은 RuntimeRecordTests 하나뿐이며 코드 점검용이다(S-P5 학습용 안의 fold 하나, 1 epoch).
 """
+import contextlib
 import hashlib
+import io
 import json
 import tempfile
 import unittest
@@ -211,7 +213,8 @@ class PastResults(unittest.TestCase):
     def test_verify_matches_saved_summary_and_summarize_does_not_overwrite(self):
         out = v2_cal.results_dir("V2-S-P5-cal")
         before = v2.digest(out / "summary.json")
-        again = v2_cal.cmd_verify("S-P5")
+        with contextlib.redirect_stdout(io.StringIO()):     # cmd_verify가 "—"를 출력해 cp949 콘솔 파이프에서 실패하는 것을 피한다
+            again = v2_cal.cmd_verify("S-P5")
         saved = json.loads((out / "summary.json").read_text(encoding="utf-8"))
         self.assertEqual(again["chosen_E"], saved["chosen_E"])
         with self.assertRaises(FileExistsError):
