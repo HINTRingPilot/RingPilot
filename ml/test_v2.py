@@ -43,6 +43,25 @@ class PositiveCountTests(unittest.TestCase):
         self.assertEqual((t[0], t[-1], len(t)), (1590, 9990, 169))
 
 
+class DigestTests(unittest.TestCase):
+    def test_digest_ignores_line_endings(self):
+        with tempfile.TemporaryDirectory() as d:
+            lf, crlf, other = Path(d) / "a.csv", Path(d) / "b.csv", Path(d) / "c.csv"
+            lf.write_bytes(b"x,y\n1,2\n3,4\n")
+            crlf.write_bytes(b"x,y\r\n1,2\r\n3,4\r\n")
+            other.write_bytes(b"x,y\n1,2\n3,5\n")
+            self.assertEqual(v2.digest(lf), v2.digest(crlf))
+            self.assertNotEqual(v2.digest(lf), v2.digest(other))
+
+    def test_dump_writes_lf(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "x.json"
+            v2.dump(p, {"a": [1, 2], "b": "한글"})
+            raw = p.read_bytes()
+            self.assertNotIn(b"\r", raw)
+            self.assertEqual(json.loads(raw.decode("utf-8")), {"a": [1, 2], "b": "한글"})
+
+
 class ReadSensorTests(unittest.TestCase):
     def test_strict_checks(self):
         with tempfile.TemporaryDirectory() as d:

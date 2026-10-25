@@ -1,14 +1,14 @@
 {
   "experiment": "BLE-v2",
-  "created_before_training_kst": "2026-10-25T17:27:57+09:00",
-  "records_sha256": "36618b36a72094d1a7033fd74ac4196bdf70b965565183f33ae1d7fbf6501468",
+  "created_before_training_kst": "2026-10-25T17:39:15+09:00",
+  "records_sha256": "d2192aad02b42d5ba19a508bee6347ab01c6dd1a4817310753bf85d3911d4dfa",
   "split_sha256": {
-    "C": "ec1f6317a62d894852c79ecc68e0d5280bf487258527b390a19dd6aafdd28c0d",
-    "S-P1": "cde08949be4ddef7a04a987dc477c582615ecd7c4025121d0320632a4ece5751",
-    "S-P2": "a20be51c295e6bf8c71e5d3812bfdb8979f07e753e49a00c8370c8ae158c743a",
-    "S-P3": "d582469f74c52964528ed41e024efa16e0b87d4d34cf9274c8ba239110d03e29",
-    "S-P4": "368b5b6b7added6aab228a9b0b168135e0b9a38aa4c71ca56a0662a7389fcaed",
-    "S-P5": "9c254c94384d5d64ff0d4a53adae4aab381c0f9351f07092fcf6939ba43ee1bf"
+    "C": "bd03a084dcf990f2284390379dd316eb7374eaf4ca5fce281c8f1d06e8bde50c",
+    "S-P1": "09b2d0ca9f06537502083b04984d911c7c92a8d34baf23480d23fa351a98d101",
+    "S-P2": "78d13f694bab7a950bea30f46d47ab771ae8e3742d86c20385e88d9a08920b04",
+    "S-P3": "14f519d829b735f8d5c3c19daf42783e33c75cbc48797adc2ac6132b611528d5",
+    "S-P4": "2dcade87146f4d11e524c2eb4197141851095f4581780fcef337124c67e9d3b3",
+    "S-P5": "83874d9ef555b8049fd7018ece8a3cb653c19f57c7dd2191cae082f82da046a1"
   },
   "official_S": "S-P5",
   "rotation_S": [
@@ -93,22 +93,33 @@
     "허용 구간이 잘린 원본(e>3490)과 양성 3창 미만 원본(e>3890)을 따로 표시"
   ],
   "evaluation": "평가용은 각 방식의 최종 모델(5 seed)에 한 번만 적용한다. 결과를 보고 설정·주석·분할을 바꾸지 않는다",
-  "smoke_test_note": "protocol 저장 전에 코드 점검용 smoke 학습(S-P5 학습용 안의 fold 하나, 5 epoch)을 했다. 평가용은 열지 않았고 결과를 저장·선택에 쓰지 않았다",
+  "code_check_note": "protocol 저장 전에 코드 점검용 짧은 학습을 했다: smoke(S-P5 학습용 안의 fold 하나, 5 epoch)와 test_v2_cal.py (같은 fold 몇 epoch). 평가용은 열지 않았고 결과를 저장·선택에 쓰지 않았다",
+  "hash_note": "SHA-256은 CRLF를 LF로 바꾼 바이트로 계산한다(저장소가 core.autocrlf=true라 체크아웃 환경마다 바이트가 다르다). 처음 만든 주석·분할·protocol(커밋 805f74a)은 이 정의 전이라 학습 전에 지우고 같은 내용으로 다시 만들었다",
   "code_sha256": {
-    "v2.py": "e7ab4aeaf34698801fe550657d8b1023e7a3f50f340b6fb7ec4ed50f2fe2d761",
-    "model.py": "b9fdd056b0dc89e51aa18f0234e05a3cf2d51f172145658d90fd8fdafef9ade9"
+    "v2.py": "49cd234ca9ae27692061b72768d76d9d4ad17d233b6897c992d34938e0ed2a70",
+    "v2_cal.py": "2212e5a668dc1e60183055e33b6ed1ece8f5a9756cff84e1e7f6361c2afda52d",
+    "model.py": "2bc34c5a70acbd9bcf19d9627343ef6bd75ee9814d397bddfdfafebf329f7474"
   },
-  "git_head": "9eb5246c8eecff353c81e5a5cdf2eb46c1a02455",
+  "git_head": "805f74a16ffef22ceedf1147cd8348ac36978b52",
   "git_status_short": [
-    "M README.md",
-    " M docs/TrainingPlan.md",
-    " M \"docs/\\354\\247\\204\\355\\226\\211\\352\\270\\260\\353\\241\\235.md\"",
-    " M requirements.txt",
-    " M setup.ps1",
+    "D  data/annotations/ble-v2/phone-20261025-150714-candidates.json",
+    "D  data/annotations/ble-v2/phone-20261025-154609-candidates.json",
+    "D  data/annotations/ble-v2/phone-20261025-155510-candidates.json",
+    "D  data/annotations/ble-v2/phone-20261025-160407-candidates.json",
+    "D  data/annotations/ble-v2/phone-20261025-161530-candidates.json",
+    "D  data/annotations/ble-v2/records.json",
+    "D  data/splits/v2-C.json",
+    "D  data/splits/v2-S-P1.json",
+    "D  data/splits/v2-S-P2.json",
+    "D  data/splits/v2-S-P3.json",
+    "D  data/splits/v2-S-P4.json",
+    "D  data/splits/v2-S-P5.json",
+    "D  docs/experiments/ble-v2/results/protocol.json",
+    " M ml/test_v2.py",
+    " M ml/v2.py",
     "?? data/annotations/ble-v2/",
     "?? data/splits/",
-    "?? docs/experiments/ble-v2/",
-    "?? ml/test_v2.py",
-    "?? ml/v2.py"
+    "?? ml/test_v2_cal.py",
+    "?? ml/v2_cal.py"
   ]
 }

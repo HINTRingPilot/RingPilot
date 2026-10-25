@@ -75,12 +75,15 @@ SESSION_INFO = {"gyro_range_dps": 2000, "gesture_samples": 400, "pre_roll_cue_ms
 
 
 def dump(path, value):
+    """JSON을 LF로 저장한다(Windows에서 write_text는 \\n을 \\r\\n으로 바꾼다)."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    text = json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
+    path.write_bytes(text.encode("utf-8"))
 
 
 def digest(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    """줄바꿈(CRLF/LF)과 무관한 SHA-256. 저장소는 core.autocrlf=true라 체크아웃 환경마다 파일 바이트가 다르다."""
+    return hashlib.sha256(Path(path).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def now():
@@ -307,7 +310,7 @@ def annotate():
         raw_json = run_completion_tool(folder, 9000000000 + n * 1000)
         cand_path = ANN / f"{folder}-candidates.json"
         cand_path.parent.mkdir(parents=True, exist_ok=True)
-        cand_path.write_text(raw_json, encoding="utf-8")
+        cand_path.write_bytes(raw_json.replace("\r\n", "\n").encode("utf-8"))
         candidate_files[cand_path.name] = digest(cand_path)
         by_name = {a["filename"]: a for a in json.loads(raw_json)["annotations"]}
         files = sorted(session_dir.glob("*.csv"), key=lambda p: (clip_kind(p.name), clip_index(p.name)))
@@ -525,14 +528,24 @@ def fold_sets(by_path, split, k):
 
 
 _tf_ready = False
+tf_threads_fixed = None
 
 
 def configure_tf():
-    global _tf_ready
+    """스레드 1개 + 연산 결정성. 같은 프로세스에서 TensorFlow가 이미 초기화됐으면 스레드 수는 못 바꾼다.
+
+    실험 실행기는 새 프로세스에서 시작하므로 항상 고정된다. 이미 초기화된 경우(테스트 묶음 실행)는
+    tf_threads_fixed=False로 남기고, 결정성 연산만 켠 채 진행한다.
+    """
+    global _tf_ready, tf_threads_fixed
     import tensorflow as tf
     if not _tf_ready:
-        tf.config.threading.set_intra_op_parallelism_threads(1)
-        tf.config.threading.set_inter_op_parallelism_threads(1)
+        try:
+            tf.config.threading.set_intra_op_parallelism_threads(1)
+            tf.config.threading.set_inter_op_parallelism_threads(1)
+            tf_threads_fixed = True
+        except RuntimeError:
+            tf_threads_fixed = False
         tf.config.experimental.enable_op_determinism()
         _tf_ready = True
     return tf
@@ -620,8 +633,11 @@ def protocol():
            "fixed_conditions": PROTOCOL_CONDITIONS, "data_processing_order": PROTOCOL_ORDER,
            "events": PROTOCOL_EVENTS, "epoch_selection": PROTOCOL_SELECTION, "report": PROTOCOL_REPORT,
            "evaluation": "평가용은 각 방식의 최종 모델(5 seed)에 한 번만 적용한다. 결과를 보고 설정·주석·분할을 바꾸지 않는다",
-           "smoke_test_note": "protocol 저장 전에 코드 점검용 smoke 학습(S-P5 학습용 안의 fold 하나, 5 epoch)을 했다. 평가용은 열지 않았고 결과를 저장·선택에 쓰지 않았다",
-           "code_sha256": {p: digest(ROOT / "ml" / p) for p in ("v2.py", "model.py")},
+           "code_check_note": "protocol 저장 전에 코드 점검용 짧은 학습을 했다: smoke(S-P5 학습용 안의 fold 하나, 5 epoch)와 test_v2_cal.py "
+                              "(같은 fold 몇 epoch). 평가용은 열지 않았고 결과를 저장·선택에 쓰지 않았다",
+           "hash_note": "SHA-256은 CRLF를 LF로 바꾼 바이트로 계산한다(저장소가 core.autocrlf=true라 체크아웃 환경마다 바이트가 다르다). "
+                        "처음 만든 주석·분할·protocol(커밋 805f74a)은 이 정의 전이라 학습 전에 지우고 같은 내용으로 다시 만들었다",
+           "code_sha256": {p: digest(ROOT / "ml" / p) for p in ("v2.py", "v2_cal.py", "model.py")},
            "git_head": git("rev-parse", "HEAD"), "git_status_short": git("status", "--short").splitlines()}
     dump(out_path, out)
     print("protocol saved", out_path)
