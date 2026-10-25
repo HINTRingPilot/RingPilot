@@ -36,7 +36,7 @@ PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
 
 제스처 데이터를 무선으로 모을 때는 [imu_ble_stream.ino](firmware/imu_ble_stream/imu_ble_stream.ino)를 업로드하고 [Android 수집 앱](android/README.md)을 사용합니다.
 
-모델 학습·평가는 로컬 Python(`ml/`)에서 진행합니다. 계획은 [학습 계획](docs/TrainingPlan.md), 실험 기록은 [BLE v1 실험](docs/experiments/ble-v1/README.md)에 있습니다.
+모델 학습·평가는 로컬 Python(`ml/`)에서 진행합니다. 계획은 [학습 계획](docs/TrainingPlan.md), 실험 기록은 [BLE v1 실험](docs/experiments/ble-v1/README.md)(코드 확인용 테스트)과 [BLE v2 실험](docs/experiments/ble-v2/README.md)(자세별 5세션)에 있습니다.
 
 ## 문서
 

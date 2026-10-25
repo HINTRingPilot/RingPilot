@@ -1,0 +1,114 @@
+{
+  "experiment": "BLE-v2",
+  "created_before_training_kst": "2026-10-25T17:27:57+09:00",
+  "records_sha256": "36618b36a72094d1a7033fd74ac4196bdf70b965565183f33ae1d7fbf6501468",
+  "split_sha256": {
+    "C": "ec1f6317a62d894852c79ecc68e0d5280bf487258527b390a19dd6aafdd28c0d",
+    "S-P1": "cde08949be4ddef7a04a987dc477c582615ecd7c4025121d0320632a4ece5751",
+    "S-P2": "a20be51c295e6bf8c71e5d3812bfdb8979f07e753e49a00c8370c8ae158c743a",
+    "S-P3": "d582469f74c52964528ed41e024efa16e0b87d4d34cf9274c8ba239110d03e29",
+    "S-P4": "368b5b6b7added6aab228a9b0b168135e0b9a38aa4c71ca56a0662a7389fcaed",
+    "S-P5": "9c254c94384d5d64ff0d4a53adae4aab381c0f9351f07092fcf6939ba43ee1bf"
+  },
+  "official_S": "S-P5",
+  "rotation_S": [
+    "S-P1",
+    "S-P2",
+    "S-P3",
+    "S-P4"
+  ],
+  "fixed_conditions": {
+    "input": "100 Hz 6축, 160행×6, 5행(50 ms)마다 판정, t=창의 마지막 실제 샘플 시각, 첫 판정 1590 ms",
+    "label": "자연 복귀 완료 e에 대해 e <= t < e+150 ms만 방향, 나머지 NONE(복귀 중 포함). idle/other 클립 전체 NONE",
+    "model": "ml/model.py build_model(160) 기본값: Conv16k5-Pool2-Drop.2-Conv32k5-Pool2-Flatten-Drop.3-Dense5, 9,493 파라미터",
+    "training": {
+      "optimizer": "Adam lr=0.001",
+      "loss": "sparse_categorical_crossentropy",
+      "batch_size": 16,
+      "augmentation": null,
+      "class_weight": null,
+      "early_stopping": null,
+      "threads": "intra=1 inter=1, enable_op_determinism, oneDNN off"
+    },
+    "none_selection": "학습에만. 양성 창 수만큼 NONE을 종류(in_progress, post_completion, idle, other)별 라운드로빈으로 고정 추출. 추출 seed는 20261021 고정(학습 seed와 별개)",
+    "postprocess": {
+      "score_threshold": 0.8,
+      "margin": 0.2,
+      "consecutive_direction": 2,
+      "consecutive_none_rearm": 2
+    }
+  },
+  "data_processing_order": [
+    "1. 원본 클립을 먼저 나눈다(평가용/학습용, 학습용 안의 fold). 같은 원본의 창은 한쪽에만 둔다",
+    "2. 원본마다 160행 창을 50 ms 간격으로 만든다. 파일 경계를 넘어 붙이지 않는다",
+    "3. 정규화 평균·표준편차는 학습 부분 원본의 행으로만 계산한다. 교차검증은 fold마다 다시 계산한다",
+    "4. NONE 추출은 학습 부분에만 한다. 검증·평가는 모든 판정 시각을 그대로 replay한다",
+    "5. 검증·평가 데이터에서 계산한 값은 학습 설정에 쓰지 않는다"
+  ],
+  "events": {
+    "decision_times": "160행이 찬 1590 ms부터 50 ms마다. 그 전 구간은 판정하지 않음",
+    "emit_time": "발행 조건을 처음 만족한 판정 시각(두 번째 연속 창의 마지막 샘플 시각)",
+    "initial_state": "원본마다 잠금 해제·후보 없음으로 시작. 원본 사이에 상태를 넘기지 않음",
+    "completion_ms_use": "정답 라벨과 사후 채점에만 사용. 발행·재무장에는 사용하지 않음",
+    "classification_order": [
+      "배경 원본 → background_false",
+      "t < e → early",
+      "t > e+500 → late_unmatched",
+      "다른 방향 → wrong_direction",
+      "이미 correct 있음 → duplicate",
+      "그 밖 → correct",
+      "correct 없음 → missed 1"
+    ],
+    "match_horizon_clipped": "e+500 > 3990 (e > 3490)인 원본은 그대로 채점하되 목록을 따로 표시"
+  },
+  "epoch_selection": {
+    "candidates": [
+      1,
+      5,
+      10,
+      20,
+      30,
+      40,
+      60
+    ],
+    "seeds": [
+      20261021,
+      20261022,
+      20261023,
+      20261024,
+      20261025
+    ],
+    "training": "(seed, fold)마다 max(E)=60 epoch까지 한 번 학습하고 후보 epoch가 끝난 시점마다 검증 fold를 replay",
+    "score": "seed마다 모든 fold 예측을 합쳐 (정검출 수 − 방향 원본의 미매칭 발행 수) ÷ 검증 방향 원본 수. 미매칭=wrong_direction+duplicate+early+late_unmatched. 배경 오발행은 점수에 넣지 않고 따로 보고",
+    "rule": "5 seed 점수 평균이 가장 큰 E, 같으면 작은 E. 방식(그리고 S 회전)마다 같은 원칙으로 따로 선택"
+  },
+  "report": [
+    "정검출 수/평가 방향 원본 수",
+    "미매칭 발행: 종류별 원시 개수와 방향 원본 1개당 수",
+    "누락: 원시 개수와 비율",
+    "배경 오발행: 원시 개수, 실제 판정 구간(클립마다 첫 판정 전 1.59초 제외), 관측 1분당 수",
+    "지연: 정검출의 완료→발행 median/p95와 표본 수",
+    "모두 5 seed의 seed별 값과 평균·범위",
+    "C−S는 같은 seed끼리 차이를 seed별로, 평균·범위와 함께. 통계적 판정 규칙을 두지 않음",
+    "허용 구간이 잘린 원본(e>3490)과 양성 3창 미만 원본(e>3890)을 따로 표시"
+  ],
+  "evaluation": "평가용은 각 방식의 최종 모델(5 seed)에 한 번만 적용한다. 결과를 보고 설정·주석·분할을 바꾸지 않는다",
+  "smoke_test_note": "protocol 저장 전에 코드 점검용 smoke 학습(S-P5 학습용 안의 fold 하나, 5 epoch)을 했다. 평가용은 열지 않았고 결과를 저장·선택에 쓰지 않았다",
+  "code_sha256": {
+    "v2.py": "e7ab4aeaf34698801fe550657d8b1023e7a3f50f340b6fb7ec4ed50f2fe2d761",
+    "model.py": "b9fdd056b0dc89e51aa18f0234e05a3cf2d51f172145658d90fd8fdafef9ade9"
+  },
+  "git_head": "9eb5246c8eecff353c81e5a5cdf2eb46c1a02455",
+  "git_status_short": [
+    "M README.md",
+    " M docs/TrainingPlan.md",
+    " M \"docs/\\354\\247\\204\\355\\226\\211\\352\\270\\260\\353\\241\\235.md\"",
+    " M requirements.txt",
+    " M setup.ps1",
+    "?? data/annotations/ble-v2/",
+    "?? data/splits/",
+    "?? docs/experiments/ble-v2/",
+    "?? ml/test_v2.py",
+    "?? ml/v2.py"
+  ]
+}

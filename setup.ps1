@@ -34,6 +34,7 @@ if (-not (Has 'winget')) {
 Install-Winget 'ArduinoSA.IDE.stable' 'Arduino IDE'
 Install-Winget 'ArduinoSA.CLI'       'arduino-cli'
 Install-Winget 'OpenJS.NodeJS'       'Node.js (npm 포함)'
+Install-Winget 'Python.Python.3.12'  'Python 3.12 (ml/ 학습용)'
 if (-not $SkipAndroid) {
     Install-Winget 'Google.AndroidStudio' 'Android Studio'
     Install-Winget 'Google.PlatformTools' 'Android Platform-Tools (adb)'
@@ -51,6 +52,18 @@ if (Has 'arduino-cli') {
     arduino-cli lib install $ImuLibrary
 } else {
     Write-Warning 'arduino-cli를 찾지 못했습니다. 새 PowerShell 창을 열고 다시 실행하세요.'
+}
+
+# 3) 모델 학습 환경 (ml/.venv). TensorFlow 2.21.0은 Python 3.10~3.13, NumPy 2.5.4는 3.12 이상만 지원한다.
+$Venv = Join-Path $PSScriptRoot 'ml\.venv'
+if (Test-Path (Join-Path $Venv 'Scripts\python.exe')) {
+    Write-Host '==> ml/.venv 이미 있음'
+} elseif (Has 'py') {
+    Write-Host '==> ml/.venv 생성 (Python 3.12) + ml/requirements.txt 설치'
+    py -3.12 -m venv $Venv
+    & (Join-Path $Venv 'Scripts\python.exe') -m pip install -r (Join-Path $PSScriptRoot 'ml\requirements.txt')
+} else {
+    Write-Warning 'py 런처를 찾지 못했습니다. 새 PowerShell 창을 열고 다시 실행하세요.'
 }
 
 Write-Host ''
