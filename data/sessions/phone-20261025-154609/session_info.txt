@@ -1,0 +1,10 @@
+session=20261025-154609
+started=2026-10-25 15:46:09
+memo=누워서 바른 자세
+device=RingPilot-IMU
+csv=timestamp ms, accX/Y/Z m/s^2 (raw x 0.122 mg), gyrX/Y/Z deg/s (raw x 0.07)
+gyro_range_dps=2000
+gesture_samples=400 pre_roll_cue_ms=1000
+ended=2026-10-25 15:54:20
+counts=raw_up:15 raw_right:15 raw_left:15 raw_down:15 idle:3 other:5 
+posture=P2 누운 채 팔을 침대에 그대로 내림
