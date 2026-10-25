@@ -1,0 +1,19 @@
+{
+  "schema": "event-timing-01/product-requirements-v1",
+  "status": "unagreed",
+  "source": "사용자에게 비동기 질문으로 요청; 수치 답변 전에는 임의 설정하지 않음",
+  "priority": null,
+  "R_min": null,
+  "U_max": null,
+  "B_max_per_min": null,
+  "D_max_ms": null,
+  "auto_adopt": false,
+  "timing_goal": "자연 복귀 완료 후 명령 발행; 실제 완료 경계는 독립 관찰 필요",
+  "units": {
+    "R_min": "방향 원본 중 정검출 비율 [0,1]",
+    "U_max": "방향 원본 1개당 미매칭 발행 수",
+    "B_max_per_min": "실제 판정 관측 구간 분당 배경 발행",
+    "D_max_ms": "추가 예약 지연 ms"
+  },
+  "interpretation": "미합의여도 읽기 전용 분석 가능; 최고 점수 후보 자동 채택·가중치 변경 금지"
+}

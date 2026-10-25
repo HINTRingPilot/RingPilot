@@ -79,3 +79,23 @@ Android Studio 없이 빌드할 때는 JDK 17(예: Temurin 17)을 `JAVA_HOME`으
 ## 보존한 기능
 
 `SwipeAccessibilityService`(화면 스와이프 주입)는 제스처 인식 결과를 화면 조작으로 바꾸는 출력 경로로 코드만 남겨 두었다. 현재 화면에서는 호출하지 않는다.
+
+## 캡처 시각 sidecar (영상 동기화 준비용)
+
+각 캡처가 완료·실패·취소되면 같은 폴더에 `<CSV 이름>.capture.json`을 별도로 저장한다. CSV 열·행·환산은 그대로다. JSON은 기존 파일을 덮어쓰지 않고 CSV와 같은 단일 저장 대기열에서 기록한다.
+
+- `first_board_slot`, `last_board_slot`: 실제 CSV 행으로 받아들인 첫/마지막 보드 슬롯. `sample_count`는 받아들인 행 수이며, 연속 기록의 공백을 포함한 시간 길이가 아니다. `sample_interval_ms=10`은 슬롯 간격 규칙이고 실제 샘플 시계 정확도를 측정한 값은 아니다.
+- `start_call_elapsed_realtime_ms`: `startCapture` 진입 직후(세션 준비 전)의 휴대폰 부팅 기준 시각. `first_callback_arrival_elapsed_realtime_ms`: 첫 행이 속한 BLE listener 콜백 진입 시각. **물리적인 센서 샘플 시각이 아니며** BLE 배칭·전송 지연이 포함된다. `end_elapsed_realtime_ms`는 캡처를 끝내기로 결정한 시각이며 파일 저장 완료 시각이 아니다.
+- `mode`: `finite`(목표 행 수 있음) 또는 `continuous`. `end_status`: `completed`, `stopped`, `sample_gap`, `timeout`, `aborted`, 또는 CSV 쓰기 오류가 있으면 `csv_write_failed`. 실패한 고정 길이 캡처는 CSV를 만들지 않지만 sidecar에는 실패를 남긴다.
+- `intended_csv`는 예정 이름이다. `source_csv`는 최종 저장 시점에 파일이 존재할 때만 이름이 있고, 없으면 null이다. `csv_exists_at_finalization`은 그 시점의 존재 여부이며 무결성 보장이 아니다. `csv_write_failed=true`이면 일부만 기록된 CSV일 수도 있어 분석에 사용하면 안 된다.
+- `session_directory`, `activity_instance_id`는 앱이 확실히 아는 문맥이다. Activity가 새로 만들어지면 ID가 바뀐다. 보드 부팅 ID·재시작 여부·펌웨어/앱 커밋·협상 MTU는 이 경로에서 확인할 수 없으므로 null이다. 같은 세션이나 Activity ID가 같다고 보드 부팅이 같다는 뜻은 아니다.
+
+첫 슬롯만으로 영상 동기화가 완성되지 않는다. 별도의 영상 표식과 파일럿으로 대응 관계·오차를 확인해야 한다. 앱 비정상 종료/강제 종료에는 최종 sidecar가 없을 수 있다. 저장 오류는 화면 이벤트에 표시한다. **방금 것 다시**는 기존처럼 CSV를 삭제하며, sidecar는 당시 캡처 기록으로 보존되므로 CSV의 현재 존재 여부를 별도로 확인한다.
+
+Android SDK 없이 순수 Java sidecar 검사를 실행할 수 있다(JDK 17 이상).
+
+```powershell
+.\android\tests\run-sidecar-tests.ps1
+```
+
+이 검사는 null/실패 메타데이터, 슬롯·도착 시각·행 수·연속 기록 구분, JSON 이스케이프와 덮어쓰기 거부를 확인한다. 실제 Android 수집·BLE·파일럿 동기화 검증을 대신하지 않는다.

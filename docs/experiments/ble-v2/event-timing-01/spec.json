@@ -1,0 +1,18 @@
+{
+  "experiment": "BLE-v2-EVENT-TIMING-01",
+  "data_role": "development_diagnostic",
+  "delays_ms": [0, 50, 100, 150, 200],
+  "max_delay_ms": 200,
+  "primary_panels": ["legacy-S-P5-E60", "legacy-C-E60"],
+  "supporting_panels": "S-P5/C 각 전략 E1/E60 및 선택 E; 이어 S-P1~P4 같은 조건 전체",
+  "candidate_policy": "원래 점수 문턱·margin·연속 횟수·잠금·재무장 유지; 잠금 시작은 후보 시각 t",
+  "scheduled_policy": "후보의 시각만 t+D로 이동; 취소·방향 변경·새 게이트 없음",
+  "common_policy": "원래 후보 t<=T-200을 D0에도 동일 적용; 이 구간의 D0를 주 비교 기준으로 사용",
+  "full_policy": "t+D>T인 예약은 pending으로 보존; 마지막 시각으로 당기거나 삭제하지 않음",
+  "exposure_policy": "공통 배경 노출은 (T-200)-first+10 ms, 전체 노출은 T-first+10 ms; 후보별 동일 분모",
+  "metrics": ["correct_rate", "no_observed_emit_rate", "raw_no_candidate_rate", "early_clip_rate", "unmatched_per_source", "background_false_per_min", "delay_ms_median", "delay_ms_p95", "pending", "pending_only_sources"],
+  "pairing": "같은 strategy/split/E/seed/source; D-D0 차이 평균·범위·상승/하락/동일 seed 수만 기술",
+  "adoption": "제품 기준 및 독립 관찰 미확정이면 후보 자동 채택·새 학습·기본값 변경 없음",
+  "truth_usage": "e/정답 방향은 사후 진단/채점에만 사용; 발행 입력에 파일명/영상/정답/미래 점수 사용 금지",
+  "code_files": ["ml/v2_event_trace.py", "ml/v2_delay_replay.py", "ml/v2_event_timing.py"]
+}

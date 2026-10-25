@@ -1,0 +1,252 @@
+{
+  "experiment": "BLE-v2-EVENT-TIMING-01",
+  "created_before_replay_kst": "2026-10-25T20:00:59+09:00",
+  "spec": {
+    "experiment": "BLE-v2-EVENT-TIMING-01",
+    "data_role": "development_diagnostic",
+    "delays_ms": [
+      0,
+      50,
+      100,
+      150,
+      200
+    ],
+    "max_delay_ms": 200,
+    "primary_panels": [
+      "legacy-S-P5-E60",
+      "legacy-C-E60"
+    ],
+    "supporting_panels": "S-P5/C 각 전략 E1/E60 및 선택 E; 이어 S-P1~P4 같은 조건 전체",
+    "candidate_policy": "원래 점수 문턱·margin·연속 횟수·잠금·재무장 유지; 잠금 시작은 후보 시각 t",
+    "scheduled_policy": "후보의 시각만 t+D로 이동; 취소·방향 변경·새 게이트 없음",
+    "common_policy": "원래 후보 t<=T-200을 D0에도 동일 적용; 이 구간의 D0를 주 비교 기준으로 사용",
+    "full_policy": "t+D>T인 예약은 pending으로 보존; 마지막 시각으로 당기거나 삭제하지 않음",
+    "exposure_policy": "공통 배경 노출은 (T-200)-first+10 ms, 전체 노출은 T-first+10 ms; 후보별 동일 분모",
+    "metrics": [
+      "correct_rate",
+      "no_observed_emit_rate",
+      "raw_no_candidate_rate",
+      "early_clip_rate",
+      "unmatched_per_source",
+      "background_false_per_min",
+      "delay_ms_median",
+      "delay_ms_p95",
+      "pending",
+      "pending_only_sources"
+    ],
+    "pairing": "같은 strategy/split/E/seed/source; D-D0 차이 평균·범위·상승/하락/동일 seed 수만 기술",
+    "adoption": "제품 기준 및 독립 관찰 미확정이면 후보 자동 채택·새 학습·기본값 변경 없음",
+    "truth_usage": "e/정답 방향은 사후 진단/채점에만 사용; 발행 입력에 파일명/영상/정답/미래 점수 사용 금지",
+    "code_files": [
+      "ml/v2_event_trace.py",
+      "ml/v2_delay_replay.py",
+      "ml/v2_event_timing.py"
+    ]
+  },
+  "spec_sha256": "f125014b5b5622b1a31b2f97cca88660c195a3e754aa3def255b696dbc431357",
+  "requirements_at_freeze": {
+    "schema": "event-timing-01/product-requirements-v1",
+    "status": "unagreed",
+    "source": "사용자에게 비동기 질문으로 요청; 수치 답변 전에는 임의 설정하지 않음",
+    "priority": null,
+    "R_min": null,
+    "U_max": null,
+    "B_max_per_min": null,
+    "D_max_ms": null,
+    "auto_adopt": false,
+    "timing_goal": "자연 복귀 완료 후 명령 발행; 실제 완료 경계는 독립 관찰 필요",
+    "units": {
+      "R_min": "방향 원본 중 정검출 비율 [0,1]",
+      "U_max": "방향 원본 1개당 미매칭 발행 수",
+      "B_max_per_min": "실제 판정 관측 구간 분당 배경 발행",
+      "D_max_ms": "추가 예약 지연 ms"
+    },
+    "interpretation": "미합의여도 읽기 전용 분석 가능; 최고 점수 후보 자동 채택·가중치 변경 금지"
+  },
+  "requirements_sha256": "26564372f7ce04c100fd3954ecce7f89d86b316ac998551e377f04fc5b28c13f",
+  "input_manifest_sha256": "253b89af06e2bac5e9f011dfda5ed050ca1b09d40bbab22bdb455d103b52d966",
+  "code_sha256": {
+    "ml/v2_event_trace.py": "bd8fe3d21100d5bf881f3ea6f5f7a45c02025007985cf1c3d023b0d87a566da2",
+    "ml/v2_delay_replay.py": "c262c7d805e73e030a13e10d2b31644b032c9811c2efff2a94229919a9d62d34",
+    "ml/v2_event_timing.py": "c58f4c149abf3ec896fa0306d5e398f9988bb0a902fd1729fe048874c0d555cd"
+  },
+  "panels": [
+    {
+      "id": "legacy-S-P5-E60",
+      "strategy": "legacy",
+      "split": "S-P5",
+      "epoch": 60,
+      "phase": "primary"
+    },
+    {
+      "id": "legacy-C-E60",
+      "strategy": "legacy",
+      "split": "C",
+      "epoch": 60,
+      "phase": "primary"
+    },
+    {
+      "id": "legacy-S-P5-E1",
+      "strategy": "legacy",
+      "split": "S-P5",
+      "epoch": 1,
+      "phase": "supporting"
+    },
+    {
+      "id": "legacy-C-E1",
+      "strategy": "legacy",
+      "split": "C",
+      "epoch": 1,
+      "phase": "supporting"
+    },
+    {
+      "id": "balanced-S-P5-E1",
+      "strategy": "balanced",
+      "split": "S-P5",
+      "epoch": 1,
+      "phase": "supporting"
+    },
+    {
+      "id": "balanced-S-P5-E60",
+      "strategy": "balanced",
+      "split": "S-P5",
+      "epoch": 60,
+      "phase": "supporting"
+    },
+    {
+      "id": "balanced-C-E1",
+      "strategy": "balanced",
+      "split": "C",
+      "epoch": 1,
+      "phase": "supporting"
+    },
+    {
+      "id": "balanced-C-E60",
+      "strategy": "balanced",
+      "split": "C",
+      "epoch": 60,
+      "phase": "supporting"
+    },
+    {
+      "id": "legacy-S-P1-E1",
+      "strategy": "legacy",
+      "split": "S-P1",
+      "epoch": 1,
+      "phase": "rotation"
+    },
+    {
+      "id": "legacy-S-P1-E60",
+      "strategy": "legacy",
+      "split": "S-P1",
+      "epoch": 60,
+      "phase": "rotation"
+    },
+    {
+      "id": "balanced-S-P1-E1",
+      "strategy": "balanced",
+      "split": "S-P1",
+      "epoch": 1,
+      "phase": "rotation"
+    },
+    {
+      "id": "balanced-S-P1-E60",
+      "strategy": "balanced",
+      "split": "S-P1",
+      "epoch": 60,
+      "phase": "rotation"
+    },
+    {
+      "id": "legacy-S-P2-E1",
+      "strategy": "legacy",
+      "split": "S-P2",
+      "epoch": 1,
+      "phase": "rotation"
+    },
+    {
+      "id": "legacy-S-P2-E60",
+      "strategy": "legacy",
+      "split": "S-P2",
+      "epoch": 60,
+      "phase": "rotation"
+    },
+    {
+      "id": "balanced-S-P2-E1",
+      "strategy": "balanced",
+      "split": "S-P2",
+      "epoch": 1,
+      "phase": "rotation"
+    },
+    {
+      "id": "balanced-S-P2-E60",
+      "strategy": "balanced",
+      "split": "S-P2",
+      "epoch": 60,
+      "phase": "rotation"
+    },
+    {
+      "id": "legacy-S-P3-E1",
+      "strategy": "legacy",
+      "split": "S-P3",
+      "epoch": 1,
+      "phase": "rotation"
+    },
+    {
+      "id": "legacy-S-P3-E5",
+      "strategy": "legacy",
+      "split": "S-P3",
+      "epoch": 5,
+      "phase": "rotation"
+    },
+    {
+      "id": "legacy-S-P3-E60",
+      "strategy": "legacy",
+      "split": "S-P3",
+      "epoch": 60,
+      "phase": "rotation"
+    },
+    {
+      "id": "balanced-S-P3-E1",
+      "strategy": "balanced",
+      "split": "S-P3",
+      "epoch": 1,
+      "phase": "rotation"
+    },
+    {
+      "id": "balanced-S-P3-E60",
+      "strategy": "balanced",
+      "split": "S-P3",
+      "epoch": 60,
+      "phase": "rotation"
+    },
+    {
+      "id": "legacy-S-P4-E1",
+      "strategy": "legacy",
+      "split": "S-P4",
+      "epoch": 1,
+      "phase": "rotation"
+    },
+    {
+      "id": "legacy-S-P4-E60",
+      "strategy": "legacy",
+      "split": "S-P4",
+      "epoch": 60,
+      "phase": "rotation"
+    },
+    {
+      "id": "balanced-S-P4-E1",
+      "strategy": "balanced",
+      "split": "S-P4",
+      "epoch": 1,
+      "phase": "rotation"
+    },
+    {
+      "id": "balanced-S-P4-E60",
+      "strategy": "balanced",
+      "split": "S-P4",
+      "epoch": 60,
+      "phase": "rotation"
+    }
+  ],
+  "can_adopt": false,
+  "new_training": false
+}

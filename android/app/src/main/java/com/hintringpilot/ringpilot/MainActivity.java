@@ -83,6 +83,7 @@ public final class MainActivity extends Activity {
 
     // 세션
     private File sessionDir;
+    private final String activityInstanceId = java.util.UUID.randomUUID().toString();
     private final Map<String, Integer> savedCounts = new LinkedHashMap<>();
     private final Map<String, Integer> nextIndex = new LinkedHashMap<>();
 
@@ -108,18 +109,24 @@ public final class MainActivity extends Activity {
         final File file;
         final CaptureDone done;
         final StringBuilder rows = new StringBuilder();
-        final long startedAt = SystemClock.elapsedRealtime();
+        final long startedAt;
+        final CaptureSidecar sidecar;
+        long endedAt;
+        boolean csvWriteFailed; // accessed only by fileWriter
         long firstSlot = -1;
         long nextSlot = -1;
         int count = 0;
         long gapSamples = 0;
         boolean finished = false;
 
-        Capture(String label, int target, File file, CaptureDone done) {
+        Capture(String label, int target, File file, CaptureDone done, long startedAt, String activityId) {
             this.label = label;
             this.target = target;
             this.file = file;
             this.done = done;
+            this.startedAt = startedAt;
+            this.sidecar = new CaptureSidecar(file.getName(), target, startedAt,
+                    file.getParentFile().getName(), activityId);
         }
     }
 
@@ -332,7 +339,8 @@ public final class MainActivity extends Activity {
     private final ImuBleClient.Listener bleListener = new ImuBleClient.Listener() {
         @Override
         public void onSamples(long firstSlot, short[] raw, int count) {
-            acceptSamples(firstSlot, raw, count);
+            long arrival = SystemClock.elapsedRealtime();
+            acceptSamples(firstSlot, raw, count, arrival);
         }
 
         @Override
@@ -408,11 +416,13 @@ public final class MainActivity extends Activity {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
     }
 
-    private static void writeText(File file, String text, boolean append) {
+    private static boolean writeText(File file, String text, boolean append) {
         try (FileWriter writer = new FileWriter(file, append)) {
             writer.write(text);
+            return true;
         } catch (IOException ignored) {
-            // 저장 실패는 다음 파일 목록 확인에서 드러난다
+            // Capture writers additionally record the failure in their sidecar.
+            return false;
         }
     }
 
@@ -431,10 +441,11 @@ public final class MainActivity extends Activity {
     }
 
     private Capture startCapture(String label, int target, CaptureDone done) {
+        long startCall = SystemClock.elapsedRealtime();
         ensureSession();
-        Capture c = new Capture(label, target, nextFile(label), done);
+        Capture c = new Capture(label, target, nextFile(label), done, startCall, activityInstanceId);
         if (target <= 0) {
-            fileWriter.execute(() -> writeText(c.file, "timestamp,accX,accY,accZ,gyrX,gyrY,gyrZ\n", false));
+            fileWriter.execute(() -> c.csvWriteFailed |= !writeText(c.file, "timestamp,accX,accY,accZ,gyrX,gyrY,gyrZ\n", false));
         }
         synchronized (captureLock) {
             capture = c;
@@ -445,7 +456,9 @@ public final class MainActivity extends Activity {
                 synchronized (captureLock) {
                     if (capture != c || c.finished) return;
                     c.finished = true;
+                    c.endedAt = SystemClock.elapsedRealtime();
                     capture = null;
+                    queueSidecar(c, "timeout", "capture timeout");
                 }
                 c.done.finished(c, false, "시간 초과(연결 확인)");
             }, timeout);
@@ -456,13 +469,16 @@ public final class MainActivity extends Activity {
     private void abortCapture() {
         synchronized (captureLock) {
             if (capture == null) return;
-            capture.finished = true;
+            Capture c = capture;
+            c.finished = true;
+            c.endedAt = SystemClock.elapsedRealtime();
             capture = null;
+            queueSidecar(c, "aborted", "capture cancelled");
         }
     }
 
     /** Bluetooth 스레드에서 호출된다. 정해진 길이 기록은 슬롯이 하나라도 비면 실패로 처리해 깨끗한 파일만 남긴다. */
-    private void acceptSamples(long firstSlot, short[] raw, int count) {
+    private void acceptSamples(long firstSlot, short[] raw, int count, long arrival) {
         Capture done = null;
         boolean ok = false;
         String reason = null;
@@ -487,6 +503,7 @@ public final class MainActivity extends Activity {
                 appendRow(c.rows, (slot - c.firstSlot) * 10, raw, i * 6);
                 c.nextSlot = slot + 1;
                 c.count++;
+                c.sidecar.accept(slot, arrival);
                 if (c.target > 0 && c.count >= c.target) {
                     ok = true;
                     done = c;
@@ -495,13 +512,15 @@ public final class MainActivity extends Activity {
             }
             if (done != null) {
                 done.finished = true;
+                done.endedAt = SystemClock.elapsedRealtime();
                 capture = null;
+                if (!ok) queueSidecar(done, "sample_gap", reason);
             } else if (c.target <= 0 && c.rows.length() > 64 * 1024) {
                 // 연속 기록은 메모리에 계속 쌓지 않고 일정량마다 파일에 덧붙인다
                 String data = c.rows.toString();
                 c.rows.setLength(0);
                 File file = c.file;
-                fileWriter.execute(() -> writeText(file, data, true));
+                fileWriter.execute(() -> c.csvWriteFailed |= !writeText(file, data, true));
             }
         }
         if (done != null) {
@@ -524,11 +543,31 @@ public final class MainActivity extends Activity {
     /** 정해진 길이 기록이 끝나면 파일로 쓴다. 실패한 기록은 파일을 만들지 않는다. */
     private void saveFixed(Capture c) {
         String data = "timestamp,accX,accY,accZ,gyrX,gyrY,gyrZ\n" + c.rows;
-        fileWriter.execute(() -> writeText(c.file, data, false));
+        fileWriter.execute(() -> {
+            c.csvWriteFailed |= !writeText(c.file, data, false);
+            writeSidecar(c, "completed", null);
+        });
         lastSavedFile = c.file;
         lastSavedLabel = c.label;
         countSaved(c.label, 1);
         updateProgress();
+    }
+
+    // All sidecar writes share CSV ordering and never replace an existing sidecar.
+    private void queueSidecar(Capture c, String status, String reason) {
+        fileWriter.execute(() -> writeSidecar(c, status, reason));
+    }
+
+    private void writeSidecar(Capture c, String status, String reason) {
+        File sidecar = new File(c.file.getParentFile(), c.file.getName() + ".capture.json");
+        String finalStatus = c.csvWriteFailed ? "csv_write_failed" : status;
+        if (c.csvWriteFailed) mainHandler.post(() -> event(c.file.getName() + " CSV 저장 실패(분석 사용 금지)"));
+        try {
+            CaptureSidecar.writeExclusive(sidecar, c.sidecar.json(c.endedAt, finalStatus,
+                    reason, c.file.isFile(), c.csvWriteFailed));
+        } catch (IOException e) {
+            mainHandler.post(() -> event(sidecar.getName() + " 메타데이터 저장 실패: " + e.getClass().getSimpleName()));
+        }
     }
 
     // ---------------------------------------------------------------- 안내 수집
@@ -725,12 +764,16 @@ public final class MainActivity extends Activity {
             c = capture;
             if (c == null || c.target > 0) return;
             c.finished = true;
+            c.endedAt = SystemClock.elapsedRealtime();
             capture = null;
             rest = c.rows.toString();
             c.rows.setLength(0);
         }
         File file = c.file;
-        fileWriter.execute(() -> writeText(file, rest, true));
+        fileWriter.execute(() -> {
+            c.csvWriteFailed |= !writeText(file, rest, true);
+            writeSidecar(c, "stopped", "continuous capture finalized");
+        });
         tone(ToneGenerator.TONE_PROP_ACK);
         countSaved("continuous", 1);
         lastSavedFile = file;
