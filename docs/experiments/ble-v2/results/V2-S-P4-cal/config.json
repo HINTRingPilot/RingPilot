@@ -1,0 +1,263 @@
+{
+  "run_id": "V2-S-P4-cal",
+  "created_kst": "2026-10-25T17:42:13+09:00",
+  "split": "S-P4",
+  "split_sha256": "2dcade87146f4d11e524c2eb4197141851095f4581780fcef337124c67e9d3b3",
+  "records_sha256": "d2192aad02b42d5ba19a508bee6347ab01c6dd1a4817310753bf85d3911d4dfa",
+  "protocol_sha256": "d024381ea6ef8ddfbc102859a7bcca5333199f8934b6122e9afc14663e77d889",
+  "seeds": [
+    20261021,
+    20261022,
+    20261023,
+    20261024,
+    20261025
+  ],
+  "epoch_candidates": [
+    1,
+    5,
+    10,
+    20,
+    30,
+    40,
+    60
+  ],
+  "max_epoch": 60,
+  "n_folds": 4,
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "tensorflow": "2.21.0",
+  "keras": "3.15.1",
+  "numpy": "2.5.4",
+  "code_sha256": {
+    "v2.py": "49cd234ca9ae27692061b72768d76d9d4ad17d233b6897c992d34938e0ed2a70",
+    "v2_cal.py": "2212e5a668dc1e60183055e33b6ed1ece8f5a9756cff84e1e7f6361c2afda52d",
+    "model.py": "2bc34c5a70acbd9bcf19d9627343ef6bd75ee9814d397bddfdfafebf329f7474"
+  },
+  "git_head": "bd62fa45780b4ef97df754a958a100818412a11e",
+  "git_status_short": [
+    "?? docs/experiments/ble-v2/results/V2-C-cal/",
+    "?? docs/experiments/ble-v2/results/V2-S-P1-cal/",
+    "?? docs/experiments/ble-v2/results/V2-S-P2-cal/",
+    "?? docs/experiments/ble-v2/results/V2-S-P3-cal/",
+    "?? docs/experiments/ble-v2/results/V2-S-P5-cal/"
+  ],
+  "folds": [
+    {
+      "fold": 0,
+      "held_out_session": "P1",
+      "train_sources": 202,
+      "validation_sources": 66,
+      "train_windows_all": [
+        12244,
+        132,
+        135,
+        132,
+        135
+      ],
+      "train_windows_selected": [
+        534,
+        132,
+        135,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 134,
+        "other": 133,
+        "in_progress": 134,
+        "post_completion": 133
+      },
+      "validation_windows": 4194,
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.6659752957983888,
+          -2.2745905247899185,
+          4.2368908215335725,
+          1.9132588235294115,
+          -4.289426470588358,
+          -0.21237058823529736
+        ],
+        "std": [
+          6.086549668260049,
+          5.210085533300712,
+          4.051929941449926,
+          40.58142708653982,
+          66.13958531612691,
+          39.097369895531926
+        ],
+        "ddof": 0
+      }
+    },
+    {
+      "fold": 1,
+      "held_out_session": "P2",
+      "train_sources": 200,
+      "validation_sources": 68,
+      "train_windows_all": [
+        12152,
+        126,
+        135,
+        132,
+        135
+      ],
+      "train_windows_selected": [
+        528,
+        126,
+        135,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 132,
+        "other": 132,
+        "in_progress": 132,
+        "post_completion": 132
+      },
+      "validation_windows": 4292,
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.875023491313604,
+          -3.1853235301906446,
+          4.320265937076257,
+          1.758017372881354,
+          -4.3410210805085985,
+          -0.2243299788135595
+        ],
+        "std": [
+          5.949173054401461,
+          5.006897282693871,
+          3.825548704802272,
+          40.9372202993861,
+          71.57200474931139,
+          38.445298280070794
+        ],
+        "ddof": 0
+      }
+    },
+    {
+      "fold": 2,
+      "held_out_session": "P3",
+      "train_sources": 201,
+      "validation_sources": 67,
+      "train_windows_all": [
+        12198,
+        126,
+        135,
+        135,
+        135
+      ],
+      "train_windows_selected": [
+        531,
+        126,
+        135,
+        135,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 133,
+        "other": 133,
+        "in_progress": 133,
+        "post_completion": 132
+      },
+      "validation_windows": 4243,
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          3.428206016772095,
+          -4.082451108122355,
+          6.1479387720464365,
+          2.0958465189873134,
+          -4.321205590717436,
+          -0.30931286919831574
+        ],
+        "std": [
+          2.574533426040953,
+          4.0695178869992334,
+          3.954529132237961,
+          39.04360284663342,
+          67.7190191251057,
+          35.745817189759684
+        ],
+        "ddof": 0
+      }
+    },
+    {
+      "fold": 3,
+      "held_out_session": "P5",
+      "train_sources": 201,
+      "validation_sources": 67,
+      "train_windows_all": [
+        12198,
+        129,
+        135,
+        132,
+        135
+      ],
+      "train_windows_selected": [
+        531,
+        129,
+        135,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 133,
+        "other": 133,
+        "in_progress": 133,
+        "post_completion": 132
+      },
+      "validation_windows": 4243,
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.18578504430381598,
+          -0.5215693415611595,
+          6.272357598839683,
+          1.5440656118143206,
+          -4.155062658227864,
+          -0.19884651898734232
+        ],
+        "std": [
+          6.350942904113953,
+          3.232878830682699,
+          3.9735010601601184,
+          38.6446095593964,
+          67.62719203691539,
+          34.9292977290926
+        ],
+        "ddof": 0
+      }
+    }
+  ],
+  "eval_sources_opened": false
+}

@@ -1,0 +1,9 @@
+WARNING:tensorflow:From C:\Users\zoonc\Desktop\RingPilot\ml\.venv\Lib\site-packages\keras\src\backend\common\global_state.py:82: The name tf.reset_default_graph is deprecated. Please use tf.compat.v1.reset_default_graph instead.
+
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+seed 20261025 fold 0: 15.7s E1=8 E5=19 E10=21 E20=17 E30=22 E40=22 E60=21
+seed 20261025 fold 1: 10.5s E1=5 E5=16 E10=18 E20=16 E30=19 E40=17 E60=18
+seed 20261025 fold 2: 11.1s E1=6 E5=11 E10=13 E20=14 E30=16 E40=18 E60=15
+seed 20261025 fold 3: 12.2s E1=6 E5=11 E10=21 E20=22 E30=23 E40=20 E60=21
+seed 20261025 fold 4: 10.7s E1=8 E5=14 E10=14 E20=12 E30=10 E40=13 E60=13
+saved C:\Users\zoonc\Desktop\RingPilot\docs\experiments\ble-v2\results\V2-C-cal\seed-20261025.json 60.3s

@@ -1,0 +1,260 @@
+{
+  "run_id": "V2-S-P1-cal",
+  "created_kst": "2026-10-25T17:42:00+09:00",
+  "split": "S-P1",
+  "split_sha256": "09b2d0ca9f06537502083b04984d911c7c92a8d34baf23480d23fa351a98d101",
+  "records_sha256": "d2192aad02b42d5ba19a508bee6347ab01c6dd1a4817310753bf85d3911d4dfa",
+  "protocol_sha256": "d024381ea6ef8ddfbc102859a7bcca5333199f8934b6122e9afc14663e77d889",
+  "seeds": [
+    20261021,
+    20261022,
+    20261023,
+    20261024,
+    20261025
+  ],
+  "epoch_candidates": [
+    1,
+    5,
+    10,
+    20,
+    30,
+    40,
+    60
+  ],
+  "max_epoch": 60,
+  "n_folds": 4,
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "tensorflow": "2.21.0",
+  "keras": "3.15.1",
+  "numpy": "2.5.4",
+  "code_sha256": {
+    "v2.py": "49cd234ca9ae27692061b72768d76d9d4ad17d233b6897c992d34938e0ed2a70",
+    "v2_cal.py": "2212e5a668dc1e60183055e33b6ed1ece8f5a9756cff84e1e7f6361c2afda52d",
+    "model.py": "2bc34c5a70acbd9bcf19d9627343ef6bd75ee9814d397bddfdfafebf329f7474"
+  },
+  "git_head": "bd62fa45780b4ef97df754a958a100818412a11e",
+  "git_status_short": [
+    "?? docs/experiments/ble-v2/results/V2-C-cal/",
+    "?? docs/experiments/ble-v2/results/V2-S-P5-cal/"
+  ],
+  "folds": [
+    {
+      "fold": 0,
+      "held_out_session": "P2",
+      "train_sources": 202,
+      "validation_sources": 68,
+      "train_windows_all": [
+        12244,
+        129,
+        138,
+        132,
+        135
+      ],
+      "train_windows_selected": [
+        534,
+        129,
+        138,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 134,
+        "other": 133,
+        "in_progress": 134,
+        "post_completion": 133
+      },
+      "validation_windows": 4292,
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -4.300585400315216,
+          -2.0762521993697614,
+          -0.18182560871846817,
+          2.0330213235294035,
+          -4.429523529411899,
+          -0.1728588235294129
+        ],
+        "std": [
+          5.274359278360546,
+          5.272750399295854,
+          4.783349398383896,
+          40.87925286110083,
+          73.78201609117328,
+          43.98242653810819
+        ],
+        "ddof": 0
+      }
+    },
+    {
+      "fold": 1,
+      "held_out_session": "P3",
+      "train_sources": 203,
+      "validation_sources": 67,
+      "train_windows_all": [
+        12290,
+        129,
+        138,
+        135,
+        135
+      ],
+      "train_windows_selected": [
+        537,
+        129,
+        138,
+        135,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 135,
+        "other": 134,
+        "in_progress": 134,
+        "post_completion": 134
+      },
+      "validation_windows": 4243,
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.019033285983274733,
+          -2.970512899372395,
+          1.6493900960250842,
+          2.366872803347266,
+          -4.409503556485484,
+          -0.25734592050209554
+        ],
+        "std": [
+          5.351850599409995,
+          4.618491793976003,
+          6.340653763119304,
+          38.99699020288394,
+          70.07317681345882,
+          41.64074117751439
+        ],
+        "ddof": 0
+      }
+    },
+    {
+      "fold": 2,
+      "held_out_session": "P4",
+      "train_sources": 202,
+      "validation_sources": 68,
+      "train_windows_all": [
+        12244,
+        132,
+        135,
+        132,
+        135
+      ],
+      "train_windows_selected": [
+        534,
+        132,
+        135,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 134,
+        "other": 133,
+        "in_progress": 134,
+        "post_completion": 133
+      },
+      "validation_windows": 4292,
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -0.6659752957983888,
+          -2.2745905247899185,
+          4.2368908215335725,
+          1.9132588235294115,
+          -4.289426470588358,
+          -0.21237058823529736
+        ],
+        "std": [
+          6.086549668260049,
+          5.210085533300712,
+          4.051929941449926,
+          40.58142708653982,
+          66.13958531612691,
+          39.097369895531926
+        ],
+        "ddof": 0
+      }
+    },
+    {
+      "fold": 3,
+      "held_out_session": "P5",
+      "train_sources": 203,
+      "validation_sources": 67,
+      "train_windows_all": [
+        12290,
+        132,
+        138,
+        132,
+        135
+      ],
+      "train_windows_selected": [
+        537,
+        132,
+        138,
+        132,
+        135
+      ],
+      "train_none_groups": {
+        "idle": 135,
+        "other": 134,
+        "in_progress": 134,
+        "post_completion": 134
+      },
+      "validation_windows": 4243,
+      "normalization": {
+        "axes": [
+          "accX",
+          "accY",
+          "accZ",
+          "gyrX",
+          "gyrY",
+          "gyrZ"
+        ],
+        "mean": [
+          -3.6027817440377192,
+          0.5605706934100575,
+          1.772767761087848,
+          1.8197093096234023,
+          -4.2447509414226845,
+          -0.1478039748954012
+        ],
+        "std": [
+          6.1210131808622785,
+          2.743109137288351,
+          6.439193336097364,
+          38.60474941305813,
+          69.98539124498923,
+          40.947714760155506
+        ],
+        "ddof": 0
+      }
+    }
+  ],
+  "eval_sources_opened": false
+}
