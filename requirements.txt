@@ -48,11 +48,11 @@
 # 앱 설치 후: 설정 -> 접근성 -> 'RingPilot 스와이프' 사용
 #
 # ---------------------------------------------------------------------------
-# [E] Python 3.11 - 모델 학습(ml/) 전용
+# [E] Python 3.12 - 모델 학습(ml/) 전용
 # ---------------------------------------------------------------------------
-# Python                       3.11      https://www.python.org/downloads/
+# Python                       3.12      https://www.python.org/downloads/  (BLE 실험은 3.12.15로 실행. numpy 2.5.4는 3.12 이상 필요)
 # 패키지(TensorFlow 2.21.0, Keras 3.15.1, NumPy 2.5.4, pandas 3.0.6, scikit-learn 1.9.1,
 #   SciPy 1.18.1 등)는 ml/requirements.txt에 고정돼 있다. 가상환경 만들고 한 번에 설치:
-#     py -3.11 -m venv ml\.venv
+#     py -3.12 -m venv ml\.venv
 #     ml\.venv\Scripts\pip install -r ml\requirements.txt
 #   (ml/.venv는 로컬 전용이라 Git에 올리지 않는다.)

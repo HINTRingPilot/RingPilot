@@ -31,7 +31,7 @@ if (-not (Has 'winget')) {
 }
 
 # 1) 프로그램 설치
-Install-Winget 'Arduino.ArduinoIDE'  'Arduino IDE'
+Install-Winget 'ArduinoSA.IDE.stable' 'Arduino IDE'
 Install-Winget 'ArduinoSA.CLI'       'arduino-cli'
 Install-Winget 'OpenJS.NodeJS'       'Node.js (npm 포함)'
 if (-not $SkipAndroid) {
