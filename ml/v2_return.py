@@ -5,17 +5,12 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
   label   old: 방향 라벨 e ≤ t < e+150 ms   new: r ≤ t < r+150 ms (제외 구간 없음, 나머지 NONE)
   scoring old_window: [e, e+500 ms]          new_window: [복귀 피크, r+500 ms]
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
-  newhard: new 라벨 + 학습 NONE 추출 변경. v2.choose_training이 고른 in_progress NONE 수는 그대로 두고,
-           그 절반을 "가는 피크 ~ 복귀 피크"에 끝나는 창(끝점 근처)에서 클립을 돌아가며 뽑는다.
-           idle·other·post_completion 선택과 NONE 총량(방향 창과 1:1)은 바꾸지 않는다.
-  newpre:  newhard와 같되, 끝점 근처 대신 끝 시각이 끝점(가는→돌아오는 덩어리 사이 0 교차) 이하인 창에서 뽑는다.
-           볼록이 하나 이하인 창만 강제로 넣어 "볼록 하나면 NONE"을 가르치려는 조건이다.
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
-  run --label old|new|newhard|newpre --split C|S-P1..S-P5 --seed N   한 seed의 모든 fold 학습·채점
+  run --label old|new --split C|S-P1..S-P5 --seed N   한 seed의 모든 fold 학습·채점
   run-all [--parallel 8]                              빠진 (label, split, seed)를 모두 실행
-  summarize [--out summary.json]                      요약 작성(이미 있으면 거부)
+  summarize                                           summary.json 작성(이미 있으면 거부)
 """
 
 import argparse
@@ -23,7 +18,7 @@ import json
 import subprocess
 import sys
 import time
-from collections import Counter, defaultdict
+from collections import Counter
 
 import numpy as np
 
@@ -34,7 +29,7 @@ NEW_RECORDS = ROOT / "data/annotations/ble-v2-return/records.json"
 EXP = "return-label-01"
 OUT = DOC / EXP
 RUNS = ROOT / "ml/runs" / EXP
-LABELS = ("old", "new", "newhard", "newpre")
+LABELS = ("old", "new")
 SCORINGS = ("old_window", "new_window")
 
 
@@ -57,7 +52,6 @@ def relabel(by_path, nb, label):
     """label=new면 방향 원본의 completion_ms를 r로 바꾼 사본. v2.windows가 이 값으로 라벨을 붙인다."""
     if label == "old":
         return by_path
-    assert label in ("new", "newhard", "newpre")
     out = {}
     for p, r in by_path.items():
         r = dict(r)
@@ -118,54 +112,6 @@ def score(val_chunks, scores, by_path, nb, scoring):
     return dict(totals), per_source
 
 
-HARD_RANGES = {
-    "newhard": lambda n, t: n["outbound_peak_ms"] <= t <= n["return_peak_ms"],          # 가는 피크 ~ 복귀 피크
-    "newpre": lambda n, t: n["extreme_ms"] is not None and t <= n["extreme_ms"],        # 처음 ~ 끝점
-}
-
-
-def hard_none_sampler(nb, stats, label="newhard"):
-    """v2.choose_training을 감싸 in_progress 몫의 절반을 HARD_RANGES[label] 창으로 바꾼다. 다른 NONE은 그대로다."""
-    in_range = HARD_RANGES[label]
-    original = v2.choose_training
-
-    def choose(y, meta, seed=v2.SEED):
-        idx = original(y, meta, seed)
-        is_ip = lambda i: y[i] == 0 and meta[i]["none_group"] == "in_progress"
-
-        def is_hard(i):
-            n = nb.get(meta[i]["source_path"])
-            return n is not None and is_ip(i) and in_range(n, meta[i]["timestamp_ms"])
-
-        chosen_ip = [int(i) for i in idx if is_ip(i)]
-        want_hard = len(chosen_ip) // 2
-        rng = np.random.default_rng(seed + 1)
-        pools = defaultdict(list)
-        for i in range(len(y)):
-            if is_hard(i):
-                pools[meta[i]["source_path"]].append(i)
-        for v in pools.values():
-            rng.shuffle(v)
-        hard = []
-        while len(hard) < want_hard and any(pools.values()):
-            for src in sorted(pools):
-                if pools[src] and len(hard) < want_hard:
-                    hard.append(pools[src].pop())
-        rest = [i for i in chosen_ip if not is_hard(i)]
-        new_ip = hard + rest[:len(chosen_ip) - len(hard)]
-        for i in chosen_ip:      # 끝점 근처가 아닌 원래 선택이 모자라면 원래 선택으로 채운다
-            if len(new_ip) >= len(chosen_ip):
-                break
-            if i not in new_ip:
-                new_ip.append(i)
-        assert len(set(new_ip)) == len(chosen_ip)
-        others = [int(i) for i in idx if not is_ip(i)]
-        stats.append({"in_progress": len(chosen_ip), "hard": len(hard), "hard_available": sum(len(v) for v in pools.values()) + len(hard)})
-        return np.array(sorted(others + new_ip), dtype=np.int64)
-
-    return choose
-
-
 def result_path(label, split, seed):
     """원본 결과(수 MB씩)는 깃 제외 폴더에 둔다. 저장소에는 OUT/results/에 gzip 사본을 올린다."""
     return RUNS / "results" / f"{label}-{split}" / f"seed-{seed}.json"
@@ -177,9 +123,6 @@ def cmd_run(label, split_name, seed):
         raise FileExistsError(f"{target}가 이미 있다. 덮어쓰지 않는다")
     _, by_path, nb = load()
     recs = relabel(by_path, nb, label)
-    sampler_stats = []
-    if label in HARD_RANGES:
-        v2.choose_training = hard_none_sampler(nb, sampler_stats, label)
     split = v2.load_split(split_name)
     score_dir = RUNS / f"{label}-{split_name}"
     score_dir.mkdir(parents=True, exist_ok=True)
@@ -203,8 +146,6 @@ def cmd_run(label, split_name, seed):
                                 "seconds": round(time.time() - t0, 1)})
         print(f"{label} {split_name} seed {seed} fold {k}: {round(time.time() - t0, 1)}s", flush=True)
     result["seconds"] = round(time.time() - t_start, 1)
-    result["none_sampler"] = f"hard_in_progress_half:{label}" if label in HARD_RANGES else "v2.choose_training"
-    result["sampler_stats"] = sampler_stats
     result["tf_threads_fixed"] = v2.tf_threads_fixed
     dump(target, result)
     print("saved", target)
@@ -264,14 +205,12 @@ def epoch_stats(seed_results, epoch, scoring):
     return out
 
 
-def cmd_summarize(name="summary.json"):
-    target = OUT / name
+def cmd_summarize():
+    target = OUT / "summary.json"
     if target.exists():
         raise FileExistsError(f"{target}가 이미 있다")
     summary = {"experiment": EXP, "created_kst": now(), "rule": "E는 seed 평균 selection_score 최대, 같으면 작은 E", "panels": {}}
-    labels = [lab for lab in LABELS if all(result_path(lab, sp, s).exists() for sp in v2.SPLIT_NAMES for s in v2.SEEDS)]
-    summary["labels"] = labels
-    for lab in labels:
+    for lab in LABELS:
         for sp in v2.SPLIT_NAMES:
             res = [json.loads(result_path(lab, sp, s).read_text(encoding="utf-8")) for s in v2.SEEDS]
             panel = {}
@@ -289,7 +228,7 @@ def print_table(summary):
         print(f"\n== {sc}: 선택 E / 정검출률(seed 평균) / 조기 발행 클립 / 무발행 / 배경 오발행(클립당)")
         for sp in v2.SPLIT_NAMES:
             row = [sp]
-            for lab in summary.get("labels", LABELS):
+            for lab in LABELS:
                 p = summary["panels"][f"{lab}-{sp}"][sc]
                 s = p["by_epoch"][str(p["selected_E"])]
                 row.append(f"{lab}: E{p['selected_E']:<2} {s['success_rate']*100:5.1f}% early {s['early_clip_rate']*100:4.1f}% "
@@ -306,15 +245,14 @@ def main():
     r.add_argument("--seed", type=int, required=True)
     a = sub.add_parser("run-all")
     a.add_argument("--parallel", type=int, default=8)
-    m = sub.add_parser("summarize")
-    m.add_argument("--out", default="summary.json")
+    sub.add_parser("summarize")
     args = p.parse_args()
     if args.cmd == "run":
         cmd_run(args.label, args.split, args.seed)
     elif args.cmd == "run-all":
         cmd_run_all(args.parallel)
     else:
-        cmd_summarize(args.out)
+        cmd_summarize()
 
 
 if __name__ == "__main__":

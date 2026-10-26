@@ -76,3 +76,7 @@ E를 10·20·60으로 고정해도 방향은 같다: 세션 보류(S)에서는 n
 - 해석: "볼록 하나로 끝나는 창"을 NONE으로 더 넣어도 혼동이 줄지 않았다. 예시 부족만으로는 설명되지 않고, 모델이 창 앞쪽 덩어리를 활용하지 못하는 쪽(합성곱이 약 0.15초 범위만 보고 두 덩어리 관계를 Flatten 뒤 위치마다 배워야 함)이 더 유력해졌다(추정).
 - 결정: 채택하지 않는다. 다음 후보는 창 안 누적 자이로(시작 자세 대비 회전각) 입력 채널 추가, 또는 수용 영역을 넓힌 구조.
 - 파일: `summary-pre.json`(old/new/newhard/newpre 전체), `results/newpre-*/seed-*.json.gz`.
+
+## 코드 정리 — 2026-10-26
+
+newhard·newpre는 채택하지 않았으므로 `ml/v2_return.py`에서 해당 코드(NONE 추출 변경, `summarize --out`)를 걷어내고 커밋 `e63b718` 버전으로 되돌렸다. 위 기록과 `summary-hard.json`·`summary-pre.json`·`results/newhard-*`·`results/newpre-*`는 보존한다. 두 조건을 재현하려면 커밋 `699e79b`의 `ml/v2_return.py`를 쓴다.
