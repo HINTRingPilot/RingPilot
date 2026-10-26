@@ -1,0 +1,8 @@
+WARNING:tensorflow:From C:\Users\user\Desktop\prj\watch\ml\.venv\Lib\site-packages\keras\src\backend\common\global_state.py:82: The name tf.reset_default_graph is deprecated. Please use tf.compat.v1.reset_default_graph instead.
+
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+newangle S-P2 seed 20261025 fold 0: 44.6s
+newangle S-P2 seed 20261025 fold 1: 34.9s
+newangle S-P2 seed 20261025 fold 2: 35.0s
+newangle S-P2 seed 20261025 fold 3: 33.7s
+saved C:\Users\user\Desktop\prj\watch\ml\runs\return-label-01\results\newangle-S-P2\seed-20261025.json
