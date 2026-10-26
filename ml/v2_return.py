@@ -8,10 +8,12 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
   newhard: new 라벨 + 학습 NONE 추출 변경. v2.choose_training이 고른 in_progress NONE 수는 그대로 두고,
            그 절반을 "가는 피크 ~ 복귀 피크"에 끝나는 창(끝점 근처)에서 클립을 돌아가며 뽑는다.
            idle·other·post_completion 선택과 NONE 총량(방향 창과 1:1)은 바꾸지 않는다.
+  newpre:  newhard와 같되, 끝점 근처 대신 끝 시각이 끝점(가는→돌아오는 덩어리 사이 0 교차) 이하인 창에서 뽑는다.
+           볼록이 하나 이하인 창만 강제로 넣어 "볼록 하나면 NONE"을 가르치려는 조건이다.
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
-  run --label old|new|newhard --split C|S-P1..S-P5 --seed N   한 seed의 모든 fold 학습·채점
+  run --label old|new|newhard|newpre --split C|S-P1..S-P5 --seed N   한 seed의 모든 fold 학습·채점
   run-all [--parallel 8]                              빠진 (label, split, seed)를 모두 실행
   summarize [--out summary.json]                      요약 작성(이미 있으면 거부)
 """
@@ -32,7 +34,7 @@ NEW_RECORDS = ROOT / "data/annotations/ble-v2-return/records.json"
 EXP = "return-label-01"
 OUT = DOC / EXP
 RUNS = ROOT / "ml/runs" / EXP
-LABELS = ("old", "new", "newhard")
+LABELS = ("old", "new", "newhard", "newpre")
 SCORINGS = ("old_window", "new_window")
 
 
@@ -55,7 +57,7 @@ def relabel(by_path, nb, label):
     """label=new면 방향 원본의 completion_ms를 r로 바꾼 사본. v2.windows가 이 값으로 라벨을 붙인다."""
     if label == "old":
         return by_path
-    assert label in ("new", "newhard")
+    assert label in ("new", "newhard", "newpre")
     out = {}
     for p, r in by_path.items():
         r = dict(r)
@@ -116,8 +118,15 @@ def score(val_chunks, scores, by_path, nb, scoring):
     return dict(totals), per_source
 
 
-def hard_none_sampler(nb, stats):
-    """v2.choose_training을 감싸 in_progress 몫의 절반을 끝점 근처 창으로 바꾼다. 다른 NONE은 그대로다."""
+HARD_RANGES = {
+    "newhard": lambda n, t: n["outbound_peak_ms"] <= t <= n["return_peak_ms"],          # 가는 피크 ~ 복귀 피크
+    "newpre": lambda n, t: n["extreme_ms"] is not None and t <= n["extreme_ms"],        # 처음 ~ 끝점
+}
+
+
+def hard_none_sampler(nb, stats, label="newhard"):
+    """v2.choose_training을 감싸 in_progress 몫의 절반을 HARD_RANGES[label] 창으로 바꾼다. 다른 NONE은 그대로다."""
+    in_range = HARD_RANGES[label]
     original = v2.choose_training
 
     def choose(y, meta, seed=v2.SEED):
@@ -126,7 +135,7 @@ def hard_none_sampler(nb, stats):
 
         def is_hard(i):
             n = nb.get(meta[i]["source_path"])
-            return n is not None and is_ip(i) and n["outbound_peak_ms"] <= meta[i]["timestamp_ms"] <= n["return_peak_ms"]
+            return n is not None and is_ip(i) and in_range(n, meta[i]["timestamp_ms"])
 
         chosen_ip = [int(i) for i in idx if is_ip(i)]
         want_hard = len(chosen_ip) // 2
@@ -169,8 +178,8 @@ def cmd_run(label, split_name, seed):
     _, by_path, nb = load()
     recs = relabel(by_path, nb, label)
     sampler_stats = []
-    if label == "newhard":
-        v2.choose_training = hard_none_sampler(nb, sampler_stats)
+    if label in HARD_RANGES:
+        v2.choose_training = hard_none_sampler(nb, sampler_stats, label)
     split = v2.load_split(split_name)
     score_dir = RUNS / f"{label}-{split_name}"
     score_dir.mkdir(parents=True, exist_ok=True)
@@ -194,7 +203,7 @@ def cmd_run(label, split_name, seed):
                                 "seconds": round(time.time() - t0, 1)})
         print(f"{label} {split_name} seed {seed} fold {k}: {round(time.time() - t0, 1)}s", flush=True)
     result["seconds"] = round(time.time() - t_start, 1)
-    result["none_sampler"] = "hard_in_progress_half" if label == "newhard" else "v2.choose_training"
+    result["none_sampler"] = f"hard_in_progress_half:{label}" if label in HARD_RANGES else "v2.choose_training"
     result["sampler_stats"] = sampler_stats
     result["tf_threads_fixed"] = v2.tf_threads_fixed
     dump(target, result)
