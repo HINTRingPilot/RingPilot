@@ -507,10 +507,11 @@ def make_chunks(recs, mean, std, root=ROOT, window_fn=None):
     return [(r, *window_fn(r, mean, std, root)) for r in recs]
 
 
-def build_sets(train_recs, val_recs, root=ROOT, none_seed=SEED, window_fn=None):
+def build_sets(train_recs, val_recs, root=ROOT, none_seed=SEED, window_fn=None, none_fn=None):
     """원본 분할 → 학습 원본만으로 정규화 → 창 생성 → 학습에만 NONE 추출. 검증은 전체 replay.
 
     window_fn은 windows와 같은 (record, mean, std, root) → (x, y, meta) 함수다. 없으면 windows를 쓴다.
+    none_fn은 choose_training과 같은 (y, meta, seed) → 학습 창 번호 함수다. 없으면 choose_training을 쓴다.
     """
     assert {r["source_path"] for r in train_recs}.isdisjoint(r["source_path"] for r in val_recs)
     mean, std = normalization(train_recs, root)
@@ -518,7 +519,7 @@ def build_sets(train_recs, val_recs, root=ROOT, none_seed=SEED, window_fn=None):
     x = np.concatenate([c[1] for c in train_chunks])
     y = np.concatenate([c[2] for c in train_chunks])
     meta = sum([c[3] for c in train_chunks], [])
-    idx = choose_training(y, meta, none_seed)
+    idx = (none_fn or choose_training)(y, meta, none_seed)
     val_chunks = make_chunks(val_recs, mean, std, root, window_fn)
     return {"x_train": x[idx], "y_train": y[idx], "train_all_counts": np.bincount(y, minlength=5).tolist(),
             "train_counts": np.bincount(y[idx], minlength=5).tolist(),
@@ -526,12 +527,12 @@ def build_sets(train_recs, val_recs, root=ROOT, none_seed=SEED, window_fn=None):
             "val": val_chunks, "mean": mean, "std": std, "train_sources": len(train_recs), "val_sources": len(val_recs)}
 
 
-def fold_sets(by_path, split, k, window_fn=None):
+def fold_sets(by_path, split, k, window_fn=None, none_fn=None):
     val = set(split["cv"]["folds"][k]["validation_sources"])
     assert val <= set(split["train_sources"]) and not val & set(split["eval_sources"])
     train_recs = [by_path[p] for p in split["train_sources"] if p not in val]
     val_recs = [by_path[p] for p in split["train_sources"] if p in val]
-    return build_sets(train_recs, val_recs, window_fn=window_fn)
+    return build_sets(train_recs, val_recs, window_fn=window_fn, none_fn=none_fn)
 
 
 _tf_ready = False

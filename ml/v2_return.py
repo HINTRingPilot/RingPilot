@@ -7,13 +7,16 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
   newangle  new + 회전각 3채널(창 시작 대비 누적 자이로, 클립 중앙값 영점 보정, 45도로 나눔). 입력 9채널
   newtcn    newangle과 같은 입력·라벨, 모델만 TCN(model.build_tcn: 커널 3, dilation 1·2·4·8·16·49, 16채널,
             블록당 합성곱 1개, 드롭아웃 0.1, 정규화 없음, 마지막 시점 판정, 4,613 파라미터)
+  newtcnhard newtcn + 학습 NONE 추출 변경: choose_training이 고른 in_progress NONE 수는 그대로 두고 그 절반을
+            "가는 피크 ~ 끝점"에 끝나는 창(가는 볼록 하강, 반대 방향 발행이 나던 구간)에서 클립을 돌아가며 뽑는다.
+            idle·other·post_completion 선택과 NONE 총량은 바꾸지 않는다.
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
-  run --label old|new|newangle|newtcn --split C|S-P2|S-P5 --seed N   한 seed의 모든 fold 학습·채점
+  run --label old|new|newangle|newtcn|newtcnhard --split C|S-P2|S-P5 --seed N   한 seed의 모든 fold 학습·채점
   run-all [--parallel 8]                                      빠진 (label, split, seed)를 모두 실행
   summarize [--out summary.json]                              요약 작성(이미 있으면 거부)
 """
@@ -41,12 +44,14 @@ SPLITS = ("C", "S-P2", "S-P5")
 ANGLE_SCALE_DEG = 45.0
 SAMPLE_S = 0.01
 
-# label: 방향 라벨의 기준 시각("settled" = 기존 e, "return" = r), angle: 회전각 채널 추가 여부, model: "cnn" | "tcn"
+# label: 방향 라벨의 기준 시각("settled" = 기존 e, "return" = r), angle: 회전각 채널 추가 여부, model: "cnn" | "tcn",
+# hard: 학습 NONE에 반드시 넣을 구간(None = v2.choose_training 그대로, "outbound" = 가는 피크 ~ 끝점)
 CONDITIONS = {
-    "old": {"label": "settled", "angle": False, "model": "cnn"},
-    "new": {"label": "return", "angle": False, "model": "cnn"},
-    "newangle": {"label": "return", "angle": True, "model": "cnn"},
-    "newtcn": {"label": "return", "angle": True, "model": "tcn"},
+    "old": {"label": "settled", "angle": False, "model": "cnn", "hard": None},
+    "new": {"label": "return", "angle": False, "model": "cnn", "hard": None},
+    "newangle": {"label": "return", "angle": True, "model": "cnn", "hard": None},
+    "newtcn": {"label": "return", "angle": True, "model": "tcn", "hard": None},
+    "newtcnhard": {"label": "return", "angle": True, "model": "tcn", "hard": "outbound"},
 }
 LABELS = tuple(CONDITIONS)
 
@@ -95,6 +100,39 @@ def windows_with_angle(record, mean, std, root=ROOT):
     return np.concatenate([x, (angle / ANGLE_SCALE_DEG).astype(np.float32)], axis=2), y, meta
 
 
+def outbound_none_chooser(nb):
+    """v2.choose_training의 선택에서 in_progress NONE 절반을 "가는 피크 ~ 끝점"에 끝나는 창으로 바꾼다.
+
+    in_progress 개수, 다른 NONE 종류의 선택, 양성 창은 그대로다. 끝점 근처 창이 모자라면 원래 선택으로 채운다.
+    """
+    def choose(y, meta, seed=v2.SEED):
+        idx = v2.choose_training(y, meta, seed)
+        in_progress = lambda i: y[i] == 0 and meta[i]["none_group"] == "in_progress"
+
+        def outbound(i):
+            n = nb.get(meta[i]["source_path"])
+            return n is not None and n["extreme_ms"] is not None and in_progress(i)                 and n["outbound_peak_ms"] <= meta[i]["timestamp_ms"] <= n["extreme_ms"]
+
+        chosen = [int(i) for i in idx if in_progress(i)]
+        pools = {}
+        for i in range(len(y)):
+            if outbound(i):
+                pools.setdefault(meta[i]["source_path"], []).append(i)
+        rng = np.random.default_rng(seed + 1)
+        for src in sorted(pools):
+            rng.shuffle(pools[src])
+        hard = []
+        while len(hard) < len(chosen) // 2 and any(pools.values()):
+            for src in sorted(pools):
+                if pools[src] and len(hard) < len(chosen) // 2:
+                    hard.append(pools[src].pop())
+        picked = hard + [i for i in chosen if not outbound(i)][:len(chosen) - len(hard)]
+        picked += [i for i in chosen if i not in set(picked)][:len(chosen) - len(picked)]
+        assert len(set(picked)) == len(chosen)
+        return np.array(sorted([int(i) for i in idx if not in_progress(i)] + picked), dtype=np.int64)
+    return choose
+
+
 def tcn(channels):
     from model import build_tcn
     return build_tcn(v2.WINDOW, channels=channels)
@@ -104,7 +142,8 @@ def prepare_fold(label, by_path, nb, split, k):
     """조건 label의 fold k 학습·검증 집합과 학습 함수를 돌려준다."""
     cond = CONDITIONS[label]
     window_fn = windows_with_angle if cond["angle"] else None
-    d = v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn)
+    none_fn = outbound_none_chooser(nb) if cond["hard"] == "outbound" else None
+    d = v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn, none_fn=none_fn)
     if cond["model"] == "tcn":
         return d, lambda *args: v2.fit_snapshots(*args, model_fn=tcn)
     return d, v2.fit_snapshots
@@ -243,16 +282,20 @@ def epoch_stats(seed_results, epoch, scoring):
         for p in gest:
             c.update(p["counts"])
         unmatched = sum(c[k] for k in v2.UNMATCHED_ON_GESTURE)
+        # 정답 발행이 있고, 클립 안에 다른 방향 발행이 하나도 없는 경우(실제 사용에서 잘못된 명령이 안 나간 성공)
+        clean = sum(1 for p in gest if p["counts"].get("correct")
+                    and len({ev[1] for ev in p["events"]}) == 1)
         delays = [d for p in gest for d in p["delays_ms"]]
         per_seed.append({"n": len(gest), "correct": c["correct"], "unmatched": unmatched,
                          "selection_score": (c["correct"] - unmatched) / len(gest),
                          "success_rate": c["correct"] / len(gest),
+                         "clean_success_rate": clean / len(gest),
                          "early_clip_rate": sum(1 for p in gest if any(ev[2] == "early" for ev in p["events"])) / len(gest),
                          "no_issue_rate": sum(1 for p in gest if not p["events"]) / len(gest),
                          "wrong_direction": c["wrong_direction"], "duplicate": c["duplicate"], "late": c["late_unmatched"],
                          "background_false": sum(p["counts"].get("background_false", 0) for p in bg), "background_clips": len(bg),
                          "delay_median_ms": float(np.median(delays)) if delays else None})
-    keys = ("success_rate", "selection_score", "early_clip_rate", "no_issue_rate")
+    keys = ("success_rate", "clean_success_rate", "selection_score", "early_clip_rate", "no_issue_rate")
     out = {k: float(np.mean([s[k] for s in per_seed])) for k in keys}
     out["success_rate_range"] = [min(s["success_rate"] for s in per_seed), max(s["success_rate"] for s in per_seed)]
     out["background_false_per_clip"] = float(np.mean([s["background_false"] / s["background_clips"] for s in per_seed]))

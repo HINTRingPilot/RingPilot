@@ -1,0 +1,8 @@
+WARNING:tensorflow:From C:\Users\user\Desktop\prj\watch\ml\.venv\Lib\site-packages\keras\src\backend\common\global_state.py:82: The name tf.reset_default_graph is deprecated. Please use tf.compat.v1.reset_default_graph instead.
+
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+newtcnhard S-P5 seed 20261024 fold 0: 9092.7s
+newtcnhard S-P5 seed 20261024 fold 1: 88.7s
+newtcnhard S-P5 seed 20261024 fold 2: 91.3s
+newtcnhard S-P5 seed 20261024 fold 3: 75.9s
+saved C:\Users\user\Desktop\prj\watch\ml\runs\return-label-01\results\newtcnhard-S-P5\seed-20261024.json
