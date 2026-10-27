@@ -1,0 +1,8 @@
+WARNING:tensorflow:From C:\Users\zoonc\Desktop\RingPilot\ml\.venv\Lib\site-packages\keras\src\backend\common\global_state.py:82: The name tf.reset_default_graph is deprecated. Please use tf.compat.v1.reset_default_graph instead.
+
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+newtcnrotwarp S-P5 seed 20261021 fold 0: 162.2s
+newtcnrotwarp S-P5 seed 20261021 fold 1: 159.3s
+newtcnrotwarp S-P5 seed 20261021 fold 2: 149.5s
+newtcnrotwarp S-P5 seed 20261021 fold 3: 152.6s
+saved C:\Users\zoonc\Desktop\RingPilot\ml\runs\return-label-01\zoon-pc-20261027\results\newtcnrotwarp-S-P5\seed-20261021.json
