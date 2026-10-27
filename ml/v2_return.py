@@ -5,13 +5,15 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
   old       방향 라벨 e ≤ t < e+150 ms
   new       방향 라벨 r ≤ t < r+150 ms (제외 구간 없음, 나머지 NONE)
   newangle  new + 회전각 3채널(창 시작 대비 누적 자이로, 클립 중앙값 영점 보정, 45도로 나눔). 입력 9채널
+  newtcn    newangle과 같은 입력·라벨, 모델만 TCN(model.build_tcn: 커널 3, dilation 1·2·4·8·16·49, 16채널,
+            블록당 합성곱 1개, 드롭아웃 0.1, 정규화 없음, 마지막 시점 판정, 4,613 파라미터)
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
-  run --label old|new|newangle --split C|S-P1..S-P5 --seed N   한 seed의 모든 fold 학습·채점
+  run --label old|new|newangle|newtcn --split C|S-P1..S-P5 --seed N   한 seed의 모든 fold 학습·채점
   run-all [--parallel 8]                                      빠진 (label, split, seed)를 모두 실행
   summarize [--out summary.json]                              요약 작성(이미 있으면 거부)
 """
@@ -37,11 +39,12 @@ SCORINGS = ("old_window", "new_window")
 ANGLE_SCALE_DEG = 45.0
 SAMPLE_S = 0.01
 
-# label: 방향 라벨의 기준 시각("settled" = 기존 e, "return" = r), angle: 회전각 채널 추가 여부
+# label: 방향 라벨의 기준 시각("settled" = 기존 e, "return" = r), angle: 회전각 채널 추가 여부, model: "cnn" | "tcn"
 CONDITIONS = {
-    "old": {"label": "settled", "angle": False},
-    "new": {"label": "return", "angle": False},
-    "newangle": {"label": "return", "angle": True},
+    "old": {"label": "settled", "angle": False, "model": "cnn"},
+    "new": {"label": "return", "angle": False, "model": "cnn"},
+    "newangle": {"label": "return", "angle": True, "model": "cnn"},
+    "newtcn": {"label": "return", "angle": True, "model": "tcn"},
 }
 LABELS = tuple(CONDITIONS)
 
@@ -90,10 +93,19 @@ def windows_with_angle(record, mean, std, root=ROOT):
     return np.concatenate([x, (angle / ANGLE_SCALE_DEG).astype(np.float32)], axis=2), y, meta
 
 
+def tcn(channels):
+    from model import build_tcn
+    return build_tcn(v2.WINDOW, channels=channels)
+
+
 def prepare_fold(label, by_path, nb, split, k):
     """조건 label의 fold k 학습·검증 집합과 학습 함수를 돌려준다."""
-    window_fn = windows_with_angle if CONDITIONS[label]["angle"] else None
-    return v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn), v2.fit_snapshots
+    cond = CONDITIONS[label]
+    window_fn = windows_with_angle if cond["angle"] else None
+    d = v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn)
+    if cond["model"] == "tcn":
+        return d, lambda *args: v2.fit_snapshots(*args, model_fn=tcn)
+    return d, v2.fit_snapshots
 
 
 # ---------------------------------------------------------------- 채점
@@ -176,7 +188,7 @@ def cmd_run(label, split_name, seed):
         d, fit = prepare_fold(label, by_path, nb, split, k)
         x_val = np.concatenate([c[1] for c in d["val"]])
         scores, _ = fit(d["x_train"], d["y_train"], x_val, seed, epochs)
-        result["model_params"] = v2.model_params(d["x_train"].shape[2])
+        result["model_params"] = tcn(d["x_train"].shape[2]).count_params() if CONDITIONS[label]["model"] == "tcn"             else v2.model_params(d["x_train"].shape[2])
         np.savez_compressed(score_dir / f"seed-{seed}-fold-{k}-scores.npz", **{f"e{e}": scores[e].astype(np.float32) for e in epochs})
         per_epoch = {str(e): {s: dict(zip(("totals", "per_source"), score(d["val"], scores[e], by_path, nb, s))) for s in SCORINGS}
                      for e in epochs}

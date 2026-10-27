@@ -563,10 +563,10 @@ def model_params(channels=len(AXES)):
     return 9493 + 80 * (channels - len(AXES))
 
 
-def fit_snapshots(x_train, y_train, x_val, seed, epochs):
+def fit_snapshots(x_train, y_train, x_val, seed, epochs, model_fn=None):
     """max(epochs)까지 한 번 학습하고 epochs에 든 epoch가 끝날 때마다 검증 점수를 저장한다.
 
-    입력 채널 수는 x_train에서 읽는다(기본 6축).
+    입력 채널 수는 x_train에서 읽는다(기본 6축). model_fn(channels)을 주면 그 모델을 쓴다(기본 build_model).
     """
     tf = configure_tf()
     from model import build_model
@@ -585,8 +585,11 @@ def fit_snapshots(x_train, y_train, x_val, seed, epochs):
     tf.keras.backend.clear_session()
     tf.keras.utils.set_random_seed(seed)
     channels = x_train.shape[2]
-    model = build_model(WINDOW, channels=channels)
-    assert model.count_params() == model_params(channels)
+    if model_fn is None:
+        model = build_model(WINDOW, channels=channels)
+        assert model.count_params() == model_params(channels)
+    else:
+        model = model_fn(channels)
     model.compile(optimizer=tf.keras.optimizers.Adam(.001), loss="sparse_categorical_crossentropy")
     ds = (tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(len(y_train), seed=seed)
           .batch(16).with_options(options))
