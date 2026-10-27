@@ -8,8 +8,11 @@
   smoke     코드 점검용 짧은 학습(결과를 저장하지 않는다)
 
 계획: docs/TrainingPlan.md "BLE v2 실험". 발행·채점 함수(issue_events, classify_events,
-choose_training)는 ml/baseline.py(v1)의 동작을 그대로 옮긴 것이고, test_v2.py가 v1 함수와
-같은 결과를 내는지 확인한다. 3초 클립 전용 값(300행, 3000 ms 범위, 고정 세션 이름)만 바꿨다.
+choose_training)는 v1(ml/baseline.py, 2026-10-27 삭제)의 동작을 그대로 옮긴 것이고, test_v2.py가
+v1과 같던 출력의 지문으로 이를 확인한다. 3초 클립 전용 값(300행, 3000 ms 범위, 고정 세션 이름)만 바꿨다.
+
+다른 실험이 창 생성이나 입력 채널을 바꿀 때는 fold_sets(window_fn=...)와 fit_snapshots에 넘기는
+입력 채널 수로 바꾼다. 기본값은 위 계획의 조건 그대로다.
 """
 
 import argparse
@@ -156,7 +159,7 @@ def normalization(train_records, root=ROOT):
 
 
 def choose_training(y, meta, seed=SEED):
-    """양성 창 수만큼 NONE을 종류별 라운드로빈으로 고정 추출한다(baseline.choose_training과 같음)."""
+    """양성 창 수만큼 NONE을 종류별 라운드로빈으로 고정 추출한다(v1과 같음)."""
     rng = np.random.default_rng(seed)
     positive = np.flatnonzero(y != 0).tolist()
     groups = defaultdict(lambda: defaultdict(list))
@@ -188,7 +191,7 @@ def choose_training(y, meta, seed=SEED):
     return np.array(sorted(positive + none), dtype=np.int64)
 
 
-# ---------------------------------------------------------------- 발행·채점 (baseline.py와 같은 동작)
+# ---------------------------------------------------------------- 발행·채점 (v1과 같은 동작)
 
 def issue_events(times, scores):
     """파일마다 초기화. 두 번째 연속 조건 충족 시 발행하고 잠그며, 확실한 NONE 2회로 재무장한다."""
@@ -499,32 +502,36 @@ def verify():
 
 # ---------------------------------------------------------------- 학습 집합·학습
 
-def make_chunks(recs, mean, std, root=ROOT):
-    return [(r, *windows(r, mean, std, root)) for r in recs]
+def make_chunks(recs, mean, std, root=ROOT, window_fn=None):
+    window_fn = window_fn or windows
+    return [(r, *window_fn(r, mean, std, root)) for r in recs]
 
 
-def build_sets(train_recs, val_recs, root=ROOT, none_seed=SEED):
-    """원본 분할 → 학습 원본만으로 정규화 → 창 생성 → 학습에만 NONE 추출. 검증은 전체 replay."""
+def build_sets(train_recs, val_recs, root=ROOT, none_seed=SEED, window_fn=None):
+    """원본 분할 → 학습 원본만으로 정규화 → 창 생성 → 학습에만 NONE 추출. 검증은 전체 replay.
+
+    window_fn은 windows와 같은 (record, mean, std, root) → (x, y, meta) 함수다. 없으면 windows를 쓴다.
+    """
     assert {r["source_path"] for r in train_recs}.isdisjoint(r["source_path"] for r in val_recs)
     mean, std = normalization(train_recs, root)
-    train_chunks = make_chunks(train_recs, mean, std, root)
+    train_chunks = make_chunks(train_recs, mean, std, root, window_fn)
     x = np.concatenate([c[1] for c in train_chunks])
     y = np.concatenate([c[2] for c in train_chunks])
     meta = sum([c[3] for c in train_chunks], [])
     idx = choose_training(y, meta, none_seed)
-    val_chunks = make_chunks(val_recs, mean, std, root)
+    val_chunks = make_chunks(val_recs, mean, std, root, window_fn)
     return {"x_train": x[idx], "y_train": y[idx], "train_all_counts": np.bincount(y, minlength=5).tolist(),
             "train_counts": np.bincount(y[idx], minlength=5).tolist(),
             "train_none_groups": dict(Counter(meta[i]["none_group"] for i in idx if y[i] == 0)),
             "val": val_chunks, "mean": mean, "std": std, "train_sources": len(train_recs), "val_sources": len(val_recs)}
 
 
-def fold_sets(by_path, split, k):
+def fold_sets(by_path, split, k, window_fn=None):
     val = set(split["cv"]["folds"][k]["validation_sources"])
     assert val <= set(split["train_sources"]) and not val & set(split["eval_sources"])
     train_recs = [by_path[p] for p in split["train_sources"] if p not in val]
     val_recs = [by_path[p] for p in split["train_sources"] if p in val]
-    return build_sets(train_recs, val_recs)
+    return build_sets(train_recs, val_recs, window_fn=window_fn)
 
 
 _tf_ready = False
@@ -551,8 +558,16 @@ def configure_tf():
     return tf
 
 
+def model_params(channels=len(AXES)):
+    """build_model(WINDOW)의 파라미터 수. 입력 채널이 하나 늘 때마다 첫 Conv(커널 5, 필터 16) 가중치가 80개 는다."""
+    return 9493 + 80 * (channels - len(AXES))
+
+
 def fit_snapshots(x_train, y_train, x_val, seed, epochs):
-    """max(epochs)까지 한 번 학습하고 epochs에 든 epoch가 끝날 때마다 검증 점수를 저장한다."""
+    """max(epochs)까지 한 번 학습하고 epochs에 든 epoch가 끝날 때마다 검증 점수를 저장한다.
+
+    입력 채널 수는 x_train에서 읽는다(기본 6축).
+    """
     tf = configure_tf()
     from model import build_model
 
@@ -569,8 +584,9 @@ def fit_snapshots(x_train, y_train, x_val, seed, epochs):
     options.threading.private_threadpool_size = 1
     tf.keras.backend.clear_session()
     tf.keras.utils.set_random_seed(seed)
-    model = build_model(WINDOW)
-    assert model.count_params() == 9493
+    channels = x_train.shape[2]
+    model = build_model(WINDOW, channels=channels)
+    assert model.count_params() == model_params(channels)
     model.compile(optimizer=tf.keras.optimizers.Adam(.001), loss="sparse_categorical_crossentropy")
     ds = (tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(len(y_train), seed=seed)
           .batch(16).with_options(options))

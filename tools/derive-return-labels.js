@@ -13,6 +13,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { median, movingAverage } = require('./lib/signal');
 
 const SAMPLE_MS = 10;
 const WINDOW = 160;
@@ -42,22 +43,6 @@ function parseArgs(argv) {
 function digest(file) {
   const bytes = fs.readFileSync(file).toString('latin1').replaceAll('\r\n', '\n');
   return crypto.createHash('sha256').update(Buffer.from(bytes, 'latin1')).digest('hex');
-}
-
-function median(values) {
-  const sorted = [...values].sort((a, b) => a - b);
-  return (sorted[(sorted.length - 1) >> 1] + sorted[sorted.length >> 1]) / 2;
-}
-
-function movingAverage(values, width) {
-  const radius = width >> 1;
-  return values.map((_, ix) => {
-    const start = Math.max(0, ix - radius);
-    const end = Math.min(values.length, ix + radius + 1);
-    let sum = 0;
-    for (let k = start; k < end; k += 1) sum += values[k];
-    return sum / (end - start);
-  });
 }
 
 function readRows(file) {

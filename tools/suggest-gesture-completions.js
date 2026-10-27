@@ -4,6 +4,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { median, mean, movingAverage } = require('./lib/signal');
 
 const LABELS = ['raw_up', 'raw_down', 'raw_left', 'raw_right'];
 const QUIET_HOLD_MS = 180;
@@ -62,17 +63,6 @@ function printHelp() {
   ].join('\n'));
 }
 
-function median(values) {
-  const sorted = [...values].sort((a, b) => a - b);
-  const hi = sorted.length >> 1;
-  const lo = (sorted.length - 1) >> 1;
-  return (sorted[lo] + sorted[hi]) / 2;
-}
-
-function mean(values) {
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
 function magnitude(values) {
   return Math.hypot(...values);
 }
@@ -80,15 +70,6 @@ function magnitude(values) {
 function percentile(values, ratio) {
   const sorted = [...values].sort((a, b) => a - b);
   return sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * ratio))];
-}
-
-function movingAverage(values, width) {
-  const radius = Math.floor(width / 2);
-  return values.map((_, ix) => {
-    const start = Math.max(0, ix - radius);
-    const end = Math.min(values.length, ix + radius + 1);
-    return mean(values.slice(start, end));
-  });
 }
 
 function vectorMedian(rows, offset) {
@@ -167,12 +148,9 @@ function findQuietStart(quietMask, startIndex, holdSamples) {
 // motion allowed after 0.5 s and a ±1000 dps gyro.
 const DEFAULT_RECORDING = { clipSamples: 300, preRollMs: 500, gyroRangeDps: 1000 };
 
-function analyzeSample(label, sample, response, recording = DEFAULT_RECORDING) {
-  const rows = response.payload.values;
-  const intervalMs = response.sample.intervalMs;
-  if (intervalMs !== SAMPLE_INTERVAL_MS) {
-    throw new Error(`${sample.filename}: expected ${SAMPLE_INTERVAL_MS} ms interval, got ${intervalMs}`);
-  }
+// rows: clipSamples six-axis rows sampled every SAMPLE_INTERVAL_MS (acc x/y/z, gyro x/y/z).
+function analyzeSample(label, sample, rows, recording = DEFAULT_RECORDING) {
+  const intervalMs = SAMPLE_INTERVAL_MS;
   if (rows.length !== recording.clipSamples
     || rows.some(row => row.length !== 6 || row.some(value => !Number.isFinite(value)))) {
     throw new Error(`${sample.filename}: expected ${recording.clipSamples} finite six-axis rows`);
@@ -340,8 +318,7 @@ function analyzeLocalDir(localDir, exclude, idStart) {
       const rows = loadLocalCsv(fullPath, recording.clipSamples);
       const sample = { id: nextId, filename, sourcePath: path.relative(process.cwd(), fullPath).replaceAll('\\', '/') };
       nextId += 1;
-      const response = { payload: { values: rows }, sample: { intervalMs: SAMPLE_INTERVAL_MS } };
-      annotations.push(analyzeSample(label, sample, response, recording));
+      annotations.push(analyzeSample(label, sample, rows, recording));
     }
   }
   return annotations;

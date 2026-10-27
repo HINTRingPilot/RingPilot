@@ -1,5 +1,6 @@
 """BLE v2 데이터·창·채점 점검. 학습하지 않는다. 합성 데이터와 저장된 주석·분할만 읽는다."""
 import csv
+import hashlib
 import json
 import tempfile
 import unittest
@@ -7,7 +8,6 @@ from pathlib import Path
 
 import numpy as np
 
-import baseline
 import v2
 
 
@@ -21,8 +21,10 @@ def write_clip(path, rows, gap=10, header=None, start=0):
 
 class PositiveCountTests(unittest.TestCase):
     def test_matches_v1_where_both_cover_all_windows(self):
-        for e in range(1000, 2860):
-            self.assertEqual(v2.positive_count(e), baseline.positive_count(e), e)
+        # v1(ml/baseline.py, 2026-10-27 삭제)과 같던 출력의 지문
+        counts = [v2.positive_count(e) for e in range(1000, 2860)]
+        self.assertEqual(hashlib.sha256(json.dumps(counts).encode()).hexdigest(),
+                         "7358f5d098a25c993d0151bdd1d52a18207d41e82250aedbdb4c61b7e77ee2f2")
 
     def test_warmup_does_not_invent_positives(self):
         self.assertEqual(v2.positive_count(1420), 0)
@@ -124,24 +126,26 @@ class WindowTests(unittest.TestCase):
 
 class EventTests(unittest.TestCase):
     def test_same_as_v1_on_random_scores(self):
+        # v1(ml/baseline.py, 2026-10-27 삭제)과 같던 발행·채점 출력의 지문
         rng = np.random.default_rng(7)
+        out = []
         for trial in range(300):
             n = int(rng.integers(5, 60))
             scores = rng.dirichlet(np.full(5, rng.choice([.15, .4, 1.0])), size=n)
             times = list(range(1590, 1590 + 50 * n, 50))
-            self.assertEqual(v2.issue_events(times, scores), baseline.issue_events(times, scores))
+            events = v2.issue_events(times, scores)
             e = int(rng.choice([None, 1900, 2400, 3000]) or 0) or None
             record = {"completion_ms": e, "direction": "NONE" if e is None else "LEFT"}
-            events = v2.issue_events(times, scores)
-            self.assertEqual(v2.classify_events(record, events), baseline.classify_events(record, events))
+            out.append([events, v2.classify_events(record, events)])
+        self.assertEqual(hashlib.sha256(json.dumps(out, sort_keys=True).encode()).hexdigest(),
+                         "d5903ddd8d7d78e6d2f184dc588db85a1905756a3b09402dcb77e62571db8414")
 
     def test_choose_training_same_as_v1(self):
         rng = np.random.default_rng(3)
         y = np.array([1, 2, 3, 4, 1, 2] + [0] * 60)
         meta = [{"none_group": ["idle", "other", "in_progress", "post_completion"][i % 4], "source_path": f"f{i % 5}"}
                 for i in range(len(y))]
-        a, b = v2.choose_training(y, meta), baseline.choose_training(y, meta)
-        np.testing.assert_array_equal(a, b)
+        a = v2.choose_training(y, meta)
         self.assertEqual(np.bincount(y[a], minlength=5).tolist(), [6, 2, 2, 1, 1])
 
     def test_issue_does_not_use_completion_time(self):
