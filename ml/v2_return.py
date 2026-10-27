@@ -13,13 +13,16 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
   newtcnnorm newtcn + 회전각 3채널을 fold 학습 창의 축별 평균·표준편차로 정규화(다른 6채널과 같은 크기로 맞춤).
   newtcnrt   newtcnnorm과 같되 회전각 영점을 인과적으로 잡는다: 클립 0~900 ms(동작 신호 전 정지 구간) 자이로 중앙값.
             첫 판정(1590 ms)보다 앞선 데이터만 쓰므로 실시간 영점 추정에 해당한다.
+  newtcnrot  newtcnrt + 학습 원본마다 회전 사본 2개(R = R_tilt·R_y(θ), θ ~ U(±30°), X-Z 평면 임의 축 둘레 ±15°).
+            가속도는 중력까지 돌리고 자이로는 원본 0~890 ms 영점을 뺀 뒤 돌려 다시 더한다. 회전각 영점은 사본에서 다시 잡는다.
+            계획: docs/superpowers/plans/2026-10-27-v2-augmentation.md §6
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
-  run --label old|new|newangle|newtcn|newtcnhard|newtcnnorm|newtcnrt --split C|S-P5 --seed N [--tag T]   한 seed의 모든 fold 학습·채점
+  run --label old|new|newangle|newtcn|newtcnhard|newtcnnorm|newtcnrt|newtcnrot --split C|S-P5 --seed N [--tag T]   한 seed의 모든 fold 학습·채점
   run-all [--parallel 8] [--labels L ...] [--tag T]           빠진 (label, split, seed)를 실행(기본은 모든 조건)
   summarize [--out summary.json] [--tag T]                    요약 작성(이미 있으면 거부)
 --tag를 주면 결과는 ml/runs/return-label-01/<T>/, 로그는 OUT/logs/<T>/에 둔다(다른 PC·재실행 결과를 기존 것과 나눔).
@@ -27,6 +30,7 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
 """
 
 import argparse
+import hashlib
 import json
 import os
 import platform
@@ -67,8 +71,11 @@ CONDITIONS = {
     "newtcnhard": {**_BASE, "angle": True, "model": "tcn", "hard": "outbound"},
     "newtcnnorm": {**_BASE, "angle": True, "model": "tcn", "angle_norm": True},
     "newtcnrt": {**_BASE, "angle": True, "model": "tcn", "angle_norm": True, "angle_bias": "precue"},
+    "newtcnrot": {**_BASE, "angle": True, "model": "tcn", "angle_norm": True, "angle_bias": "precue",
+                  "aug": {"kind": "rotate", "rot_y_deg": 30, "tilt_deg": 15, "copies": 2}},
 }
 PRECUE_SAMPLES = 90       # 0~890 ms, 동작 신호(1000 ms) 전
+AUG_SEED = 20261027       # 증강 난수(학습 seed와 별개, 클립 경로·사본 번호와 함께 쓴다)
 ANGLE = slice(6, 9)
 LABELS = tuple(CONDITIONS)
 
@@ -167,10 +174,56 @@ def tcn(channels):
     return build_tcn(v2.WINDOW, channels=channels)
 
 
+def rotation_matrix(axis, deg):
+    """단위 축 axis 둘레로 deg도 돌리는 행렬(로드리게스 공식)."""
+    a = np.asarray(axis, dtype=np.float64)
+    a = a / np.linalg.norm(a)
+    k = np.array([[0, -a[2], a[1]], [a[2], 0, -a[0]], [-a[1], a[0], 0]])
+    t = np.radians(deg)
+    return np.eye(3) + np.sin(t) * k + (1 - np.cos(t)) * (k @ k)
+
+
+def random_rotation(rng, rot_y_deg, tilt_deg):
+    """R = R_tilt · R_y(θ). θ ~ U(−rot_y, +rot_y). R_tilt는 X-Z 평면의 임의 축(방향각 ~ U(0°, 360°)) 둘레로 φ ~ U(−tilt, +tilt)."""
+    theta = rng.uniform(-rot_y_deg, rot_y_deg)
+    psi = np.radians(rng.uniform(0, 360))
+    phi = rng.uniform(-tilt_deg, tilt_deg)
+    return rotation_matrix((np.cos(psi), 0.0, np.sin(psi)), phi) @ rotation_matrix((0.0, 1.0, 0.0), theta)
+
+
+def rotate_raw(raw, rot, bias):
+    """센서 좌표계를 rot만큼 돌린 원시 사본. 가속도는 중력까지 함께 돌린다.
+    자이로 영점은 센서 고유 성질이라 돌리지 않는다: gyro' = R(gyro − b) + b."""
+    out = raw.copy()
+    out[:, 0:3] = raw[:, 0:3] @ rot.T
+    out[:, 3:6] = (raw[:, 3:6] - bias) @ rot.T + bias
+    return out
+
+
+def clip_rng(source_path, copy):
+    """클립·사본마다 고정된 난수. fold·처리 순서와 무관하게 같은 클립·사본은 같은 변형을 받는다."""
+    h = int.from_bytes(hashlib.sha256(source_path.encode("utf-8")).digest()[:8], "little")
+    return np.random.default_rng([AUG_SEED, h, copy])
+
+
+def rotate_augmenter(aug):
+    """학습 원본마다 회전 사본 aug["copies"]개. 방향·배경 모두 돌린다(회전 = 동작 클립이라는 지름길을 막는다)."""
+    def augment(record, ts, raw):
+        bias = np.median(raw[:PRECUE_SAMPLES, 3:6], axis=0)
+        copies = []
+        for c in range(1, aug["copies"] + 1):
+            rot = random_rotation(clip_rng(record["source_path"], c), aug["rot_y_deg"], aug["tilt_deg"])
+            copies.append(({**record, "source_path": f"{record['source_path']}#rot{c}"}, rotate_raw(raw, rot, bias), len(raw)))
+        return copies
+    return augment
+
+
 def augmenter(aug):
     """조건의 aug 설정으로 v2.fold_sets(augment_fn=...)에 넘길 함수를 만든다. None이면 증강하지 않는다."""
     if aug is None:
         return None
+    if aug["kind"] == "rotate":
+        return rotate_augmenter(aug)
     raise ValueError(f"알 수 없는 증강 설정: {aug}")
 
 
