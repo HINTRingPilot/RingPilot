@@ -13,7 +13,7 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
-  run --label old|new|newangle|newtcn --split C|S-P1..S-P5 --seed N   한 seed의 모든 fold 학습·채점
+  run --label old|new|newangle|newtcn --split C|S-P2|S-P5 --seed N   한 seed의 모든 fold 학습·채점
   run-all [--parallel 8]                                      빠진 (label, split, seed)를 모두 실행
   summarize [--out summary.json]                              요약 작성(이미 있으면 거부)
 """
@@ -36,6 +36,8 @@ EXP = "return-label-01"
 OUT = DOC / EXP
 RUNS = ROOT / "ml/runs" / EXP
 SCORINGS = ("old_window", "new_window")
+# 2026-10-27부터 쓰는 분할(사용자 결정). 이전 결과는 6개 분할(v2.SPLIT_NAMES)로 남아 있다.
+SPLITS = ("C", "S-P2", "S-P5")
 ANGLE_SCALE_DEG = 45.0
 SAMPLE_S = 0.01
 
@@ -203,7 +205,7 @@ def cmd_run(label, split_name, seed):
 
 
 def cmd_run_all(parallel):
-    jobs = [(lab, sp, s) for lab in LABELS for sp in v2.SPLIT_NAMES for s in v2.SEEDS if not result_path(lab, sp, s).exists()]
+    jobs = [(lab, sp, s) for lab in LABELS for sp in SPLITS for s in v2.SEEDS if not result_path(lab, sp, s).exists()]
     print("pending:", len(jobs), flush=True)
     logs = OUT / "logs"
     logs.mkdir(parents=True, exist_ok=True)
@@ -264,11 +266,11 @@ def cmd_summarize(name="summary.json"):
     target = OUT / name
     if target.exists():
         raise FileExistsError(f"{target}가 이미 있다")
-    labels = [lab for lab in LABELS if all(result_path(lab, sp, s).exists() for sp in v2.SPLIT_NAMES for s in v2.SEEDS)]
+    labels = [lab for lab in LABELS if all(result_path(lab, sp, s).exists() for sp in SPLITS for s in v2.SEEDS)]
     summary = {"experiment": EXP, "created_kst": now(), "rule": "E는 seed 평균 selection_score 최대, 같으면 작은 E",
                "labels": labels, "panels": {}}
     for lab in labels:
-        for sp in v2.SPLIT_NAMES:
+        for sp in SPLITS:
             res = [json.loads(result_path(lab, sp, s).read_text(encoding="utf-8")) for s in v2.SEEDS]
             panel = {}
             for sc in SCORINGS:
@@ -283,7 +285,7 @@ def cmd_summarize(name="summary.json"):
 def print_table(summary):
     for sc in SCORINGS:
         print(f"\n== {sc}: 선택 E / 정검출률(seed 평균) / 조기 발행 클립 / 무발행 / 배경 오발행(클립당)")
-        for sp in v2.SPLIT_NAMES:
+        for sp in SPLITS:
             row = [sp]
             for lab in summary["labels"]:
                 p = summary["panels"][f"{lab}-{sp}"][sc]
@@ -298,7 +300,7 @@ def main():
     sub = p.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run")
     r.add_argument("--label", choices=LABELS, required=True)
-    r.add_argument("--split", choices=v2.SPLIT_NAMES, required=True)
+    r.add_argument("--split", choices=SPLITS, required=True)
     r.add_argument("--seed", type=int, required=True)
     a = sub.add_parser("run-all")
     a.add_argument("--parallel", type=int, default=8)
