@@ -16,13 +16,17 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
   newtcnrot  newtcnrt + 학습 원본마다 회전 사본 2개(R = R_tilt·R_y(θ), θ ~ U(±30°), X-Z 평면 임의 축 둘레 ±15°).
             가속도는 중력까지 돌리고 자이로는 원본 0~890 ms 영점을 뺀 뒤 돌려 다시 더한다. 회전각 영점은 사본에서 다시 잡는다.
             계획: docs/superpowers/plans/2026-10-27-v2-augmentation.md §6
+  newtcnrotwarp newtcnrot의 회전 사본(같은 R)에 속도 변형을 더한다. s ~ 로그 균등(0.8, 1.25), 890 ms 고정점,
+            0~890 ms(영점 구간)는 그대로, 900 ms부터 원본 시각 890 + (t − 890)/s 값을 보간하고 자이로는 영점을 뺀 뒤 1/s배.
+            라벨 r' = 890 + s(r − 890). 배경·동작 시작 < 900 ms·양성 창 수가 줄어드는 사본·경계 점프 > 2 dps 사본은 회전만(newtcnrot 사본 그대로).
+            계획: 같은 문서 §7(3차 개정)
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
-  run --label old|new|newangle|newtcn|newtcnhard|newtcnnorm|newtcnrt|newtcnrot --split C|S-P5 --seed N [--tag T]   한 seed의 모든 fold 학습·채점
+  run --label old|new|newangle|newtcn|newtcnhard|newtcnnorm|newtcnrt|newtcnrot|newtcnrotwarp --split C|S-P5 --seed N [--tag T]   한 seed의 모든 fold 학습·채점
   run-all [--parallel 8] [--labels L ...] [--tag T]           빠진 (label, split, seed)를 실행(기본은 모든 조건)
   summarize [--out summary.json] [--tag T]                    요약 작성(이미 있으면 거부)
 --tag를 주면 결과는 ml/runs/return-label-01/<T>/, 로그는 OUT/logs/<T>/에 둔다(다른 PC·재실행 결과를 기존 것과 나눔).
@@ -46,6 +50,7 @@ import v2
 from v2 import CLASSES, DOC, ROOT, digest, dump, now
 
 NEW_RECORDS = ROOT / "data/annotations/ble-v2-return/records.json"
+CANDIDATES = ROOT / "data/annotations/ble-v2"          # *-candidates.json의 main_motion_start_ms(속도 증강 조건)
 EXP = "return-label-01"
 OUT = DOC / EXP
 RUNS = ROOT / "ml/runs" / EXP
@@ -55,6 +60,7 @@ SCORINGS = ("old_window", "new_window")
 SPLITS = ("C", "S-P5")
 ANGLE_SCALE_DEG = 45.0
 SAMPLE_S = 0.01
+SAMPLE_MS = 10.0
 
 # label: 방향 라벨의 기준 시각("settled" = 기존 e, "return" = r), angle: 회전각 채널 추가 여부, model: "cnn" | "tcn",
 # hard: 학습 NONE에 반드시 넣을 구간(None = v2.choose_training 그대로, "outbound" = 가는 피크 ~ 끝점),
@@ -73,8 +79,11 @@ CONDITIONS = {
     "newtcnrt": {**_BASE, "angle": True, "model": "tcn", "angle_norm": True, "angle_bias": "precue"},
     "newtcnrot": {**_BASE, "angle": True, "model": "tcn", "angle_norm": True, "angle_bias": "precue",
                   "aug": {"kind": "rotate", "rot_y_deg": 30, "tilt_deg": 15, "copies": 2}},
+    "newtcnrotwarp": {**_BASE, "angle": True, "model": "tcn", "angle_norm": True, "angle_bias": "precue",
+                      "aug": {"kind": "rotate_warp", "rot_y_deg": 30, "tilt_deg": 15, "copies": 2,
+                              "anchor_ms": 890, "scale_min": 0.8, "scale_max": 1.25, "max_jump_dps": 2.0}},
 }
-PRECUE_SAMPLES = 90       # 0~890 ms, 동작 신호(1000 ms) 전
+PRECUE_SAMPLES = 90       # 0~890 ms, 동작 신호(1000 ms) 전. 속도 변형은 이 행들을 건드리지 않는다(900 ms부터)
 AUG_SEED = 20261027       # 증강 난수(학습 seed와 별개, 클립 경로·사본 번호와 함께 쓴다)
 ANGLE = slice(6, 9)
 LABELS = tuple(CONDITIONS)
@@ -218,12 +227,83 @@ def rotate_augmenter(aug):
     return augment
 
 
+def warp_raw(raw, s, bias, anchor_ms):
+    """anchor_ms 고정점 속도 변형. 0~890 ms(PRECUE_SAMPLES행)는 그대로, 900 ms부터 원본 시각 anchor + (t − anchor)/s의 값을
+    축별 선형 보간한다. 자이로는 영점을 빼고 1/s배(같은 각도를 다른 속도로 돈다), 가속도는 보간만 한다.
+    (사본, 유효 행 수, 경계 점프 dps)를 돌려준다. 원본 범위(마지막 행 시각) 밖 행은 마지막 유효 행으로 채운다(그 창은 학습에서 빠진다).
+    경계 점프는 첫 변형 행에서 배율이 갑자기 바뀌어 생기는 차이: max_axis |보간값 − b|·|1/s − 1|."""
+    t = np.arange(len(raw)) * SAMPLE_MS
+    src = anchor_ms + (t[PRECUE_SAMPLES:] - anchor_ms) / s
+    src = src[src <= t[-1]]
+    seg = np.stack([np.interp(src, t, raw[:, j]) for j in range(raw.shape[1])], axis=1)
+    jump = float(np.max(np.abs(seg[0, 3:6] - bias)) * abs(1 / s - 1))
+    seg[:, 3:6] = (seg[:, 3:6] - bias) / s + bias
+    out = raw.copy()
+    n = PRECUE_SAMPLES + len(seg)
+    out[PRECUE_SAMPLES:n] = seg
+    out[n:] = out[n - 1]
+    return out, n, jump
+
+
+def positive_windows(e, rows, valid_rows):
+    """라벨 시각 e의 양성 창(e ≤ t < e+150 ms) 중 마지막 샘플이 유효 행 안에 있는 판정 창 수."""
+    t = v2.decision_times(rows)
+    t = t[t <= (valid_rows - 1) * SAMPLE_MS]
+    return int(np.sum((t >= e) & (t < e + v2.POSITIVE_MS)))
+
+
+def motion_starts():
+    """방향 원본의 주동작 시작 시각(ms, 활동 신호 누적 에너지 1% 시점)."""
+    return {a["source_path"]: a["main_motion_start_ms"] for f in sorted(CANDIDATES.glob("*-candidates.json"))
+            for a in json.loads(f.read_text(encoding="utf-8"))["annotations"]}
+
+
+def rotate_warp_augmenter(aug, starts=None):
+    """newtcnrot과 같은 회전 사본(같은 난수 순서·같은 사본 이름)에 속도 변형을 더한다. s는 R 다음에 같은 난수에서 뽑는다.
+    속도 조건을 못 넘는 사본은 회전만 적용한 newtcnrot 사본 그대로 둔다. augment.stats에 사본별 처리 결과를 센다."""
+    starts = motion_starts() if starts is None else starts
+    lo, hi = np.log(aug["scale_min"]), np.log(aug["scale_max"])
+    anchor = aug["anchor_ms"]
+    stats = Counter()
+
+    def augment(record, ts, raw):
+        path = record["source_path"]
+        bias = np.median(raw[:PRECUE_SAMPLES, 3:6], axis=0)
+        copies = []
+        for c in range(1, aug["copies"] + 1):
+            rng = clip_rng(path, c)
+            rot = rotate_raw(raw, random_rotation(rng, aug["rot_y_deg"], aug["tilt_deg"]), bias)
+            s = float(np.exp(rng.uniform(lo, hi)))
+            copy, why = ({**record, "source_path": f"{path}#rot{c}"}, rot, len(raw)), None
+            e = record["completion_ms"]
+            if e is None:
+                why = "background"
+            elif starts[path] < PRECUE_SAMPLES * SAMPLE_MS:
+                why = "early_start"
+            else:
+                r2 = anchor + s * (e - anchor)
+                warped, n, jump = warp_raw(rot, s, bias, anchor)
+                if positive_windows(r2, len(raw), n) != positive_windows(e, len(raw), len(raw)):
+                    why = "positive_loss"       # 양성 창이 첫 판정 앞으로 당겨지거나 원본 범위 밖으로 밀림
+                elif jump > aug["max_jump_dps"]:
+                    why = "jump"
+                else:
+                    copy = ({**record, "source_path": f"{path}#rot{c}", "completion_ms": r2}, warped, n)
+            stats[why or "warp"] += 1
+            copies.append(copy)
+        return copies
+    augment.stats = stats
+    return augment
+
+
 def augmenter(aug):
     """조건의 aug 설정으로 v2.fold_sets(augment_fn=...)에 넘길 함수를 만든다. None이면 증강하지 않는다."""
     if aug is None:
         return None
     if aug["kind"] == "rotate":
         return rotate_augmenter(aug)
+    if aug["kind"] == "rotate_warp":
+        return rotate_warp_augmenter(aug)
     raise ValueError(f"알 수 없는 증강 설정: {aug}")
 
 
@@ -232,8 +312,9 @@ def prepare_fold(label, by_path, nb, split, k):
     cond = CONDITIONS[label]
     window_fn = (lambda r, ts, raw, m, s: windows_with_angle(r, ts, raw, m, s, cond["angle_bias"])) if cond["angle"] else None
     none_fn = outbound_none_chooser(nb) if cond["hard"] == "outbound" else None
-    d = v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn, none_fn=none_fn,
-                     augment_fn=augmenter(cond["aug"]))
+    augment_fn = augmenter(cond["aug"])
+    d = v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn, none_fn=none_fn, augment_fn=augment_fn)
+    d["train_aug_stats"] = dict(getattr(augment_fn, "stats", {}))
     if cond["angle_norm"]:
         normalize_angle(d)
     if cond["model"] == "tcn":
@@ -351,6 +432,7 @@ def cmd_run(label, split_name, seed, tag=None):
                                 "updates_per_epoch": -(-len(d["y_train"]) // v2.BATCH_SIZE),
                                 "train_aug_copies": d["train_aug_copies"], "train_aug_skipped": d["train_aug_skipped"],
                                 "train_windows_excluded": d["train_windows_excluded"],
+                                "train_aug_stats": d["train_aug_stats"], "train_none_groups": d["train_none_groups"],
                                 "per_epoch": per_epoch, "seconds": round(time.time() - t0, 1)})
         print(f"{label} {split_name} seed {seed} fold {k}: {round(time.time() - t0, 1)}s", flush=True)
     result["seconds"] = round(time.time() - t_start, 1)
