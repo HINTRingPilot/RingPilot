@@ -11,13 +11,15 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
             "가는 피크 ~ 끝점"에 끝나는 창(가는 볼록 하강, 반대 방향 발행이 나던 구간)에서 클립을 돌아가며 뽑는다.
             idle·other·post_completion 선택과 NONE 총량은 바꾸지 않는다.
   newtcnnorm newtcn + 회전각 3채널을 fold 학습 창의 축별 평균·표준편차로 정규화(다른 6채널과 같은 크기로 맞춤).
+  newtcnrt   newtcnnorm과 같되 회전각 영점을 인과적으로 잡는다: 클립 0~900 ms(동작 신호 전 정지 구간) 자이로 중앙값.
+            첫 판정(1590 ms)보다 앞선 데이터만 쓰므로 실시간 영점 추정에 해당한다.
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
-  run --label old|new|newangle|newtcn|newtcnhard|newtcnnorm --split C|S-P5 --seed N   한 seed의 모든 fold 학습·채점
+  run --label old|new|newangle|newtcn|newtcnhard|newtcnnorm|newtcnrt --split C|S-P5 --seed N   한 seed의 모든 fold 학습·채점
   run-all [--parallel 8]                                      빠진 (label, split, seed)를 모두 실행
   summarize [--out summary.json]                              요약 작성(이미 있으면 거부)
 """
@@ -48,8 +50,9 @@ SAMPLE_S = 0.01
 
 # label: 방향 라벨의 기준 시각("settled" = 기존 e, "return" = r), angle: 회전각 채널 추가 여부, model: "cnn" | "tcn",
 # hard: 학습 NONE에 반드시 넣을 구간(None = v2.choose_training 그대로, "outbound" = 가는 피크 ~ 끝점),
-# angle_norm: 회전각 채널을 fold 학습 창의 평균·표준편차로 정규화할지
-_BASE = {"label": "return", "angle": False, "model": "cnn", "hard": None, "angle_norm": False}
+# angle_norm: 회전각 채널을 fold 학습 창의 평균·표준편차로 정규화할지,
+# angle_bias: 회전각 영점("clip" = 클립 전체 중앙값(비인과), "precue" = 클립 0~900 ms 중앙값(인과))
+_BASE = {"label": "return", "angle": False, "model": "cnn", "hard": None, "angle_norm": False, "angle_bias": "clip"}
 CONDITIONS = {
     "old": {**_BASE, "label": "settled"},
     "new": {**_BASE},
@@ -57,7 +60,9 @@ CONDITIONS = {
     "newtcn": {**_BASE, "angle": True, "model": "tcn"},
     "newtcnhard": {**_BASE, "angle": True, "model": "tcn", "hard": "outbound"},
     "newtcnnorm": {**_BASE, "angle": True, "model": "tcn", "angle_norm": True},
+    "newtcnrt": {**_BASE, "angle": True, "model": "tcn", "angle_norm": True, "angle_bias": "precue"},
 }
+PRECUE_SAMPLES = 90       # 0~890 ms, 동작 신호(1000 ms) 전
 ANGLE = slice(6, 9)
 LABELS = tuple(CONDITIONS)
 
@@ -93,13 +98,14 @@ def relabel(by_path, nb, label):
     return out
 
 
-def windows_with_angle(record, mean, std, root=ROOT):
-    """v2.windows에 회전각 3채널을 붙인다. 정규화된 자이로를 원시 deg/s로 되돌리고, 클립별 중앙값을 영점으로 빼서
-    창 안에서 누적한다. 원시 자이로에 약 10 dps 치우침이 있어 보정 없이는 1.6초에 약 16도가 쌓인다.
-    클립 중앙값은 비인과적이다(보드에서는 정지 구간에서 갱신하는 영점 추정으로 대신한다)."""
+def windows_with_angle(record, mean, std, root=ROOT, bias_mode="clip"):
+    """v2.windows에 회전각 3채널을 붙인다. 정규화된 자이로를 원시 deg/s로 되돌리고, 영점을 빼서 창 안에서 누적한다.
+    원시 자이로에 약 10 dps 치우침이 있어 보정 없이는 1.6초에 약 16도가 쌓인다.
+    bias_mode "clip"은 클립 전체 중앙값(비인과), "precue"는 클립 0~900 ms 중앙값(첫 판정 전 데이터만, 인과)."""
     x, y, meta = v2.windows(record, mean, std, root)
     _, raw = v2.read_sensor(Path(root) / record["source_path"])
-    bias = np.median(raw[:, 3:6], axis=0)
+    gyro_raw = raw[:PRECUE_SAMPLES, 3:6] if bias_mode == "precue" else raw[:, 3:6]
+    bias = np.median(gyro_raw, axis=0)
     gyro = x[:, :, 3:6].astype(np.float64) * std[3:6] + mean[3:6] - bias
     angle = np.cumsum(gyro * SAMPLE_S, axis=1)
     angle -= angle[:, :1, :]
@@ -158,7 +164,7 @@ def tcn(channels):
 def prepare_fold(label, by_path, nb, split, k):
     """조건 label의 fold k 학습·검증 집합과 학습 함수를 돌려준다."""
     cond = CONDITIONS[label]
-    window_fn = windows_with_angle if cond["angle"] else None
+    window_fn = (lambda r, m, s, root=ROOT: windows_with_angle(r, m, s, root, cond["angle_bias"])) if cond["angle"] else None
     none_fn = outbound_none_chooser(nb) if cond["hard"] == "outbound" else None
     d = v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn, none_fn=none_fn)
     if cond["angle_norm"]:
