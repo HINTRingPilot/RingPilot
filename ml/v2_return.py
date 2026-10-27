@@ -10,13 +10,14 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
   newtcnhard newtcn + 학습 NONE 추출 변경: choose_training이 고른 in_progress NONE 수는 그대로 두고 그 절반을
             "가는 피크 ~ 끝점"에 끝나는 창(가는 볼록 하강, 반대 방향 발행이 나던 구간)에서 클립을 돌아가며 뽑는다.
             idle·other·post_completion 선택과 NONE 총량은 바꾸지 않는다.
+  newtcnnorm newtcn + 회전각 3채널을 fold 학습 창의 축별 평균·표준편차로 정규화(다른 6채널과 같은 크기로 맞춤).
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
-  run --label old|new|newangle|newtcn|newtcnhard --split C|S-P2|S-P5 --seed N   한 seed의 모든 fold 학습·채점
+  run --label old|new|newangle|newtcn|newtcnhard|newtcnnorm --split C|S-P5 --seed N   한 seed의 모든 fold 학습·채점
   run-all [--parallel 8]                                      빠진 (label, split, seed)를 모두 실행
   summarize [--out summary.json]                              요약 작성(이미 있으면 거부)
 """
@@ -39,20 +40,25 @@ EXP = "return-label-01"
 OUT = DOC / EXP
 RUNS = ROOT / "ml/runs" / EXP
 SCORINGS = ("old_window", "new_window")
-# 2026-10-27부터 쓰는 분할(사용자 결정). 이전 결과는 6개 분할(v2.SPLIT_NAMES)로 남아 있다.
-SPLITS = ("C", "S-P2", "S-P5")
+# 쓰는 분할(사용자 결정). 2026-10-27 오전 C·S-P2·S-P5, 같은 날 newtcnnorm부터 C·S-P5.
+# 이전 결과는 6개 분할(v2.SPLIT_NAMES)이나 세 분할로 남아 있다.
+SPLITS = ("C", "S-P5")
 ANGLE_SCALE_DEG = 45.0
 SAMPLE_S = 0.01
 
 # label: 방향 라벨의 기준 시각("settled" = 기존 e, "return" = r), angle: 회전각 채널 추가 여부, model: "cnn" | "tcn",
-# hard: 학습 NONE에 반드시 넣을 구간(None = v2.choose_training 그대로, "outbound" = 가는 피크 ~ 끝점)
+# hard: 학습 NONE에 반드시 넣을 구간(None = v2.choose_training 그대로, "outbound" = 가는 피크 ~ 끝점),
+# angle_norm: 회전각 채널을 fold 학습 창의 평균·표준편차로 정규화할지
+_BASE = {"label": "return", "angle": False, "model": "cnn", "hard": None, "angle_norm": False}
 CONDITIONS = {
-    "old": {"label": "settled", "angle": False, "model": "cnn", "hard": None},
-    "new": {"label": "return", "angle": False, "model": "cnn", "hard": None},
-    "newangle": {"label": "return", "angle": True, "model": "cnn", "hard": None},
-    "newtcn": {"label": "return", "angle": True, "model": "tcn", "hard": None},
-    "newtcnhard": {"label": "return", "angle": True, "model": "tcn", "hard": "outbound"},
+    "old": {**_BASE, "label": "settled"},
+    "new": {**_BASE},
+    "newangle": {**_BASE, "angle": True},
+    "newtcn": {**_BASE, "angle": True, "model": "tcn"},
+    "newtcnhard": {**_BASE, "angle": True, "model": "tcn", "hard": "outbound"},
+    "newtcnnorm": {**_BASE, "angle": True, "model": "tcn", "angle_norm": True},
 }
+ANGLE = slice(6, 9)
 LABELS = tuple(CONDITIONS)
 
 
@@ -133,6 +139,17 @@ def outbound_none_chooser(nb):
     return choose
 
 
+def normalize_angle(d):
+    """회전각 채널을 fold 학습 창(선택된 학습 창)의 축별 평균·표준편차로 정규화한다. 검증 창은 통계에 쓰지 않는다."""
+    a = d["x_train"][:, :, ANGLE].astype(np.float64)
+    mean, std = a.mean(axis=(0, 1)), np.maximum(a.std(axis=(0, 1)), 1e-6)
+    d["angle_mean"], d["angle_std"] = mean, std
+    d["x_train"][:, :, ANGLE] = ((a - mean) / std).astype(np.float32)
+    for chunk in d["val"]:
+        x = chunk[1]
+        x[:, :, ANGLE] = ((x[:, :, ANGLE].astype(np.float64) - mean) / std).astype(np.float32)
+
+
 def tcn(channels):
     from model import build_tcn
     return build_tcn(v2.WINDOW, channels=channels)
@@ -144,6 +161,8 @@ def prepare_fold(label, by_path, nb, split, k):
     window_fn = windows_with_angle if cond["angle"] else None
     none_fn = outbound_none_chooser(nb) if cond["hard"] == "outbound" else None
     d = v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn, none_fn=none_fn)
+    if cond["angle_norm"]:
+        normalize_angle(d)
     if cond["model"] == "tcn":
         return d, lambda *args: v2.fit_snapshots(*args, model_fn=tcn)
     return d, v2.fit_snapshots
