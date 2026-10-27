@@ -12,7 +12,8 @@ choose_training)는 v1(ml/baseline.py, 2026-10-27 삭제)의 동작을 그대로
 v1과 같던 출력의 지문으로 이를 확인한다. 3초 클립 전용 값(300행, 3000 ms 범위, 고정 세션 이름)만 바꿨다.
 
 다른 실험이 창 생성이나 입력 채널을 바꿀 때는 fold_sets(window_fn=...)와 fit_snapshots에 넘기는
-입력 채널 수로 바꾼다. 기본값은 위 계획의 조건 그대로다.
+입력 채널 수로 바꾼다. 학습 데이터 증강은 fold_sets(augment_fn=...)로 학습 원본에만 사본을 더한다.
+기본값은 위 계획의 조건 그대로다.
 """
 
 import argparse
@@ -74,6 +75,7 @@ POSITIVE_MS = 150
 MATCH_MS = 500
 N_FOLDS_C = 5
 EPOCH_CANDIDATES = (1, 5, 10, 20, 30, 40, 60)
+BATCH_SIZE = 16
 SESSION_INFO = {"gyro_range_dps": 2000, "gesture_samples": 400, "pre_roll_cue_ms": 1000}
 
 
@@ -135,6 +137,11 @@ def positive_count(e, rows=GESTURE_ROWS):
 def windows(record, mean, std, root=ROOT):
     """원본 하나를 160행 창으로 자른다. t는 창의 마지막 실제 샘플 시각이다."""
     ts, raw = read_sensor(Path(root) / record["source_path"])
+    return windows_from_raw(record, ts, raw, mean, std)
+
+
+def windows_from_raw(record, ts, raw, mean, std):
+    """windows와 같되 이미 읽은(또는 증강한) 원시 배열을 받는다. 방향 라벨 시각은 record["completion_ms"]다."""
     ends = np.arange(WINDOW - 1, len(raw), STRIDE)
     x = np.stack([raw[i - (WINDOW - 1):i + 1] for i in ends])
     y = np.zeros(len(ends), dtype=np.int64)
@@ -503,36 +510,75 @@ def verify():
 # ---------------------------------------------------------------- 학습 집합·학습
 
 def make_chunks(recs, mean, std, root=ROOT, window_fn=None):
-    window_fn = window_fn or windows
-    return [(r, *window_fn(r, mean, std, root)) for r in recs]
+    """원본마다 (record, x, y, meta). window_fn은 windows_from_raw와 같은 (record, ts, raw, mean, std) → (x, y, meta) 함수다."""
+    window_fn = window_fn or windows_from_raw
+    chunks = []
+    for r in recs:
+        ts, raw = read_sensor(Path(root) / r["source_path"])
+        chunks.append((r, *window_fn(r, ts, raw, mean, std)))
+    return chunks
 
 
-def build_sets(train_recs, val_recs, root=ROOT, none_seed=SEED, window_fn=None, none_fn=None):
-    """원본 분할 → 학습 원본만으로 정규화 → 창 생성 → 학습에만 NONE 추출. 검증은 전체 replay.
+def augment_chunks(recs, mean, std, root, window_fn, augment_fn):
+    """학습 원본의 증강 사본 청크를 만든다.
 
-    window_fn은 windows와 같은 (record, mean, std, root) → (x, y, meta) 함수다. 없으면 windows를 쓴다.
+    augment_fn(record, ts, raw)는 사본마다 (record 사본, raw 사본, valid_rows) 또는 None(만들지 않은 사본)의 목록을 돌려준다.
+    record 사본의 source_path는 "<원본 경로>#<사본 이름>"이어야 한다(choose_training이 사본을 별도 원본으로 다룬다).
+    raw 사본은 원본과 같은 행 수이며, valid_rows 이후 행은 원본 범위 밖이라 그 행을 포함하는 창(마지막 샘플 행 ≥ valid_rows)은 버린다.
+    """
+    window_fn = window_fn or windows_from_raw
+    chunks, skipped, excluded = [], 0, 0
+    for r in recs:
+        ts, raw = read_sensor(Path(root) / r["source_path"])
+        for copy in augment_fn(r, ts, raw):
+            if copy is None:
+                skipped += 1
+                continue
+            rc, raw_c, valid_rows = copy
+            assert rc["source_path"].startswith(r["source_path"] + "#") and raw_c.shape == raw.shape
+            if not 0 < valid_rows <= len(raw):
+                raise ValueError(f"valid_rows {valid_rows}가 1~{len(raw)} 밖이다: {rc['source_path']}. 만들지 않는 사본은 None으로 돌려준다")
+            x, y, meta = window_fn(rc, ts, raw_c, mean, std)
+            keep = np.array([m["timestamp_ms"] <= ts[valid_rows - 1] for m in meta])
+            excluded += int((~keep).sum())
+            chunks.append((rc, x[keep], y[keep], [m for m, k in zip(meta, keep) if k]))
+    return chunks, skipped, excluded
+
+
+def build_sets(train_recs, val_recs, root=ROOT, none_seed=SEED, window_fn=None, none_fn=None, augment_fn=None):
+    """원본 분할 → 학습 원본만으로 정규화 → 창 생성(학습만 증강 사본 추가) → 학습에만 NONE 추출. 검증은 전체 replay.
+
+    window_fn은 windows_from_raw와 같은 (record, ts, raw, mean, std) → (x, y, meta) 함수다. 없으면 windows_from_raw를 쓴다.
     none_fn은 choose_training과 같은 (y, meta, seed) → 학습 창 번호 함수다. 없으면 choose_training을 쓴다.
+    augment_fn은 augment_chunks 설명과 같다. 없으면 증강하지 않는다. 정규화 통계는 원본 학습 클립으로만 계산한다.
     """
     assert {r["source_path"] for r in train_recs}.isdisjoint(r["source_path"] for r in val_recs)
     mean, std = normalization(train_recs, root)
     train_chunks = make_chunks(train_recs, mean, std, root, window_fn)
+    skipped = excluded = 0
+    if augment_fn is not None:
+        aug, skipped, excluded = augment_chunks(train_recs, mean, std, root, window_fn, augment_fn)
+        train_chunks += aug
     x = np.concatenate([c[1] for c in train_chunks])
     y = np.concatenate([c[2] for c in train_chunks])
     meta = sum([c[3] for c in train_chunks], [])
     idx = (none_fn or choose_training)(y, meta, none_seed)
     val_chunks = make_chunks(val_recs, mean, std, root, window_fn)
+    assert not any("#" in c[0]["source_path"] for c in val_chunks), "검증 원본은 증강하지 않는다"
     return {"x_train": x[idx], "y_train": y[idx], "train_all_counts": np.bincount(y, minlength=5).tolist(),
             "train_counts": np.bincount(y[idx], minlength=5).tolist(),
             "train_none_groups": dict(Counter(meta[i]["none_group"] for i in idx if y[i] == 0)),
+            "train_aug_copies": len(train_chunks) - len(train_recs), "train_aug_skipped": skipped,
+            "train_windows_excluded": excluded,
             "val": val_chunks, "mean": mean, "std": std, "train_sources": len(train_recs), "val_sources": len(val_recs)}
 
 
-def fold_sets(by_path, split, k, window_fn=None, none_fn=None):
+def fold_sets(by_path, split, k, window_fn=None, none_fn=None, augment_fn=None):
     val = set(split["cv"]["folds"][k]["validation_sources"])
     assert val <= set(split["train_sources"]) and not val & set(split["eval_sources"])
     train_recs = [by_path[p] for p in split["train_sources"] if p not in val]
     val_recs = [by_path[p] for p in split["train_sources"] if p in val]
-    return build_sets(train_recs, val_recs, window_fn=window_fn, none_fn=none_fn)
+    return build_sets(train_recs, val_recs, window_fn=window_fn, none_fn=none_fn, augment_fn=augment_fn)
 
 
 _tf_ready = False
@@ -593,7 +639,7 @@ def fit_snapshots(x_train, y_train, x_val, seed, epochs, model_fn=None):
         model = model_fn(channels)
     model.compile(optimizer=tf.keras.optimizers.Adam(.001), loss="sparse_categorical_crossentropy")
     ds = (tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(len(y_train), seed=seed)
-          .batch(16).with_options(options))
+          .batch(BATCH_SIZE).with_options(options))
     snap = Snapshot()
     hist = model.fit(ds, epochs=max(epochs), verbose=0, shuffle=False, callbacks=[snap])
     return snap.scores, hist.history["loss"]

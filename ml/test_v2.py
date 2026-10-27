@@ -123,6 +123,50 @@ class WindowTests(unittest.TestCase):
         write_clip(self.root / "raw_up.2.csv", 400, gap=10)
         self.assertTrue(np.allclose(v2.normalization(recs, root=self.root)[0], mean))
 
+    def test_augment_copies_are_training_only(self):
+        write_clip(self.root / "raw_up.2.csv", 400)
+        train = [{"source_path": "raw_up.1.csv", "kind": "raw_up", "direction": "UP", "completion_ms": 2000},
+                 {"source_path": "idle.1.csv", "kind": "idle", "direction": "NONE", "completion_ms": None}]
+        val = [{"source_path": "raw_up.2.csv", "kind": "raw_up", "direction": "UP", "completion_ms": 2000}]
+
+        def augment(r, ts, raw):
+            if r["completion_ms"] is None:
+                return [None]                                                       # 배경은 사본을 만들지 않음
+            return [({**r, "source_path": r["source_path"] + "#a"}, raw * 2, len(raw)),
+                    ({**r, "source_path": r["source_path"] + "#b"}, raw, 300)]       # 300행부터 원본 범위 밖
+
+        plain = v2.build_sets(train, val, root=self.root)
+        d = v2.build_sets(train, val, root=self.root, augment_fn=augment)
+        self.assertEqual((plain["train_aug_copies"], plain["train_aug_skipped"], plain["train_windows_excluded"]), (0, 0, 0))
+        self.assertEqual((d["train_aug_copies"], d["train_aug_skipped"]), (2, 1))
+        # 사본 b는 마지막 샘플 행이 300 이상인 창(판정 시각 3040 ms부터, 20개)을 버리고 양성 3창은 남긴다
+        self.assertEqual(d["train_windows_excluded"], 20)
+        self.assertEqual(d["train_all_counts"][1], 3 * plain["train_all_counts"][1])
+        # 정규화 통계와 검증 창은 증강과 무관하다
+        np.testing.assert_array_equal(d["mean"], plain["mean"])
+        np.testing.assert_array_equal(d["std"], plain["std"])
+        self.assertEqual([c[0]["source_path"] for c in d["val"]], ["raw_up.2.csv"])
+        np.testing.assert_array_equal(d["val"][0][1], plain["val"][0][1])
+
+        def bad(r, ts, raw):
+            return [(r, raw, len(raw))]                                             # 사본 이름이 원본과 같다
+        with self.assertRaises(AssertionError):
+            v2.build_sets(train, val, root=self.root, augment_fn=bad)
+
+    def test_augment_valid_rows_bounds(self):
+        rec = {"source_path": "raw_up.1.csv", "kind": "raw_up", "direction": "UP", "completion_ms": 2000}
+
+        def copy_with(valid_rows):
+            return lambda r, ts, raw: [({**r, "source_path": r["source_path"] + "#a"}, raw, valid_rows)]
+
+        for bad in (0, -1, 401):                                                    # 0은 ts[-1](마지막 행)로 잘못 읽힐 수 있다
+            with self.assertRaises(ValueError, msg=bad):
+                v2.augment_chunks([rec], np.zeros(6), np.ones(6), self.root, None, copy_with(bad))
+        _, _, excluded = v2.augment_chunks([rec], np.zeros(6), np.ones(6), self.root, None, copy_with(1))
+        self.assertEqual(excluded, 49)                                              # 유효 행 1개면 모든 창 제외
+        _, _, excluded = v2.augment_chunks([rec], np.zeros(6), np.ones(6), self.root, None, copy_with(400))
+        self.assertEqual(excluded, 0)
+
 
 class EventTests(unittest.TestCase):
     def test_same_as_v1_on_random_scores(self):

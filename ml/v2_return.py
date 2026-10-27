@@ -19,18 +19,22 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
-  run --label old|new|newangle|newtcn|newtcnhard|newtcnnorm|newtcnrt --split C|S-P5 --seed N   한 seed의 모든 fold 학습·채점
-  run-all [--parallel 8]                                      빠진 (label, split, seed)를 모두 실행
-  summarize [--out summary.json]                              요약 작성(이미 있으면 거부)
+  run --label old|new|newangle|newtcn|newtcnhard|newtcnnorm|newtcnrt --split C|S-P5 --seed N [--tag T]   한 seed의 모든 fold 학습·채점
+  run-all [--parallel 8] [--labels L ...] [--tag T]           빠진 (label, split, seed)를 실행(기본은 모든 조건)
+  summarize [--out summary.json] [--tag T]                    요약 작성(이미 있으면 거부)
+--tag를 주면 결과는 ml/runs/return-label-01/<T>/, 로그는 OUT/logs/<T>/에 둔다(다른 PC·재실행 결과를 기존 것과 나눔).
+로그는 덮어쓰지 않는다(이미 있으면 run-all이 시작하지 않는다).
 """
 
 import argparse
 import json
+import os
+import platform
+import re
 import subprocess
 import sys
 import time
 from collections import Counter
-from pathlib import Path
 
 import numpy as np
 
@@ -51,8 +55,10 @@ SAMPLE_S = 0.01
 # label: 방향 라벨의 기준 시각("settled" = 기존 e, "return" = r), angle: 회전각 채널 추가 여부, model: "cnn" | "tcn",
 # hard: 학습 NONE에 반드시 넣을 구간(None = v2.choose_training 그대로, "outbound" = 가는 피크 ~ 끝점),
 # angle_norm: 회전각 채널을 fold 학습 창의 평균·표준편차로 정규화할지,
-# angle_bias: 회전각 영점("clip" = 클립 전체 중앙값(비인과), "precue" = 클립 0~900 ms 중앙값(인과))
-_BASE = {"label": "return", "angle": False, "model": "cnn", "hard": None, "angle_norm": False, "angle_bias": "clip"}
+# angle_bias: 회전각 영점("clip" = 클립 전체 중앙값(비인과), "precue" = 클립 0~900 ms 중앙값(인과)),
+# aug: 학습 원본 증강 설정(None = 증강 없음). 계획: docs/superpowers/plans/2026-10-27-v2-augmentation.md
+_BASE = {"label": "return", "angle": False, "model": "cnn", "hard": None, "angle_norm": False, "angle_bias": "clip",
+         "aug": None}
 CONDITIONS = {
     "old": {**_BASE, "label": "settled"},
     "new": {**_BASE},
@@ -98,12 +104,12 @@ def relabel(by_path, nb, label):
     return out
 
 
-def windows_with_angle(record, mean, std, root=ROOT, bias_mode="clip"):
-    """v2.windows에 회전각 3채널을 붙인다. 정규화된 자이로를 원시 deg/s로 되돌리고, 영점을 빼서 창 안에서 누적한다.
+def windows_with_angle(record, ts, raw, mean, std, bias_mode="clip"):
+    """v2.windows_from_raw에 회전각 3채널을 붙인다. 정규화된 자이로를 원시 deg/s로 되돌리고, 영점을 빼서 창 안에서 누적한다.
     원시 자이로에 약 10 dps 치우침이 있어 보정 없이는 1.6초에 약 16도가 쌓인다.
-    bias_mode "clip"은 클립 전체 중앙값(비인과), "precue"는 클립 0~900 ms 중앙값(첫 판정 전 데이터만, 인과)."""
-    x, y, meta = v2.windows(record, mean, std, root)
-    _, raw = v2.read_sensor(Path(root) / record["source_path"])
+    bias_mode "clip"은 클립 전체 중앙값(비인과), "precue"는 클립 0~900 ms 중앙값(첫 판정 전 데이터만, 인과).
+    영점은 넘겨받은 raw에서 잡는다. 증강 사본이면 사본의 raw다(창과 영점이 같은 신호에서 나와야 한다)."""
+    x, y, meta = v2.windows_from_raw(record, ts, raw, mean, std)
     gyro_raw = raw[:PRECUE_SAMPLES, 3:6] if bias_mode == "precue" else raw[:, 3:6]
     bias = np.median(gyro_raw, axis=0)
     gyro = x[:, :, 3:6].astype(np.float64) * std[3:6] + mean[3:6] - bias
@@ -161,12 +167,20 @@ def tcn(channels):
     return build_tcn(v2.WINDOW, channels=channels)
 
 
+def augmenter(aug):
+    """조건의 aug 설정으로 v2.fold_sets(augment_fn=...)에 넘길 함수를 만든다. None이면 증강하지 않는다."""
+    if aug is None:
+        return None
+    raise ValueError(f"알 수 없는 증강 설정: {aug}")
+
+
 def prepare_fold(label, by_path, nb, split, k):
     """조건 label의 fold k 학습·검증 집합과 학습 함수를 돌려준다."""
     cond = CONDITIONS[label]
-    window_fn = (lambda r, m, s, root=ROOT: windows_with_angle(r, m, s, root, cond["angle_bias"])) if cond["angle"] else None
+    window_fn = (lambda r, ts, raw, m, s: windows_with_angle(r, ts, raw, m, s, cond["angle_bias"])) if cond["angle"] else None
     none_fn = outbound_none_chooser(nb) if cond["hard"] == "outbound" else None
-    d = v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn, none_fn=none_fn)
+    d = v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn, none_fn=none_fn,
+                     augment_fn=augmenter(cond["aug"]))
     if cond["angle_norm"]:
         normalize_angle(d)
     if cond["model"] == "tcn":
@@ -229,22 +243,43 @@ def score(val_chunks, scores, by_path, nb, scoring):
 
 # ---------------------------------------------------------------- 실행
 
-def result_path(label, split, seed):
-    """원본 결과(수 MB씩)는 깃 제외 폴더에 둔다. 저장소에는 OUT/results/에 gzip 사본을 올린다."""
-    return RUNS / "results" / f"{label}-{split}" / f"seed-{seed}.json"
+def run_dir(tag=None):
+    """실행 결과 폴더. tag가 있으면 RUNS/<tag>로 나눠 다른 PC·재실행 결과와 섞이지 않게 한다(없으면 이전 실험 경로)."""
+    if tag is None:
+        return RUNS
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", tag):
+        raise ValueError(f"tag는 영문·숫자·._-만 쓴다: {tag!r}")
+    return RUNS / tag
 
 
-def cmd_run(label, split_name, seed):
-    target = result_path(label, split_name, seed)
+def log_dir(tag=None):
+    return OUT / "logs" if tag is None else OUT / "logs" / tag
+
+
+def result_path(label, split, seed, tag=None):
+    """원본 결과(수 MB씩)는 깃 제외 폴더에 둔다. 저장소에는 OUT/results/(tag가 있으면 OUT/results/<tag>/)에 gzip 사본을 올린다."""
+    return run_dir(tag) / "results" / f"{label}-{split}" / f"seed-{seed}.json"
+
+
+def runtime_env():
+    """실행 환경. CPU·라이브러리가 다르면 같은 코드·seed라도 E5 이후 결과가 달라진다(README 재현성 절)."""
+    import tensorflow as tf
+    return {"python": platform.python_version(), "numpy": np.__version__, "tensorflow": tf.__version__,
+            "os": platform.platform(), "cpu": platform.processor(), "logical_cpus": os.cpu_count(), "venv": sys.prefix,
+            **{k: os.environ.get(k) for k in ("TF_ENABLE_ONEDNN_OPTS", "TF_DETERMINISTIC_OPS")}}
+
+
+def cmd_run(label, split_name, seed, tag=None):
+    target = result_path(label, split_name, seed, tag)
     if target.exists():
         raise FileExistsError(f"{target}가 이미 있다. 덮어쓰지 않는다")
     _, by_path, nb = load()
     split = v2.load_split(split_name)
-    score_dir = RUNS / f"{label}-{split_name}"
+    score_dir = run_dir(tag) / f"{label}-{split_name}"
     score_dir.mkdir(parents=True, exist_ok=True)
     epochs = tuple(v2.EPOCH_CANDIDATES)
     result = {"experiment": EXP, "label": label, "condition": CONDITIONS[label], "split": split_name, "seed": seed,
-              "created_kst": now(),
+              "tag": tag, "created_kst": now(),
               "code_sha256": {f: digest(ROOT / "ml" / f) for f in ("v2.py", "v2_return.py", "model.py")},
               "records_sha256": digest(v2.RECORDS), "new_records_sha256": digest(NEW_RECORDS),
               "epochs": list(epochs), "folds": []}
@@ -259,25 +294,34 @@ def cmd_run(label, split_name, seed):
         per_epoch = {str(e): {s: dict(zip(("totals", "per_source"), score(d["val"], scores[e], by_path, nb, s))) for s in SCORINGS}
                      for e in epochs}
         result["folds"].append({"fold": k, "held_out_session": split["cv"]["folds"][k].get("held_out_session"),
-                                "train_windows_selected": d["train_counts"], "per_epoch": per_epoch,
-                                "seconds": round(time.time() - t0, 1)})
+                                "train_windows_selected": d["train_counts"],
+                                "updates_per_epoch": -(-len(d["y_train"]) // v2.BATCH_SIZE),
+                                "train_aug_copies": d["train_aug_copies"], "train_aug_skipped": d["train_aug_skipped"],
+                                "train_windows_excluded": d["train_windows_excluded"],
+                                "per_epoch": per_epoch, "seconds": round(time.time() - t0, 1)})
         print(f"{label} {split_name} seed {seed} fold {k}: {round(time.time() - t0, 1)}s", flush=True)
     result["seconds"] = round(time.time() - t_start, 1)
     result["tf_threads_fixed"] = v2.tf_threads_fixed
+    result["env"] = runtime_env()
     dump(target, result)
     print("saved", target)
 
 
-def cmd_run_all(parallel):
-    jobs = [(lab, sp, s) for lab in LABELS for sp in SPLITS for s in v2.SEEDS if not result_path(lab, sp, s).exists()]
+def cmd_run_all(parallel, labels=LABELS, tag=None):
+    """labels 중 결과가 없는 (label, split, seed)를 돌린다. ml/runs/는 깃 제외라 새 PC에서는 비어 있으니 labels를 지정한다.
+    로그는 저장소에 있으므로 덮어쓰지 않는다: 하나라도 이미 있으면 아무것도 시작하지 않는다. 재실행은 새 tag로 한다."""
+    jobs = [(lab, sp, s) for lab in labels for sp in SPLITS for s in v2.SEEDS if not result_path(lab, sp, s, tag).exists()]
+    logs = log_dir(tag)
+    existing = [f"{lab}-{sp}-seed-{s}.log" for lab, sp, s in jobs if (logs / f"{lab}-{sp}-seed-{s}.log").exists()]
+    if existing:
+        raise FileExistsError(f"{logs}에 로그가 이미 있다(덮어쓰지 않는다. 새 --tag를 쓴다): {existing[:3]} 외 {max(0, len(existing) - 3)}개")
     print("pending:", len(jobs), flush=True)
-    logs = OUT / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     running, failed = [], []
     for lab, sp, s in jobs:
-        log = open(logs / f"{lab}-{sp}-seed-{s}.log", "w", encoding="utf-8")
-        proc = subprocess.Popen([sys.executable, str(ROOT / "ml/v2_return.py"), "run", "--label", lab, "--split", sp, "--seed", str(s)],
-                                cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
+        log = open(logs / f"{lab}-{sp}-seed-{s}.log", "x", encoding="utf-8")
+        cmd = [sys.executable, str(ROOT / "ml/v2_return.py"), "run", "--label", lab, "--split", sp, "--seed", str(s)]
+        proc = subprocess.Popen(cmd + (["--tag", tag] if tag else []), cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
         running.append(((lab, sp, s), proc, log))
         while sum(p.poll() is None for _, p, _ in running) >= parallel:
             time.sleep(2)
@@ -330,16 +374,16 @@ def epoch_stats(seed_results, epoch, scoring):
     return out
 
 
-def cmd_summarize(name="summary.json"):
+def cmd_summarize(name="summary.json", tag=None):
     target = OUT / name
     if target.exists():
         raise FileExistsError(f"{target}가 이미 있다")
-    labels = [lab for lab in LABELS if all(result_path(lab, sp, s).exists() for sp in SPLITS for s in v2.SEEDS)]
+    labels = [lab for lab in LABELS if all(result_path(lab, sp, s, tag).exists() for sp in SPLITS for s in v2.SEEDS)]
     summary = {"experiment": EXP, "created_kst": now(), "rule": "E는 seed 평균 selection_score 최대, 같으면 작은 E",
-               "labels": labels, "panels": {}}
+               "tag": tag, "labels": labels, "panels": {}}
     for lab in labels:
         for sp in SPLITS:
-            res = [json.loads(result_path(lab, sp, s).read_text(encoding="utf-8")) for s in v2.SEEDS]
+            res = [json.loads(result_path(lab, sp, s, tag).read_text(encoding="utf-8")) for s in v2.SEEDS]
             panel = {}
             for sc in SCORINGS:
                 by_e = {str(e): epoch_stats(res, e, sc) for e in v2.EPOCH_CANDIDATES}
@@ -370,17 +414,21 @@ def main():
     r.add_argument("--label", choices=LABELS, required=True)
     r.add_argument("--split", choices=SPLITS, required=True)
     r.add_argument("--seed", type=int, required=True)
+    r.add_argument("--tag")
     a = sub.add_parser("run-all")
     a.add_argument("--parallel", type=int, default=8)
+    a.add_argument("--labels", nargs="+", choices=LABELS, default=list(LABELS))
+    a.add_argument("--tag")
     m = sub.add_parser("summarize")
     m.add_argument("--out", default="summary.json")
+    m.add_argument("--tag")
     args = p.parse_args()
     if args.cmd == "run":
-        cmd_run(args.label, args.split, args.seed)
+        cmd_run(args.label, args.split, args.seed, args.tag)
     elif args.cmd == "run-all":
-        cmd_run_all(args.parallel)
+        cmd_run_all(args.parallel, args.labels, args.tag)
     else:
-        cmd_summarize(args.out)
+        cmd_summarize(args.out, args.tag)
 
 
 if __name__ == "__main__":
