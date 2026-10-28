@@ -24,12 +24,12 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
-요약(정검출·E 선택 점수)은 data/annotations/ble-v2/eval-excluded.json의 클립(약한 동작)을 뺀다. 학습과 클립별 채점 기록에는 남는다.
+요약은 모든 방향 클립으로 계산하고, data/annotations/ble-v2/weak-gestures.json의 약한 동작 검출률을 by_epoch[E]["weak"]에 따로 적는다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
   run --label old|new|newangle|newtcn|newtcnhard|newtcnnorm|newtcnrt|newtcnrot|newtcnrotwarp --split C|S-P5 --seed N [--tag T]   한 seed의 모든 fold 학습·채점
   run-all [--parallel 8] [--labels L ...] [--tag T]           빠진 (label, split, seed)를 실행(기본은 모든 조건)
-  summarize [--out summary.json] [--tag T] [--eval-all]       요약 작성(이미 있으면 거부). --eval-all이면 평가 제외 목록을 쓰지 않는다
+  summarize [--out summary.json] [--tag T] [--exclude-weak]   요약 작성(이미 있으면 거부). --exclude-weak이면 약한 동작을 정검출·E 선택에서 뺀다
 --tag를 주면 결과는 ml/runs/return-label-01/<T>/, 로그는 OUT/logs/<T>/에 둔다(다른 PC·재실행 결과를 기존 것과 나눔).
 로그는 덮어쓰지 않는다(이미 있으면 run-all이 시작하지 않는다).
 """
@@ -51,7 +51,7 @@ import v2
 from v2 import CLASSES, DOC, ROOT, digest, dump, now
 
 NEW_RECORDS = ROOT / "data/annotations/ble-v2-return/records.json"
-EVAL_EXCLUDED = ROOT / "data/annotations/ble-v2/eval-excluded.json"
+WEAK_GESTURES = ROOT / "data/annotations/ble-v2/weak-gestures.json"
 CANDIDATES = ROOT / "data/annotations/ble-v2"          # *-candidates.json의 main_motion_start_ms(속도 증강 조건)
 EXP = "return-label-01"
 OUT = DOC / EXP
@@ -477,21 +477,22 @@ def is_gesture(source_path):
     return source_path.rsplit("/", 1)[-1].startswith("raw_")
 
 
-def load_eval_excluded():
-    """평가에서만 빼는 방향 클립 경로. 원본이 목록을 만들 때와 같은지 확인한다."""
-    data = json.loads(EVAL_EXCLUDED.read_text(encoding="utf-8"))
+def load_weak():
+    """약한 동작 클립 경로. 원본이 목록을 만들 때와 같은지 확인한다."""
+    data = json.loads(WEAK_GESTURES.read_text(encoding="utf-8"))
     for e in data["entries"]:
         if digest(ROOT / e["source_path"]) != e["sha256"]:
-            raise ValueError(f"평가 제외 원본이 바뀌었다: {e['source_path']}")
+            raise ValueError(f"약한 동작 원본이 바뀌었다: {e['source_path']}")
     return frozenset(e["source_path"] for e in data["entries"])
 
 
-def epoch_stats(seed_results, epoch, scoring, skip=frozenset()):
-    """seed별로 fold를 합친 뒤 seed 평균을 낸다. skip의 방향 클립은 세지 않는다(평가 제외)."""
+def epoch_stats(seed_results, epoch, scoring, skip=frozenset(), only=None):
+    """seed별로 fold를 합친 뒤 seed 평균을 낸다. skip의 방향 클립은 세지 않고, only를 주면 그 방향 클립만 센다."""
     per_seed = []
     for res in seed_results:
         sources = [p for f in res["folds"] for p in f["per_epoch"][str(epoch)][scoring]["per_source"]]
-        gest = [p for p in sources if is_gesture(p["source_path"]) and p["source_path"] not in skip]
+        gest = [p for p in sources if is_gesture(p["source_path"]) and p["source_path"] not in skip
+                and (only is None or p["source_path"] in only)]
         bg = [p for p in sources if not is_gesture(p["source_path"])]
         c = Counter()
         for p in gest:
@@ -520,16 +521,17 @@ def epoch_stats(seed_results, epoch, scoring, skip=frozenset()):
     return out
 
 
-def cmd_summarize(name="summary.json", tag=None, eval_all=False):
+def cmd_summarize(name="summary.json", tag=None, exclude_weak=False):
     target = OUT / name
     if target.exists():
         raise FileExistsError(f"{target}가 이미 있다")
     labels = [lab for lab in LABELS if all(result_path(lab, sp, s, tag).exists() for sp in SPLITS for s in v2.SEEDS)]
-    skip = frozenset() if eval_all else load_eval_excluded()
+    weak = load_weak()
+    skip = weak if exclude_weak else frozenset()
     summary = {"experiment": EXP, "created_kst": now(), "rule": "E는 seed 평균 selection_score 최대, 같으면 작은 E",
                "tag": tag, "labels": labels,
-               "eval_excluded": None if eval_all else {"file": EVAL_EXCLUDED.relative_to(ROOT).as_posix(),
-                                                       "sha256": digest(EVAL_EXCLUDED), "clips": len(skip)},
+               "weak_gestures": {"file": WEAK_GESTURES.relative_to(ROOT).as_posix(), "sha256": digest(WEAK_GESTURES),
+                                 "clips": len(weak), "excluded_from_main": exclude_weak},
                "panels": {}}
     for lab in labels:
         for sp in SPLITS:
@@ -537,6 +539,10 @@ def cmd_summarize(name="summary.json", tag=None, eval_all=False):
             panel = {}
             for sc in SCORINGS:
                 by_e = {str(e): epoch_stats(res, e, sc, skip) for e in v2.EPOCH_CANDIDATES}
+                for e in v2.EPOCH_CANDIDATES:
+                    w = epoch_stats(res, e, sc, only=weak)
+                    by_e[str(e)]["weak"] = {k: w[k] for k in ("clean_success_rate", "no_issue_rate", "success_rate")}
+                    by_e[str(e)]["weak"]["clip_evaluations_per_seed"] = w["per_seed"][0]["n"]
                 best = max(v2.EPOCH_CANDIDATES, key=lambda e: (round(by_e[str(e)]["selection_score"], 12), -e))
                 panel[sc] = {"selected_E": best, "by_epoch": by_e}
             summary["panels"][f"{lab}-{sp}"] = panel
@@ -572,14 +578,14 @@ def main():
     m = sub.add_parser("summarize")
     m.add_argument("--out", default="summary.json")
     m.add_argument("--tag")
-    m.add_argument("--eval-all", action="store_true")
+    m.add_argument("--exclude-weak", action="store_true")
     args = p.parse_args()
     if args.cmd == "run":
         cmd_run(args.label, args.split, args.seed, args.tag)
     elif args.cmd == "run-all":
         cmd_run_all(args.parallel, args.labels, args.tag)
     else:
-        cmd_summarize(args.out, args.tag, args.eval_all)
+        cmd_summarize(args.out, args.tag, args.exclude_weak)
 
 
 if __name__ == "__main__":
