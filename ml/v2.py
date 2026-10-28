@@ -496,7 +496,9 @@ def verify():
             for f in sp["cv"]["folds"]:
                 for label, n in Counter(label_of(by_path[p]) for p in f["validation_sources"]).items():
                     per_label[label].append(n)
-            assert all(max(v) - min(v) <= 1 for v in per_label.values()), "fold별 라벨 수 차이가 1을 넘는다"
+            # 균형은 처음 뽑을 때만 보장한다. 수정된 분할은 다시 뽑지 않고 제외 경로만 뺐으므로 fold 크기가 달라질 수 있다
+            if not sp.get("revisions"):
+                assert all(max(v) - min(v) <= 1 for v in per_label.values()), "fold별 라벨 수 차이가 1을 넘는다"
         else:
             held = sp["held_out_session"]
             assert {by_path[p]["session"] for p in ev} == {held}
