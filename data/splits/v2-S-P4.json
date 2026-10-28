@@ -10,7 +10,7 @@
     "LEFT",
     "RIGHT"
   ],
-  "records_sha256": "d2192aad02b42d5ba19a508bee6347ab01c6dd1a4817310753bf85d3911d4dfa",
+  "records_sha256": "0a227a6448aadf377dc0d76255323a7f332dc23c8d50f5b23a560c0f8f78fb2c",
   "held_out_session": "P4",
   "official": false,
   "eval_sources": [
@@ -308,7 +308,6 @@
     "data/sessions/phone-20261025-161530/raw_down.7.csv",
     "data/sessions/phone-20261025-161530/raw_down.8.csv",
     "data/sessions/phone-20261025-161530/raw_down.9.csv",
-    "data/sessions/phone-20261025-161530/raw_left.1.csv",
     "data/sessions/phone-20261025-161530/raw_left.10.csv",
     "data/sessions/phone-20261025-161530/raw_left.11.csv",
     "data/sessions/phone-20261025-161530/raw_left.12.csv",
@@ -329,7 +328,6 @@
     "data/sessions/phone-20261025-161530/raw_right.12.csv",
     "data/sessions/phone-20261025-161530/raw_right.13.csv",
     "data/sessions/phone-20261025-161530/raw_right.14.csv",
-    "data/sessions/phone-20261025-161530/raw_right.15.csv",
     "data/sessions/phone-20261025-161530/raw_right.2.csv",
     "data/sessions/phone-20261025-161530/raw_right.3.csv",
     "data/sessions/phone-20261025-161530/raw_right.4.csv",
@@ -603,7 +601,6 @@
           "data/sessions/phone-20261025-161530/raw_down.7.csv",
           "data/sessions/phone-20261025-161530/raw_down.8.csv",
           "data/sessions/phone-20261025-161530/raw_down.9.csv",
-          "data/sessions/phone-20261025-161530/raw_left.1.csv",
           "data/sessions/phone-20261025-161530/raw_left.10.csv",
           "data/sessions/phone-20261025-161530/raw_left.11.csv",
           "data/sessions/phone-20261025-161530/raw_left.12.csv",
@@ -624,7 +621,6 @@
           "data/sessions/phone-20261025-161530/raw_right.12.csv",
           "data/sessions/phone-20261025-161530/raw_right.13.csv",
           "data/sessions/phone-20261025-161530/raw_right.14.csv",
-          "data/sessions/phone-20261025-161530/raw_right.15.csv",
           "data/sessions/phone-20261025-161530/raw_right.2.csv",
           "data/sessions/phone-20261025-161530/raw_right.3.csv",
           "data/sessions/phone-20261025-161530/raw_right.4.csv",
@@ -663,10 +659,19 @@
     "train": {
       "UP": 57,
       "DOWN": 60,
-      "LEFT": 59,
-      "RIGHT": 60,
+      "LEFT": 58,
+      "RIGHT": 59,
       "idle": 12,
       "other": 20
     }
-  }
+  },
+  "revisions": [
+    {
+      "date_kst": "2026-10-28T10:29:47+09:00",
+      "removed": [
+        "data/sessions/phone-20261025-161530/raw_left.1.csv",
+        "data/sessions/phone-20261025-161530/raw_right.15.csv"
+      ]
+    }
+  ]
 }

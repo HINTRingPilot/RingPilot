@@ -4812,23 +4812,6 @@
       "decision": "ACCEPT_SENSOR_LABEL"
     },
     {
-      "source_path": "data/sessions/phone-20261025-161530/raw_left.1.csv",
-      "session": "P5",
-      "posture": "돌아누워 팔을 꺾지 않음",
-      "kind": "raw_left",
-      "rows": 400,
-      "sha256": "64ade87c34363c5acab588c1b39a64c87a7757c9fffa9c50937d41769d92fe89",
-      "peak_gyro_dps": 245.1,
-      "direction": "LEFT",
-      "completion_ms": 2640,
-      "annotation_status": "REVIEW",
-      "annotation_flags": "early_motion",
-      "positive_windows": 3,
-      "positive_truncated": false,
-      "match_horizon_clipped": false,
-      "decision": "ACCEPT_SENSOR_LABEL"
-    },
-    {
       "source_path": "data/sessions/phone-20261025-161530/raw_left.2.csv",
       "session": "P5",
       "posture": "돌아누워 팔을 꺾지 않음",
@@ -5305,23 +5288,6 @@
       "decision": "ACCEPT_SENSOR_LABEL"
     },
     {
-      "source_path": "data/sessions/phone-20261025-161530/raw_right.15.csv",
-      "session": "P5",
-      "posture": "돌아누워 팔을 꺾지 않음",
-      "kind": "raw_right",
-      "rows": 400,
-      "sha256": "b7a820e426e81be293685d9e4db2021c7349c90aa6a7db9bea854b406ab68a64",
-      "peak_gyro_dps": 151.2,
-      "direction": "RIGHT",
-      "completion_ms": 2660,
-      "annotation_status": "AUTO",
-      "annotation_flags": "",
-      "positive_windows": 3,
-      "positive_truncated": false,
-      "match_horizon_clipped": false,
-      "decision": "ACCEPT_SENSOR_LABEL"
-    },
-    {
       "source_path": "data/sessions/phone-20261025-161530/raw_up.1.csv",
       "session": "P5",
       "posture": "돌아누워 팔을 꺾지 않음",
@@ -5585,6 +5551,26 @@
       "source_path": "data/sessions/phone-20261025-161530/excluded/raw_up.15.csv",
       "sha256": "e700da6809611ee1f70677202f39972316d451982d1b7dca5ba1777289ed3d66",
       "reason": "본 동작은 1.6~2.3초에 끝났는데 3.4~3.7초의 작은 움직임 때문에 자동 완료가 3640 ms로 늦게 잡힘(정답 오류)"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-161530/excluded/raw_right.15.csv",
+      "sha256": "b7a820e426e81be293685d9e4db2021c7349c90aa6a7db9bea854b406ab68a64",
+      "reason": "자동 라벨(r) 오류: 가는/돌아오는 볼록이 뒤바뀌어 r이 약 400 ms 늦게 잡힘(실제 복귀 피크 2170 ms 근처). 2026-10-28 사용자 결정"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-161530/excluded/raw_left.1.csv",
+      "sha256": "64ade87c34363c5acab588c1b39a64c87a7757c9fffa9c50937d41769d92fe89",
+      "reason": "신호 전(0~0.9초) 손이 천천히 회전해 회전각 영점이 틀림(누적 회전각 클립 끝까지 증가, 최대 약 80도). 2026-10-28 사용자 결정"
+    }
+  ],
+  "revisions": [
+    {
+      "date_kst": "2026-10-28T10:29:47+09:00",
+      "removed": [
+        "data/sessions/phone-20261025-161530/raw_left.1.csv",
+        "data/sessions/phone-20261025-161530/raw_right.15.csv"
+      ],
+      "note": "분할은 다시 뽑지 않고 각 분할 파일에서 두 경로만 뺐다(C 분할 무작위 배정 유지)"
     }
   ]
 }

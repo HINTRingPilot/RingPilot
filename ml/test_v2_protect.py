@@ -200,6 +200,10 @@ class PastResults(unittest.TestCase):
         if not (out / "summary.json").exists():
             raise unittest.SkipTest("과거 결과가 없다")
         cls.config = v2_cal.load_config("V2-S-P5-cal")
+        if json.loads(v2.RECORDS.read_text(encoding="utf-8")).get("revisions"):
+            # 2026-10-28 records.json에서 클립 2개를 뺐다. 과거 결과는 이전 records(커밋 b545b95 이전)로 계산됐으므로
+            # 해시가 달라 현재 데이터로는 확인할 수 없다. 확인하려면 그 커밋의 data/를 꺼내 실행한다.
+            raise unittest.SkipTest("records.json이 수정돼 과거 V2-*-cal 결과는 이전 데이터로만 확인할 수 있다")
         cls.results = v2_cal.load_seed_results(out, cls.config)
 
     def test_verified_against_recorded_code(self):

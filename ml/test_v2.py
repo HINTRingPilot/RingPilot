@@ -230,7 +230,8 @@ class SavedDataTests(unittest.TestCase):
 
     def test_records_match_files_and_counts(self):
         recs = self.data["records"]
-        self.assertEqual(Counter(r["kind"] for r in recs), Counter({"raw_up": 71, "raw_down": 76, "raw_left": 74, "raw_right": 75, "idle": 15, "other": 25}))
+        # 2026-10-28: P5 raw_right.15·raw_left.1 제외(records.json revisions)
+        self.assertEqual(Counter(r["kind"] for r in recs), Counter({"raw_up": 71, "raw_down": 76, "raw_left": 73, "raw_right": 74, "idle": 15, "other": 25}))
         for r in recs:
             if r["direction"] != "NONE":
                 self.assertEqual(r["positive_windows"], v2.positive_count(r["completion_ms"]))
@@ -243,8 +244,15 @@ class SavedDataTests(unittest.TestCase):
         v2.verify()
 
     def test_c_split_is_reproducible(self):
-        name, rebuilt = v2.split_c(self.data)
-        self.assertEqual(json.loads(json.dumps(rebuilt)), v2.load_split(name))   # JSON 왕복으로 튜플·리스트 차이 제거
+        saved = v2.load_split("C")
+        if not saved.get("revisions"):
+            name, rebuilt = v2.split_c(self.data)
+            self.assertEqual(json.loads(json.dumps(rebuilt)), saved)   # JSON 왕복으로 튜플·리스트 차이 제거
+            return
+        # 수정된 분할: 무작위 배정을 다시 뽑지 않고 제외 경로만 뺐다(다시 뽑으면 C 배정이 바뀐다). 제외 경로가 모든 목록에서 빠졌는지 확인한다
+        removed = {p for rev in saved["revisions"] for p in rev["removed"]}
+        self.assertTrue(removed.isdisjoint(set(saved["eval_sources"]) | set(saved["train_sources"])))
+        self.assertTrue(all(removed.isdisjoint(f["validation_sources"]) for f in saved["cv"]["folds"]))
 
     def test_fold_has_no_leakage(self):
         sp = v2.load_split("S-P5")

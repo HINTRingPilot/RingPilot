@@ -168,7 +168,7 @@ class RotateWarpFoldTests(unittest.TestCase):
         starts = vr.motion_starts()
         gestures = [p for p, r in self.by_path.items() if r["completion_ms"] is not None]
         self.assertTrue(all(p in starts for p in gestures))
-        self.assertEqual(sum(starts[p] < 900 for p in gestures), 23)
+        self.assertEqual(sum(starts[p] < 900 for p in gestures), 22)   # 2026-10-28 raw_left.1(신호 전 동작) 제외로 23 → 22
 
     def test_fold_keeps_copy_count_and_validation(self):
         split = v2.load_split("C")
