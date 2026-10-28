@@ -1,0 +1,116 @@
+{
+  "version": "ble-v2-eval-excluded",
+  "created_kst": "2026-10-28T14:34:01+09:00",
+  "rule": "약한 동작은 명령으로 받지 않는다(2026-10-28 사용자 결정). 학습에는 쓰고 평가(정검출·E 선택 점수)에서만 뺀다.",
+  "criterion": "복귀 피크 세기(return_peak_dps) < 같은 방향 중앙값의 0.6배",
+  "threshold": 0.6,
+  "direction_median_dps": {
+    "UP": 457.2,
+    "DOWN": 443.6,
+    "LEFT": 226.9,
+    "RIGHT": 201.9
+  },
+  "based_on": "data/annotations/ble-v2-return/records.json",
+  "based_on_sha256": "fa54b3522c56e76b5b2833ae0a40517a02902de74febd4d913a6f5bbb19fe2a6",
+  "note": "기준은 S-P5 P1 fold 무발행 클립을 본 뒤 정했다. 처음에는 학습에서도 뺐으나 같은 PC 비교에서 무발행이 늘어 평가에서만 빼기로 바꿨다.",
+  "entries": [
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_down.10.csv",
+      "sha256": "18a4ad1268f803dfbf899dc7fe44dd78940b30bb70827d43845127eebabcd05d",
+      "direction": "DOWN",
+      "return_peak_dps": 263.6,
+      "relative_strength": 0.594
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_down.11.csv",
+      "sha256": "a72b00b760ed4bdfa0a4b1fe683f27521522f12e2a70d4314bc63c6bc3219f67",
+      "direction": "DOWN",
+      "return_peak_dps": 246.1,
+      "relative_strength": 0.555
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_down.7.csv",
+      "sha256": "30eb508c8d22063ffc07618ecd3e4fe2632d2879ee9c8c12e2e65416076271b6",
+      "direction": "DOWN",
+      "return_peak_dps": 251.7,
+      "relative_strength": 0.567
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_down.8.csv",
+      "sha256": "73fe6138c516fa03ed54e264bf6054a9e6fb49091ca4f6865b414bcbb8c19328",
+      "direction": "DOWN",
+      "return_peak_dps": 245.3,
+      "relative_strength": 0.553
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_right.2.csv",
+      "sha256": "a3c5d199d558d2b579b9383a3542586c6f686e679a4d46a32f2dc2cfdd4cbbef",
+      "direction": "RIGHT",
+      "return_peak_dps": 103.1,
+      "relative_strength": 0.511
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_right.5.csv",
+      "sha256": "6a90f360102bbafcd76df89e7da8ca4755444f4463d487fe9d363f5dd147eff9",
+      "direction": "RIGHT",
+      "return_peak_dps": 101.9,
+      "relative_strength": 0.505
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.6.csv",
+      "sha256": "8b39049d12fddb28c1a6af9178d56a7e43a01c973d1a7f87f73d12db56c1297c",
+      "direction": "UP",
+      "return_peak_dps": 207.4,
+      "relative_strength": 0.454
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.7.csv",
+      "sha256": "bb55c63b532dbfa0da41d073808cc2ba68484f5a937bc55e4db79806956b51f7",
+      "direction": "UP",
+      "return_peak_dps": 181.7,
+      "relative_strength": 0.397
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.8.csv",
+      "sha256": "1ccb4059a552987702fcc6b5dfff59fbcf1fb3ee7c0bc741135660c13283ee32",
+      "direction": "UP",
+      "return_peak_dps": 163.4,
+      "relative_strength": 0.357
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.9.csv",
+      "sha256": "c35fc0622a25990a957e6b1f7c2085c2d9c61641b033b7451cf3709b8a08cf8f",
+      "direction": "UP",
+      "return_peak_dps": 258.3,
+      "relative_strength": 0.565
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-154609/raw_right.1.csv",
+      "sha256": "71e863bdb85b8de399ed60429d127a229f172fecf8e33107b9c2f64fba1048b2",
+      "direction": "RIGHT",
+      "return_peak_dps": 110.6,
+      "relative_strength": 0.548
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-154609/raw_right.2.csv",
+      "sha256": "adc10420105ddd7ad3753d407cecb6c5cf1af6bc8dbaa577d703de325a70b3db",
+      "direction": "RIGHT",
+      "return_peak_dps": 118.1,
+      "relative_strength": 0.585
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-155510/raw_up.10.csv",
+      "sha256": "0b8dddc1775314f1e7cbc632ef04bf03489df728bc70a21115ea4e600a2610ca",
+      "direction": "UP",
+      "return_peak_dps": 246,
+      "relative_strength": 0.538
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-161530/raw_right.12.csv",
+      "sha256": "1544b6d79a038e403d9dd807b50be9b33b912ecac734572a74d4df699f2b18ec",
+      "direction": "RIGHT",
+      "return_peak_dps": 98,
+      "relative_strength": 0.485
+    }
+  ]
+}

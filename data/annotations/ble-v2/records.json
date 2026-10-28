@@ -229,6 +229,40 @@
       "decision": "ACCEPT_SENSOR_LABEL"
     },
     {
+      "source_path": "data/sessions/phone-20261025-150714/raw_down.7.csv",
+      "session": "P1",
+      "posture": "앉은 자세",
+      "kind": "raw_down",
+      "rows": 400,
+      "sha256": "30eb508c8d22063ffc07618ecd3e4fe2632d2879ee9c8c12e2e65416076271b6",
+      "peak_gyro_dps": 294.3,
+      "direction": "DOWN",
+      "completion_ms": 1950,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_down.8.csv",
+      "session": "P1",
+      "posture": "앉은 자세",
+      "kind": "raw_down",
+      "rows": 400,
+      "sha256": "73fe6138c516fa03ed54e264bf6054a9e6fb49091ca4f6865b414bcbb8c19328",
+      "peak_gyro_dps": 293.9,
+      "direction": "DOWN",
+      "completion_ms": 2250,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
       "source_path": "data/sessions/phone-20261025-150714/raw_down.9.csv",
       "session": "P1",
       "posture": "앉은 자세",
@@ -238,6 +272,40 @@
       "peak_gyro_dps": 372.5,
       "direction": "DOWN",
       "completion_ms": 2060,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_down.10.csv",
+      "session": "P1",
+      "posture": "앉은 자세",
+      "kind": "raw_down",
+      "rows": 400,
+      "sha256": "18a4ad1268f803dfbf899dc7fe44dd78940b30bb70827d43845127eebabcd05d",
+      "peak_gyro_dps": 274.6,
+      "direction": "DOWN",
+      "completion_ms": 2120,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_down.11.csv",
+      "session": "P1",
+      "posture": "앉은 자세",
+      "kind": "raw_down",
+      "rows": 400,
+      "sha256": "a72b00b760ed4bdfa0a4b1fe683f27521522f12e2a70d4314bc63c6bc3219f67",
+      "peak_gyro_dps": 338.4,
+      "direction": "DOWN",
+      "completion_ms": 2030,
       "annotation_status": "AUTO",
       "annotation_flags": "",
       "positive_windows": 3,
@@ -603,6 +671,23 @@
       "decision": "ACCEPT_SENSOR_LABEL"
     },
     {
+      "source_path": "data/sessions/phone-20261025-150714/raw_right.2.csv",
+      "session": "P1",
+      "posture": "앉은 자세",
+      "kind": "raw_right",
+      "rows": 400,
+      "sha256": "a3c5d199d558d2b579b9383a3542586c6f686e679a4d46a32f2dc2cfdd4cbbef",
+      "peak_gyro_dps": 231.9,
+      "direction": "RIGHT",
+      "completion_ms": 2780,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
       "source_path": "data/sessions/phone-20261025-150714/raw_right.3.csv",
       "session": "P1",
       "posture": "앉은 자세",
@@ -629,6 +714,23 @@
       "peak_gyro_dps": 230.9,
       "direction": "RIGHT",
       "completion_ms": 2070,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_right.5.csv",
+      "session": "P1",
+      "posture": "앉은 자세",
+      "kind": "raw_right",
+      "rows": 400,
+      "sha256": "6a90f360102bbafcd76df89e7da8ca4755444f4463d487fe9d363f5dd147eff9",
+      "peak_gyro_dps": 171.9,
+      "direction": "RIGHT",
+      "completion_ms": 2640,
       "annotation_status": "AUTO",
       "annotation_flags": "",
       "positive_windows": 3,
@@ -867,6 +969,74 @@
       "peak_gyro_dps": 395.4,
       "direction": "UP",
       "completion_ms": 2260,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.6.csv",
+      "session": "P1",
+      "posture": "앉은 자세",
+      "kind": "raw_up",
+      "rows": 400,
+      "sha256": "8b39049d12fddb28c1a6af9178d56a7e43a01c973d1a7f87f73d12db56c1297c",
+      "peak_gyro_dps": 228.7,
+      "direction": "UP",
+      "completion_ms": 2080,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.7.csv",
+      "session": "P1",
+      "posture": "앉은 자세",
+      "kind": "raw_up",
+      "rows": 400,
+      "sha256": "bb55c63b532dbfa0da41d073808cc2ba68484f5a937bc55e4db79806956b51f7",
+      "peak_gyro_dps": 380.4,
+      "direction": "UP",
+      "completion_ms": 1890,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.8.csv",
+      "session": "P1",
+      "posture": "앉은 자세",
+      "kind": "raw_up",
+      "rows": 400,
+      "sha256": "1ccb4059a552987702fcc6b5dfff59fbcf1fb3ee7c0bc741135660c13283ee32",
+      "peak_gyro_dps": 239.8,
+      "direction": "UP",
+      "completion_ms": 2330,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.9.csv",
+      "session": "P1",
+      "posture": "앉은 자세",
+      "kind": "raw_up",
+      "rows": 400,
+      "sha256": "c35fc0622a25990a957e6b1f7c2085c2d9c61641b033b7451cf3709b8a08cf8f",
+      "peak_gyro_dps": 592.7,
+      "direction": "UP",
+      "completion_ms": 2090,
       "annotation_status": "AUTO",
       "annotation_flags": "",
       "positive_windows": 3,
@@ -1558,6 +1728,40 @@
       "peak_gyro_dps": 214.7,
       "direction": "LEFT",
       "completion_ms": 2480,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-154609/raw_right.1.csv",
+      "session": "P2",
+      "posture": "누운 채 팔을 침대에 그대로 내림",
+      "kind": "raw_right",
+      "rows": 400,
+      "sha256": "71e863bdb85b8de399ed60429d127a229f172fecf8e33107b9c2f64fba1048b2",
+      "peak_gyro_dps": 119.9,
+      "direction": "RIGHT",
+      "completion_ms": 2230,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-154609/raw_right.2.csv",
+      "session": "P2",
+      "posture": "누운 채 팔을 침대에 그대로 내림",
+      "kind": "raw_right",
+      "rows": 400,
+      "sha256": "adc10420105ddd7ad3753d407cecb6c5cf1af6bc8dbaa577d703de325a70b3db",
+      "peak_gyro_dps": 272.9,
+      "direction": "RIGHT",
+      "completion_ms": 2280,
       "annotation_status": "AUTO",
       "annotation_flags": "",
       "positive_windows": 3,
@@ -3031,6 +3235,23 @@
       "peak_gyro_dps": 505.7,
       "direction": "UP",
       "completion_ms": 2820,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
+      "source_path": "data/sessions/phone-20261025-155510/raw_up.10.csv",
+      "session": "P3",
+      "posture": "누운 채 팔을 하늘로 90도 올림",
+      "kind": "raw_up",
+      "rows": 400,
+      "sha256": "0b8dddc1775314f1e7cbc632ef04bf03489df728bc70a21115ea4e600a2610ca",
+      "peak_gyro_dps": 269.9,
+      "direction": "UP",
+      "completion_ms": 2750,
       "annotation_status": "AUTO",
       "annotation_flags": "",
       "positive_windows": 3,
@@ -5016,6 +5237,23 @@
       "decision": "ACCEPT_SENSOR_LABEL"
     },
     {
+      "source_path": "data/sessions/phone-20261025-161530/raw_right.12.csv",
+      "session": "P5",
+      "posture": "돌아누워 팔을 꺾지 않음",
+      "kind": "raw_right",
+      "rows": 400,
+      "sha256": "1544b6d79a038e403d9dd807b50be9b33b912ecac734572a74d4df699f2b18ec",
+      "peak_gyro_dps": 169.5,
+      "direction": "RIGHT",
+      "completion_ms": 3470,
+      "annotation_status": "AUTO",
+      "annotation_flags": "",
+      "positive_windows": 3,
+      "positive_truncated": false,
+      "match_horizon_clipped": false,
+      "decision": "ACCEPT_SENSOR_LABEL"
+    },
+    {
       "source_path": "data/sessions/phone-20261025-161530/raw_right.13.csv",
       "session": "P5",
       "posture": "돌아누워 팔을 꺾지 않음",
@@ -5323,76 +5561,6 @@
       "source_path": "data/sessions/phone-20261025-161530/excluded/raw_left.1.csv",
       "sha256": "64ade87c34363c5acab588c1b39a64c87a7757c9fffa9c50937d41769d92fe89",
       "reason": "신호 전(0~0.9초) 손이 천천히 회전해 회전각 영점이 틀림(누적 회전각 클립 끝까지 증가, 최대 약 80도). 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-150714/excluded/raw_down.7.csv",
-      "sha256": "30eb508c8d22063ffc07618ecd3e4fe2632d2879ee9c8c12e2e65416076271b6",
-      "reason": "약한 동작: 복귀 피크 252 dps = 같은 방향(DOWN) 중앙값 444 dps의 0.57배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-150714/excluded/raw_down.8.csv",
-      "sha256": "73fe6138c516fa03ed54e264bf6054a9e6fb49091ca4f6865b414bcbb8c19328",
-      "reason": "약한 동작: 복귀 피크 245 dps = 같은 방향(DOWN) 중앙값 444 dps의 0.55배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-150714/excluded/raw_down.10.csv",
-      "sha256": "18a4ad1268f803dfbf899dc7fe44dd78940b30bb70827d43845127eebabcd05d",
-      "reason": "약한 동작: 복귀 피크 264 dps = 같은 방향(DOWN) 중앙값 444 dps의 0.59배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-150714/excluded/raw_down.11.csv",
-      "sha256": "a72b00b760ed4bdfa0a4b1fe683f27521522f12e2a70d4314bc63c6bc3219f67",
-      "reason": "약한 동작: 복귀 피크 246 dps = 같은 방향(DOWN) 중앙값 444 dps의 0.55배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-150714/excluded/raw_right.2.csv",
-      "sha256": "a3c5d199d558d2b579b9383a3542586c6f686e679a4d46a32f2dc2cfdd4cbbef",
-      "reason": "약한 동작: 복귀 피크 103 dps = 같은 방향(RIGHT) 중앙값 202 dps의 0.51배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-150714/excluded/raw_right.5.csv",
-      "sha256": "6a90f360102bbafcd76df89e7da8ca4755444f4463d487fe9d363f5dd147eff9",
-      "reason": "약한 동작: 복귀 피크 102 dps = 같은 방향(RIGHT) 중앙값 202 dps의 0.50배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-150714/excluded/raw_up.6.csv",
-      "sha256": "8b39049d12fddb28c1a6af9178d56a7e43a01c973d1a7f87f73d12db56c1297c",
-      "reason": "약한 동작: 복귀 피크 207 dps = 같은 방향(UP) 중앙값 457 dps의 0.45배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-150714/excluded/raw_up.7.csv",
-      "sha256": "bb55c63b532dbfa0da41d073808cc2ba68484f5a937bc55e4db79806956b51f7",
-      "reason": "약한 동작: 복귀 피크 182 dps = 같은 방향(UP) 중앙값 457 dps의 0.40배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-150714/excluded/raw_up.8.csv",
-      "sha256": "1ccb4059a552987702fcc6b5dfff59fbcf1fb3ee7c0bc741135660c13283ee32",
-      "reason": "약한 동작: 복귀 피크 163 dps = 같은 방향(UP) 중앙값 457 dps의 0.36배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-150714/excluded/raw_up.9.csv",
-      "sha256": "c35fc0622a25990a957e6b1f7c2085c2d9c61641b033b7451cf3709b8a08cf8f",
-      "reason": "약한 동작: 복귀 피크 258 dps = 같은 방향(UP) 중앙값 457 dps의 0.56배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-154609/excluded/raw_right.1.csv",
-      "sha256": "71e863bdb85b8de399ed60429d127a229f172fecf8e33107b9c2f64fba1048b2",
-      "reason": "약한 동작: 복귀 피크 111 dps = 같은 방향(RIGHT) 중앙값 202 dps의 0.55배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-154609/excluded/raw_right.2.csv",
-      "sha256": "adc10420105ddd7ad3753d407cecb6c5cf1af6bc8dbaa577d703de325a70b3db",
-      "reason": "약한 동작: 복귀 피크 118 dps = 같은 방향(RIGHT) 중앙값 202 dps의 0.58배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-155510/excluded/raw_up.10.csv",
-      "sha256": "0b8dddc1775314f1e7cbc632ef04bf03489df728bc70a21115ea4e600a2610ca",
-      "reason": "약한 동작: 복귀 피크 246 dps = 같은 방향(UP) 중앙값 457 dps의 0.54배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
-    },
-    {
-      "source_path": "data/sessions/phone-20261025-161530/excluded/raw_right.12.csv",
-      "sha256": "1544b6d79a038e403d9dd807b50be9b33b912ecac734572a74d4df699f2b18ec",
-      "reason": "약한 동작: 복귀 피크 98 dps = 같은 방향(RIGHT) 중앙값 202 dps의 0.49배(< 0.6). 약한 제스처는 명령으로 받지 않음. 2026-10-28 사용자 결정"
     }
   ],
   "revisions": [
@@ -5403,26 +5571,6 @@
         "data/sessions/phone-20261025-161530/raw_right.15.csv"
       ],
       "note": "분할은 다시 뽑지 않고 각 분할 파일에서 두 경로만 뺐다(C 분할 무작위 배정 유지)"
-    },
-    {
-      "date_kst": "2026-10-28T11:17:47+09:00",
-      "removed": [
-        "data/sessions/phone-20261025-150714/raw_down.10.csv",
-        "data/sessions/phone-20261025-150714/raw_down.11.csv",
-        "data/sessions/phone-20261025-150714/raw_down.7.csv",
-        "data/sessions/phone-20261025-150714/raw_down.8.csv",
-        "data/sessions/phone-20261025-150714/raw_right.2.csv",
-        "data/sessions/phone-20261025-150714/raw_right.5.csv",
-        "data/sessions/phone-20261025-150714/raw_up.6.csv",
-        "data/sessions/phone-20261025-150714/raw_up.7.csv",
-        "data/sessions/phone-20261025-150714/raw_up.8.csv",
-        "data/sessions/phone-20261025-150714/raw_up.9.csv",
-        "data/sessions/phone-20261025-154609/raw_right.1.csv",
-        "data/sessions/phone-20261025-154609/raw_right.2.csv",
-        "data/sessions/phone-20261025-155510/raw_up.10.csv",
-        "data/sessions/phone-20261025-161530/raw_right.12.csv"
-      ],
-      "note": "약한 동작 제외: 복귀 피크 세기 < 같은 방향 중앙값(294개 기준)의 0.6배. 분할은 다시 뽑지 않고 경로만 뺐다"
     }
   ]
 }

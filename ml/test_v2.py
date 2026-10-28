@@ -231,7 +231,7 @@ class SavedDataTests(unittest.TestCase):
     def test_records_match_files_and_counts(self):
         recs = self.data["records"]
         # 2026-10-28: P5 raw_right.15·raw_left.1 제외(records.json revisions)
-        self.assertEqual(Counter(r["kind"] for r in recs), Counter({"raw_up": 66, "raw_down": 72, "raw_left": 73, "raw_right": 69, "idle": 15, "other": 25}))
+        self.assertEqual(Counter(r["kind"] for r in recs), Counter({"raw_up": 71, "raw_down": 76, "raw_left": 73, "raw_right": 74, "idle": 15, "other": 25}))
         for r in recs:
             if r["direction"] != "NONE":
                 self.assertEqual(r["positive_windows"], v2.positive_count(r["completion_ms"]))
