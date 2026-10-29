@@ -323,3 +323,4 @@ newhard·newpre는 채택하지 않았으므로 `ml/v2_return.py`에서 해당 �
 - 해석: 경계 창을 부드럽게 가르치자 모델이 r 전후로 확신을 덜 갖게 되어(점수 최고값이 낮아짐) 일찍 튀는 발행은 줄었지만, 점수가 문턱을 넘는 시점도 늦어지고 적어졌다. 기대했던 "봉우리가 넓어져 무발행이 줄어드는" 효과는 0.8 문턱에서는 나오지 않았다.
 - 판단: 아직 채택하지 않는다. 문턱 0.6은 결과를 본 뒤 고른 값이고, 학습량 혼입도 남아 있다. 튜닝 후보로 남긴다(앞쪽 구간 없이 뒤쪽만, 더한 창 수를 줄여 학습량 맞추기, 문턱과 함께 탐색).
 - 파일: `summary-soft.json`, `results/soft-20261029/`, `logs/soft-20261029/`.
+- 롤백(같은 날, 사용자 요청): 부드러운 라벨 코드(`newtcnrotwarpsoft` 조건, `soft_weight`·`soft_window_fn`·`soft_chooser`, 속도 사본의 복귀 피크 이동, `v2.fit_snapshots`의 categorical 손실, `ml/test_v2_soft.py`)를 되돌렸다. 기록·결과 파일과 run-all·summarize `--splits` 옵션은 남겼다. 다시 시험하려면 커밋 `2a5b9b1`의 코드를 쓴다.

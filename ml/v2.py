@@ -639,9 +639,7 @@ def fit_snapshots(x_train, y_train, x_val, seed, epochs, model_fn=None):
         assert model.count_params() == model_params(channels)
     else:
         model = model_fn(channels)
-    # y_train이 확률 벡터(부드러운 라벨)면 categorical, 클래스 번호면 sparse 교차 엔트로피
-    loss = "categorical_crossentropy" if y_train.ndim == 2 else "sparse_categorical_crossentropy"
-    model.compile(optimizer=tf.keras.optimizers.Adam(.001), loss=loss)
+    model.compile(optimizer=tf.keras.optimizers.Adam(.001), loss="sparse_categorical_crossentropy")
     ds = (tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(len(y_train), seed=seed)
           .batch(BATCH_SIZE).with_options(options))
     snap = Snapshot()
