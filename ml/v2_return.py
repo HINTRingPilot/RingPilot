@@ -23,7 +23,7 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
-  extreme_window [끝점, r+200 ms] (2026-10-29부터 주 채점). 끝점 = 가는 동작 주축 자이로가 0을 지나 복귀가 시작되는 순간.
+  extreme_window [끝점, r+300 ms] (2026-10-29부터 주 채점). 끝점 = 가는 동작 주축 자이로가 0을 지나 복귀가 시작되는 순간.
               복귀 중 같은 방향 발행은 일러도 정답이다. 이전 결과는 저장된 발행 기록으로 다시 분류한다(rescored).
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 요약은 모든 방향 클립으로 계산하고, data/annotations/ble-v2/weak-gestures.json의 약한 동작 검출률을 by_epoch[E]["weak"]에 따로 적는다.
@@ -59,7 +59,7 @@ EXP = "return-label-01"
 OUT = DOC / EXP
 RUNS = ROOT / "ml/runs" / EXP
 SCORINGS = ("old_window", "new_window", "extreme_window")
-EXTREME_AFTER_R_MS = 200   # extreme_window의 끝 = r + 200 ms
+EXTREME_AFTER_R_MS = 300   # extreme_window의 끝 = r + 300 ms(2026-10-29 r+200에서 늘림. 실기기 체감 확인 전 잠정값)
 # 쓰는 분할(사용자 결정). 2026-10-27 오전 C·S-P2·S-P5, 같은 날 newtcnnorm부터 C·S-P5.
 # 이전 결과는 6개 분할(v2.SPLIT_NAMES)이나 세 분할로 남아 있다.
 SPLITS = ("C", "S-P5")
