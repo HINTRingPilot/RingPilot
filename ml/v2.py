@@ -612,10 +612,11 @@ def model_params(channels=len(AXES)):
     return 9493 + 80 * (channels - len(AXES))
 
 
-def fit_snapshots(x_train, y_train, x_val, seed, epochs, model_fn=None):
+def fit_snapshots(x_train, y_train, x_val, seed, epochs, model_fn=None, save_dir=None):
     """max(epochs)까지 한 번 학습하고 epochs에 든 epoch가 끝날 때마다 검증 점수를 저장한다.
 
     입력 채널 수는 x_train에서 읽는다(기본 6축). model_fn(channels)을 주면 그 모델을 쓴다(기본 build_model).
+    save_dir를 주면 같은 시점마다 모델을 save_dir/e<E>.keras로 저장한다(학습 결과는 저장하지 않을 때와 같다).
     """
     tf = configure_tf()
     from model import build_model
@@ -628,6 +629,8 @@ def fit_snapshots(x_train, y_train, x_val, seed, epochs, model_fn=None):
         def on_epoch_end(self, epoch, logs=None):
             if epoch + 1 in epochs:
                 self.scores[epoch + 1] = self.model(x_val, training=False).numpy()
+                if save_dir is not None:
+                    self.model.save(Path(save_dir) / f"e{epoch + 1}.keras")
 
     options = tf.data.Options()
     options.threading.private_threadpool_size = 1
@@ -643,6 +646,8 @@ def fit_snapshots(x_train, y_train, x_val, seed, epochs, model_fn=None):
     ds = (tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(len(y_train), seed=seed)
           .batch(BATCH_SIZE).with_options(options))
     snap = Snapshot()
+    if save_dir is not None:
+        Path(save_dir).mkdir(parents=True, exist_ok=True)
     hist = model.fit(ds, epochs=max(epochs), verbose=0, shuffle=False, callbacks=[snap])
     return snap.scores, hist.history["loss"]
 

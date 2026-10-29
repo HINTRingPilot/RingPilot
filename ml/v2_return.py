@@ -92,6 +92,8 @@ CONDITIONS = {
                               "anchor_ms": 890, "scale_min": 0.8, "scale_max": 1.25, "max_jump_dps": 2.0}},
 }
 CONDITIONS["newtcnrotwarpnoacc"] = {**CONDITIONS["newtcnrotwarp"], "drop_acc": True}
+# acc: 가속도 3채널 처리("precue_sub" = 클립 0~890 ms 평균(시작 자세의 중력)을 빼고 fold 학습 창으로 정규화). 계획 Task 4
+CONDITIONS["newtcnrotwarpaccsub"] = {**CONDITIONS["newtcnrotwarp"], "acc": "precue_sub"}
 PRECUE_SAMPLES = 90       # 0~890 ms, 동작 신호(1000 ms) 전. 속도 변형은 이 행들을 건드리지 않는다(900 ms부터)
 AUG_SEED = 20261027       # 증강 난수(학습 seed와 별개, 클립 경로·사본 번호와 함께 쓴다)
 ANGLE = slice(6, 9)
@@ -129,12 +131,19 @@ def relabel(by_path, nb, label):
     return out
 
 
-def windows_with_angle(record, ts, raw, mean, std, bias_mode="clip"):
+def windows_with_angle(record, ts, raw, mean, std, bias_mode="clip", acc_mode=None):
     """v2.windows_from_raw에 회전각 3채널을 붙인다. 정규화된 자이로를 원시 deg/s로 되돌리고, 영점을 빼서 창 안에서 누적한다.
     원시 자이로에 약 10 dps 치우침이 있어 보정 없이는 1.6초에 약 16도가 쌓인다.
     bias_mode "clip"은 클립 전체 중앙값(비인과), "precue"는 클립 0~900 ms 중앙값(첫 판정 전 데이터만, 인과).
-    영점은 넘겨받은 raw에서 잡는다. 증강 사본이면 사본의 raw다(창과 영점이 같은 신호에서 나와야 한다)."""
+    영점은 넘겨받은 raw에서 잡는다. 증강 사본이면 사본의 raw다(창과 영점이 같은 신호에서 나와야 한다).
+    acc_mode "precue_sub"이면 가속도 3채널을 원시 m/s²로 되돌려 클립 0~890 ms 평균(시작 자세의 중력)을 뺀다.
+    이 채널은 normalize_acc가 fold 학습 창으로 다시 정규화한다."""
     x, y, meta = v2.windows_from_raw(record, ts, raw, mean, std)
+    if acc_mode == "precue_sub":
+        static = raw[:PRECUE_SAMPLES, 0:3].mean(axis=0)
+        x[:, :, 0:3] = (x[:, :, 0:3].astype(np.float64) * std[0:3] + mean[0:3] - static).astype(np.float32)
+    elif acc_mode is not None:
+        raise ValueError(f"알 수 없는 acc_mode: {acc_mode}")
     gyro_raw = raw[:PRECUE_SAMPLES, 3:6] if bias_mode == "precue" else raw[:, 3:6]
     bias = np.median(gyro_raw, axis=0)
     gyro = x[:, :, 3:6].astype(np.float64) * std[3:6] + mean[3:6] - bias
@@ -176,15 +185,25 @@ def outbound_none_chooser(nb):
     return choose
 
 
-def normalize_angle(d):
-    """회전각 채널을 fold 학습 창(선택된 학습 창)의 축별 평균·표준편차로 정규화한다. 검증 창은 통계에 쓰지 않는다."""
-    a = d["x_train"][:, :, ANGLE].astype(np.float64)
+def normalize_channels(d, sl, key):
+    """채널 sl을 fold 학습 창(선택된 학습 창)의 축별 평균·표준편차로 정규화하고 d[key_mean]·d[key_std]에 남긴다. 검증 창은 통계에 쓰지 않는다."""
+    a = d["x_train"][:, :, sl].astype(np.float64)
     mean, std = a.mean(axis=(0, 1)), np.maximum(a.std(axis=(0, 1)), 1e-6)
-    d["angle_mean"], d["angle_std"] = mean, std
-    d["x_train"][:, :, ANGLE] = ((a - mean) / std).astype(np.float32)
+    d[f"{key}_mean"], d[f"{key}_std"] = mean, std
+    d["x_train"][:, :, sl] = ((a - mean) / std).astype(np.float32)
     for chunk in d["val"]:
         x = chunk[1]
-        x[:, :, ANGLE] = ((x[:, :, ANGLE].astype(np.float64) - mean) / std).astype(np.float32)
+        x[:, :, sl] = ((x[:, :, sl].astype(np.float64) - mean) / std).astype(np.float32)
+
+
+def normalize_angle(d):
+    """회전각 채널을 fold 학습 창의 축별 평균·표준편차로 정규화한다."""
+    normalize_channels(d, ANGLE, "angle")
+
+
+def normalize_acc(d):
+    """정지 구간 평균을 뺀 가속도 채널(acc_mode "precue_sub")을 fold 학습 창의 축별 평균·표준편차로 정규화한다."""
+    normalize_channels(d, slice(0, 3), "acc")
 
 
 def tcn(channels):
@@ -323,20 +342,45 @@ def drop_acc(d):
 
 
 def prepare_fold(label, by_path, nb, split, k):
-    """조건 label의 fold k 학습·검증 집합과 학습 함수를 돌려준다."""
+    """조건 label의 fold k 학습·검증 집합과 학습 함수를 돌려준다. k가 None이면 분할의 학습 원본 전체로 학습하고 검증은 없다."""
     cond = CONDITIONS[label]
-    window_fn = (lambda r, ts, raw, m, s: windows_with_angle(r, ts, raw, m, s, cond["angle_bias"])) if cond["angle"] else None
+    window_fn = ((lambda r, ts, raw, m, s: windows_with_angle(r, ts, raw, m, s, cond["angle_bias"], cond.get("acc")))
+                 if cond["angle"] else None)
     none_fn = outbound_none_chooser(nb) if cond["hard"] == "outbound" else None
     augment_fn = augmenter(cond["aug"])
-    d = v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn, none_fn=none_fn, augment_fn=augment_fn)
+    rb = relabel(by_path, nb, label)
+    if k is None:
+        d = v2.build_sets([rb[p] for p in split["train_sources"]], [], window_fn=window_fn, none_fn=none_fn, augment_fn=augment_fn)
+    else:
+        d = v2.fold_sets(rb, split, k, window_fn=window_fn, none_fn=none_fn, augment_fn=augment_fn)
     d["train_aug_stats"] = dict(getattr(augment_fn, "stats", {}))
     if cond["angle_norm"]:
         normalize_angle(d)
+    if cond.get("acc") == "precue_sub":
+        normalize_acc(d)
     if cond["drop_acc"]:
         drop_acc(d)
     if cond["model"] == "tcn":
-        return d, lambda *args: v2.fit_snapshots(*args, model_fn=tcn)
+        return d, lambda *args, **kw: v2.fit_snapshots(*args, model_fn=tcn, **kw)
     return d, v2.fit_snapshots
+
+
+def prep_values(label, d):
+    """저장한 모델에 같은 입력을 만들어 넣는 데 필요한 전처리 값. 모두 그 학습 집합(fold 학습 원본·학습 창)에서 계산한 값이다."""
+    cond = CONDITIONS[label]
+    channels = list(v2.AXES[3:] if cond["drop_acc"] else v2.AXES) + (["angX", "angY", "angZ"] if cond["angle"] else [])
+    return {"input_channels": channels, "window": v2.WINDOW, "stride": v2.STRIDE, "sample_ms": SAMPLE_MS, "classes": list(CLASSES),
+            "norm_mean_6axis": d["mean"].tolist(), "norm_std_6axis": d["std"].tolist(),
+            "acc_mode": cond.get("acc"),
+            "acc_mean": d["acc_mean"].tolist() if "acc_mean" in d else None,
+            "acc_std": d["acc_std"].tolist() if "acc_std" in d else None,
+            "angle_mean": d["angle_mean"].tolist() if "angle_mean" in d else None,
+            "angle_std": d["angle_std"].tolist() if "angle_std" in d else None,
+            "angle_scale_deg": ANGLE_SCALE_DEG, "angle_bias": cond["angle_bias"], "precue_samples": PRECUE_SAMPLES,
+            "recipe": "6축 = (raw - norm_mean) / norm_std. 회전각 = 창 안에서 (자이로 raw - 영점) × 0.01 s 누적, 창 첫 값 빼기, "
+                      "÷ angle_scale_deg, (값 - angle_mean) / angle_std. 영점은 angle_bias(precue = 클립 0~890 ms 자이로 중앙값). "
+                      "drop_acc면 6축 정규화 뒤 가속도 3채널을 뺀다. acc_mode precue_sub면 가속도 = (원시 가속도 - 클립 0~890 ms 평균 - acc_mean) / acc_std. "
+                      "채널 순서는 input_channels"}
 
 
 # ---------------------------------------------------------------- 채점
@@ -422,7 +466,12 @@ def runtime_env():
             **{k: os.environ.get(k) for k in ("TF_ENABLE_ONEDNN_OPTS", "TF_DETERMINISTIC_OPS")}}
 
 
-def cmd_run(label, split_name, seed, tag=None):
+def model_dir(label, split_name, seed, k, tag=None):
+    """cmd_run --save-models의 fold별 모델 폴더(깃 제외). 안에 e<E>.keras와 prep.json이 생긴다."""
+    return run_dir(tag) / "models" / f"{label}-{split_name}" / f"seed-{seed}-fold-{k}"
+
+
+def cmd_run(label, split_name, seed, tag=None, save_models=False):
     target = result_path(label, split_name, seed, tag)
     if target.exists():
         raise FileExistsError(f"{target}가 이미 있다. 덮어쓰지 않는다")
@@ -435,13 +484,18 @@ def cmd_run(label, split_name, seed, tag=None):
               "tag": tag, "created_kst": now(),
               "code_sha256": {f: digest(ROOT / "ml" / f) for f in ("v2.py", "v2_return.py", "model.py")},
               "records_sha256": digest(v2.RECORDS), "new_records_sha256": digest(NEW_RECORDS),
-              "epochs": list(epochs), "folds": []}
+              "epochs": list(epochs), "models_saved": save_models, "folds": []}
     t_start = time.time()
     for k in range(split["cv"]["n_folds"]):
         t0 = time.time()
         d, fit = prepare_fold(label, by_path, nb, split, k)
         x_val = np.concatenate([c[1] for c in d["val"]])
-        scores, _ = fit(d["x_train"], d["y_train"], x_val, seed, epochs)
+        save_dir = model_dir(label, split_name, seed, k, tag) if save_models else None
+        if save_dir is not None and save_dir.exists():
+            raise FileExistsError(f"{save_dir}가 이미 있다. 덮어쓰지 않는다")
+        scores, _ = fit(d["x_train"], d["y_train"], x_val, seed, epochs, save_dir=save_dir)
+        if save_dir is not None:
+            dump(save_dir / "prep.json", prep_values(label, d))
         result["model_params"] = tcn(d["x_train"].shape[2]).count_params() if CONDITIONS[label]["model"] == "tcn"             else v2.model_params(d["x_train"].shape[2])
         np.savez_compressed(score_dir / f"seed-{seed}-fold-{k}-scores.npz", **{f"e{e}": scores[e].astype(np.float32) for e in epochs})
         per_epoch = {str(e): {s: dict(zip(("totals", "per_source"), score(d["val"], scores[e], by_path, nb, s))) for s in SCORINGS}
@@ -461,9 +515,17 @@ def cmd_run(label, split_name, seed, tag=None):
     print("saved", target)
 
 
-def cmd_run_all(parallel, labels=LABELS, tag=None, splits=SPLITS):
+def keep_awake():
+    """실행하는 동안 Windows 대기 모드를 막는다. 프로세스가 끝나면 풀리고 전원 설정은 바꾸지 않는다."""
+    if sys.platform == "win32":
+        import ctypes
+        ctypes.windll.kernel32.SetThreadExecutionState(0x80000000 | 0x00000001)   # ES_CONTINUOUS | ES_SYSTEM_REQUIRED
+
+
+def cmd_run_all(parallel, labels=LABELS, tag=None, splits=SPLITS, save_models=False):
     """labels 중 결과가 없는 (label, split, seed)를 돌린다. ml/runs/는 깃 제외라 새 PC에서는 비어 있으니 labels를 지정한다.
     로그는 저장소에 있으므로 덮어쓰지 않는다: 하나라도 이미 있으면 아무것도 시작하지 않는다. 재실행은 새 tag로 한다."""
+    keep_awake()
     jobs = [(lab, sp, s) for lab in labels for sp in splits for s in v2.SEEDS if not result_path(lab, sp, s, tag).exists()]
     logs = log_dir(tag)
     existing = [f"{lab}-{sp}-seed-{s}.log" for lab, sp, s in jobs if (logs / f"{lab}-{sp}-seed-{s}.log").exists()]
@@ -475,7 +537,8 @@ def cmd_run_all(parallel, labels=LABELS, tag=None, splits=SPLITS):
     for lab, sp, s in jobs:
         log = open(logs / f"{lab}-{sp}-seed-{s}.log", "x", encoding="utf-8")
         cmd = [sys.executable, str(ROOT / "ml/v2_return.py"), "run", "--label", lab, "--split", sp, "--seed", str(s)]
-        proc = subprocess.Popen(cmd + (["--tag", tag] if tag else []), cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
+        cmd += (["--tag", tag] if tag else []) + (["--save-models"] if save_models else [])
+        proc = subprocess.Popen(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
         running.append(((lab, sp, s), proc, log))
         while sum(p.poll() is None for _, p, _ in running) >= parallel:
             time.sleep(2)
@@ -486,6 +549,30 @@ def cmd_run_all(parallel, labels=LABELS, tag=None, splits=SPLITS):
     print("failed:", failed or "none")
     if failed:
         sys.exit(1)
+
+
+def cmd_export(label, split_name, seed, epoch, fold=None, tag=None):
+    """label 조건을 E까지 학습해 모델(e<E>.keras)과 전처리 값(export.json)을 저장한다(깃 제외 ml/runs/).
+    fold가 None이면 분할의 학습 원본 전체로 학습한다(배포 후보). fold를 주면 그 fold 검증 채점도 기록한다."""
+    name = f"{label}-{split_name}-seed-{seed}-E{epoch}-" + ("all" if fold is None else f"fold{fold}")
+    folder = run_dir(tag) / "export" / name
+    if folder.exists():
+        raise FileExistsError(f"{folder}가 이미 있다")
+    _, by_path, nb = load()
+    split = v2.load_split(split_name)
+    d, fit = prepare_fold(label, by_path, nb, split, fold)
+    x_val = np.concatenate([c[1] for c in d["val"]]) if d["val"] else d["x_train"][:1]
+    scores, _ = fit(d["x_train"], d["y_train"], x_val, seed, (epoch,), save_dir=folder)
+    meta = {"label": label, "condition": CONDITIONS[label], "split": split_name, "seed": seed, "epoch": epoch, "fold": fold,
+            "tag": tag, "created_kst": now(), "model_file": f"e{epoch}.keras",
+            "code_sha256": {f: digest(ROOT / "ml" / f) for f in ("v2.py", "v2_return.py", "model.py")},
+            "records_sha256": digest(v2.RECORDS), "new_records_sha256": digest(NEW_RECORDS),
+            "train_sources": d["train_sources"], "train_windows_selected": d["train_counts"],
+            **prep_values(label, d), "env": runtime_env()}
+    if d["val"]:
+        meta["val_totals"] = score(d["val"], scores[epoch], by_path, nb, "extreme_window")[0]
+    dump(folder / "export.json", meta)
+    print("saved", folder)
 
 
 # ---------------------------------------------------------------- 요약
@@ -610,11 +697,20 @@ def main():
     r.add_argument("--split", choices=v2.SPLIT_NAMES, required=True)
     r.add_argument("--seed", type=int, required=True)
     r.add_argument("--tag")
+    r.add_argument("--save-models", action="store_true", help="fold마다 후보 E 시점 모델과 전처리 값을 저장한다")
     a = sub.add_parser("run-all")
     a.add_argument("--parallel", type=int, default=8)
     a.add_argument("--labels", nargs="+", choices=LABELS, default=list(LABELS))
     a.add_argument("--splits", nargs="+", choices=v2.SPLIT_NAMES, default=list(SPLITS))
     a.add_argument("--tag")
+    a.add_argument("--save-models", action="store_true")
+    x = sub.add_parser("export")
+    x.add_argument("--label", choices=LABELS, required=True)
+    x.add_argument("--split", choices=v2.SPLIT_NAMES, required=True)
+    x.add_argument("--seed", type=int, required=True)
+    x.add_argument("--epoch", type=int, required=True)
+    x.add_argument("--fold", type=int, help="생략하면 분할의 학습 원본 전체로 학습한다(배포 후보)")
+    x.add_argument("--tag")
     m = sub.add_parser("summarize")
     m.add_argument("--out", default="summary.json")
     m.add_argument("--tag")
@@ -622,9 +718,11 @@ def main():
     m.add_argument("--splits", nargs="+", choices=v2.SPLIT_NAMES, default=list(SPLITS))
     args = p.parse_args()
     if args.cmd == "run":
-        cmd_run(args.label, args.split, args.seed, args.tag)
+        cmd_run(args.label, args.split, args.seed, args.tag, args.save_models)
     elif args.cmd == "run-all":
-        cmd_run_all(args.parallel, args.labels, args.tag, args.splits)
+        cmd_run_all(args.parallel, args.labels, args.tag, args.splits, args.save_models)
+    elif args.cmd == "export":
+        cmd_export(args.label, args.split, args.seed, args.epoch, args.fold, args.tag)
     else:
         cmd_summarize(args.out, args.tag, args.exclude_weak, args.splits)
 
