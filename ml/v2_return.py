@@ -20,6 +20,9 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
             0~890 ms(영점 구간)는 그대로, 900 ms부터 원본 시각 890 + (t − 890)/s 값을 보간하고 자이로는 영점을 뺀 뒤 1/s배.
             라벨 r' = 890 + s(r − 890). 배경·동작 시작 < 900 ms·양성 창 수가 줄어드는 사본·경계 점프 > 2 dps 사본은 회전만(newtcnrot 사본 그대로).
             계획: 같은 문서 §7(3차 개정)
+  newtcnrotwarpsoft newtcnrotwarp + 부드러운 라벨. r ≤ t < r+150은 방향 1(지금과 같음), r+150 ≤ t < r+300은 방향 0.75→0.25로
+            줄고(나머지는 NONE), 복귀 피크 ≤ t < r은 방향 0→0.6으로 오른다. 복귀 피크 전은 NONE 1 그대로. 속도 사본은 옮긴 r′·복귀 피크′ 기준.
+            기존 학습 창 선택(choose_training)은 그대로 두고, 방향 목표가 0과 1 사이인 창을 모두 더한다. 손실은 categorical cross-entropy.
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
@@ -28,8 +31,8 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
   run --label old|new|newangle|newtcn|newtcnhard|newtcnnorm|newtcnrt|newtcnrot|newtcnrotwarp --split C|S-P5 --seed N [--tag T]   한 seed의 모든 fold 학습·채점
-  run-all [--parallel 8] [--labels L ...] [--tag T]           빠진 (label, split, seed)를 실행(기본은 모든 조건)
-  summarize [--out summary.json] [--tag T] [--exclude-weak]   요약 작성(이미 있으면 거부). --exclude-weak이면 약한 동작을 정검출·E 선택에서 뺀다
+  run-all [--parallel 8] [--labels L ...] [--splits S ...] [--tag T]   빠진 (label, split, seed)를 실행(기본은 모든 조건·분할)
+  summarize [--out summary.json] [--tag T] [--splits S ...] [--exclude-weak]   요약 작성(이미 있으면 거부). --exclude-weak이면 약한 동작을 정검출·E 선택에서 뺀다
 --tag를 주면 결과는 ml/runs/return-label-01/<T>/, 로그는 OUT/logs/<T>/에 둔다(다른 PC·재실행 결과를 기존 것과 나눔).
 로그는 덮어쓰지 않는다(이미 있으면 run-all이 시작하지 않는다).
 """
@@ -69,8 +72,9 @@ SAMPLE_MS = 10.0
 # angle_norm: 회전각 채널을 fold 학습 창의 평균·표준편차로 정규화할지,
 # angle_bias: 회전각 영점("clip" = 클립 전체 중앙값(비인과), "precue" = 클립 0~900 ms 중앙값(인과)),
 # aug: 학습 원본 증강 설정(None = 증강 없음). 계획: docs/superpowers/plans/2026-10-27-v2-augmentation.md
+# soft: 부드러운 라벨 설정(None = 0/1 라벨). before_max = 복귀 피크~r 구간 끝의 방향 목표, after_ms = r+150 뒤 방향 목표가 0이 되기까지의 길이
 _BASE = {"label": "return", "angle": False, "model": "cnn", "hard": None, "angle_norm": False, "angle_bias": "clip",
-         "aug": None}
+         "aug": None, "soft": None}
 CONDITIONS = {
     "old": {**_BASE, "label": "settled"},
     "new": {**_BASE},
@@ -85,6 +89,7 @@ CONDITIONS = {
                       "aug": {"kind": "rotate_warp", "rot_y_deg": 30, "tilt_deg": 15, "copies": 2,
                               "anchor_ms": 890, "scale_min": 0.8, "scale_max": 1.25, "max_jump_dps": 2.0}},
 }
+CONDITIONS["newtcnrotwarpsoft"] = {**CONDITIONS["newtcnrotwarp"], "soft": {"before_max": 0.6, "after_ms": 150}}
 PRECUE_SAMPLES = 90       # 0~890 ms, 동작 신호(1000 ms) 전. 속도 변형은 이 행들을 건드리지 않는다(900 ms부터)
 AUG_SEED = 20261027       # 증강 난수(학습 seed와 별개, 클립 경로·사본 번호와 함께 쓴다)
 ANGLE = slice(6, 9)
@@ -118,6 +123,7 @@ def relabel(by_path, nb, label):
         r = dict(r)
         if r["completion_ms"] is not None:
             r["completion_ms"] = nb[p]["event_ms"]
+            r["return_peak_ms"] = nb[p]["return_peak_ms"]   # 부드러운 라벨이 쓴다(v2.windows_from_raw는 읽지 않는다)
         out[p] = r
     return out
 
@@ -290,7 +296,10 @@ def rotate_warp_augmenter(aug, starts=None):
                 elif jump > aug["max_jump_dps"]:
                     why = "jump"
                 else:
-                    copy = ({**record, "source_path": f"{path}#rot{c}", "completion_ms": r2}, warped, n)
+                    moved = {"completion_ms": r2}
+                    if record.get("return_peak_ms") is not None:
+                        moved["return_peak_ms"] = anchor + s * (record["return_peak_ms"] - anchor)
+                    copy = ({**record, "source_path": f"{path}#rot{c}", **moved}, warped, n)
             stats[why or "warp"] += 1
             copies.append(copy)
         return copies
@@ -309,14 +318,66 @@ def augmenter(aug):
     raise ValueError(f"알 수 없는 증강 설정: {aug}")
 
 
+def soft_weight(t, e, rp, soft):
+    """판정 시각 t의 방향 목표(0~1). e = r, rp = 복귀 피크."""
+    if e <= t < e + v2.POSITIVE_MS:
+        return 1.0
+    end = e + v2.POSITIVE_MS
+    if end <= t < end + soft["after_ms"]:
+        return 1.0 - (t - end + v2.STRIDE * 10) / (soft["after_ms"] + v2.STRIDE * 10)
+    if rp is not None and rp <= t < e:
+        return soft["before_max"] * (t - rp) / (e - rp)
+    return 0.0
+
+
+def soft_window_fn(window_fn, soft):
+    """창 meta에 부드러운 방향 목표(soft_w)와 방향 번호(soft_class)를 붙인다. 0/1 라벨(y)은 바꾸지 않는다."""
+    def fn(record, ts, raw, mean, std):
+        x, y, meta = window_fn(record, ts, raw, mean, std)
+        if record["completion_ms"] is not None:
+            cls = v2.CLASSES.index(record["direction"])
+            for m in meta:
+                m["soft_w"] = soft_weight(m["timestamp_ms"], record["completion_ms"], record.get("return_peak_ms"), soft)
+                m["soft_class"] = cls
+        return x, y, meta
+    return fn
+
+
+def soft_chooser(base):
+    """base 선택에 방향 목표가 0과 1 사이인 창을 더하고, 선택 창의 목표 확률 벡터를 chooser.targets에 남긴다."""
+    def choose(y, meta, seed=v2.SEED):
+        idx = set(int(i) for i in base(y, meta, seed))
+        ramp = [i for i, m in enumerate(meta) if 0 < m.get("soft_w", 0) < 1]
+        choose.added = len(set(ramp) - idx)
+        idx = np.array(sorted(idx | set(ramp)), dtype=np.int64)
+        targets = np.zeros((len(idx), len(v2.CLASSES)), dtype=np.float32)
+        for row, i in enumerate(idx):
+            w = meta[i].get("soft_w", 0.0) if y[i] == 0 else 1.0
+            cls = int(y[i]) if y[i] != 0 else meta[i].get("soft_class", 0)
+            targets[row, cls] += w
+            targets[row, 0] += 1.0 - w
+        assert np.allclose(targets.sum(axis=1), 1)
+        choose.targets = targets
+        return idx
+    return choose
+
+
 def prepare_fold(label, by_path, nb, split, k):
     """조건 label의 fold k 학습·검증 집합과 학습 함수를 돌려준다."""
     cond = CONDITIONS[label]
     window_fn = (lambda r, ts, raw, m, s: windows_with_angle(r, ts, raw, m, s, cond["angle_bias"])) if cond["angle"] else None
     none_fn = outbound_none_chooser(nb) if cond["hard"] == "outbound" else None
+    soft = None
+    if cond["soft"]:
+        window_fn = soft_window_fn(window_fn or v2.windows_from_raw, cond["soft"])
+        soft = soft_chooser(none_fn or v2.choose_training)
+        none_fn = soft
     augment_fn = augmenter(cond["aug"])
     d = v2.fold_sets(relabel(by_path, nb, label), split, k, window_fn=window_fn, none_fn=none_fn, augment_fn=augment_fn)
     d["train_aug_stats"] = dict(getattr(augment_fn, "stats", {}))
+    if soft is not None:
+        d["y_train"] = soft.targets
+        d["train_soft_windows"] = soft.added
     if cond["angle_norm"]:
         normalize_angle(d)
     if cond["model"] == "tcn":
@@ -435,6 +496,7 @@ def cmd_run(label, split_name, seed, tag=None):
                                 "train_aug_copies": d["train_aug_copies"], "train_aug_skipped": d["train_aug_skipped"],
                                 "train_windows_excluded": d["train_windows_excluded"],
                                 "train_aug_stats": d["train_aug_stats"], "train_none_groups": d["train_none_groups"],
+                                "train_soft_windows": d.get("train_soft_windows"), "train_windows_total": int(len(d["y_train"])),
                                 "per_epoch": per_epoch, "seconds": round(time.time() - t0, 1)})
         print(f"{label} {split_name} seed {seed} fold {k}: {round(time.time() - t0, 1)}s", flush=True)
     result["seconds"] = round(time.time() - t_start, 1)
@@ -444,10 +506,10 @@ def cmd_run(label, split_name, seed, tag=None):
     print("saved", target)
 
 
-def cmd_run_all(parallel, labels=LABELS, tag=None):
+def cmd_run_all(parallel, labels=LABELS, tag=None, splits=SPLITS):
     """labels 중 결과가 없는 (label, split, seed)를 돌린다. ml/runs/는 깃 제외라 새 PC에서는 비어 있으니 labels를 지정한다.
     로그는 저장소에 있으므로 덮어쓰지 않는다: 하나라도 이미 있으면 아무것도 시작하지 않는다. 재실행은 새 tag로 한다."""
-    jobs = [(lab, sp, s) for lab in labels for sp in SPLITS for s in v2.SEEDS if not result_path(lab, sp, s, tag).exists()]
+    jobs = [(lab, sp, s) for lab in labels for sp in splits for s in v2.SEEDS if not result_path(lab, sp, s, tag).exists()]
     logs = log_dir(tag)
     existing = [f"{lab}-{sp}-seed-{s}.log" for lab, sp, s in jobs if (logs / f"{lab}-{sp}-seed-{s}.log").exists()]
     if existing:
@@ -521,20 +583,20 @@ def epoch_stats(seed_results, epoch, scoring, skip=frozenset(), only=None):
     return out
 
 
-def cmd_summarize(name="summary.json", tag=None, exclude_weak=False):
+def cmd_summarize(name="summary.json", tag=None, exclude_weak=False, splits=SPLITS):
     target = OUT / name
     if target.exists():
         raise FileExistsError(f"{target}가 이미 있다")
-    labels = [lab for lab in LABELS if all(result_path(lab, sp, s, tag).exists() for sp in SPLITS for s in v2.SEEDS)]
+    labels = [lab for lab in LABELS if all(result_path(lab, sp, s, tag).exists() for sp in splits for s in v2.SEEDS)]
     weak = load_weak()
     skip = weak if exclude_weak else frozenset()
     summary = {"experiment": EXP, "created_kst": now(), "rule": "E는 seed 평균 selection_score 최대, 같으면 작은 E",
-               "tag": tag, "labels": labels,
+               "tag": tag, "labels": labels, "splits": list(splits),
                "weak_gestures": {"file": WEAK_GESTURES.relative_to(ROOT).as_posix(), "sha256": digest(WEAK_GESTURES),
                                  "clips": len(weak), "excluded_from_main": exclude_weak},
                "panels": {}}
     for lab in labels:
-        for sp in SPLITS:
+        for sp in summary.get("splits", SPLITS):
             res = [json.loads(result_path(lab, sp, s, tag).read_text(encoding="utf-8")) for s in v2.SEEDS]
             panel = {}
             for sc in SCORINGS:
@@ -553,7 +615,7 @@ def cmd_summarize(name="summary.json", tag=None, exclude_weak=False):
 def print_table(summary):
     for sc in SCORINGS:
         print(f"\n== {sc}: 선택 E / 정검출률(seed 평균) / 조기 발행 클립 / 무발행 / 배경 오발행(클립당)")
-        for sp in SPLITS:
+        for sp in summary.get("splits", SPLITS):
             row = [sp]
             for lab in summary["labels"]:
                 p = summary["panels"][f"{lab}-{sp}"][sc]
@@ -574,18 +636,20 @@ def main():
     a = sub.add_parser("run-all")
     a.add_argument("--parallel", type=int, default=8)
     a.add_argument("--labels", nargs="+", choices=LABELS, default=list(LABELS))
+    a.add_argument("--splits", nargs="+", choices=SPLITS, default=list(SPLITS))
     a.add_argument("--tag")
     m = sub.add_parser("summarize")
     m.add_argument("--out", default="summary.json")
     m.add_argument("--tag")
     m.add_argument("--exclude-weak", action="store_true")
+    m.add_argument("--splits", nargs="+", choices=SPLITS, default=list(SPLITS))
     args = p.parse_args()
     if args.cmd == "run":
         cmd_run(args.label, args.split, args.seed, args.tag)
     elif args.cmd == "run-all":
-        cmd_run_all(args.parallel, args.labels, args.tag)
+        cmd_run_all(args.parallel, args.labels, args.tag, args.splits)
     else:
-        cmd_summarize(args.out, args.tag, args.exclude_weak)
+        cmd_summarize(args.out, args.tag, args.exclude_weak, args.splits)
 
 
 if __name__ == "__main__":
