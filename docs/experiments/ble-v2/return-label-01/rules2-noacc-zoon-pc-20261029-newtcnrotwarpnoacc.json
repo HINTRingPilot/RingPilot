@@ -1,0 +1,195 @@
+{
+  "tag": "noacc-zoon-pc-20261029",
+  "label": "newtcnrotwarpnoacc",
+  "summary": "summary-noacc-zoon_computer.json",
+  "rules": {
+    "R0": {
+      "refractory_ms": 0,
+      "rearm": 2
+    },
+    "R4": {
+      "refractory_ms": 0,
+      "rearm": 2,
+      "consecutive": 3
+    },
+    "R5": {
+      "refractory_ms": 500,
+      "rearm": 2,
+      "consecutive": 3
+    }
+  },
+  "scoring": "extreme_window",
+  "created_kst": "2026-10-29T22:57:16+09:00",
+  "panels": {
+    "C": {
+      "epoch": 20,
+      "R0": {
+        "clean_success_rate": 0.9846153846153847,
+        "no_issue_rate": 0.013675213675213677,
+        "background_false_per_clip": 0.18,
+        "delay_median_ms": 60.0,
+        "off_direction": 2
+      },
+      "R4": {
+        "clean_success_rate": 0.9649572649572649,
+        "no_issue_rate": 0.03418803418803419,
+        "background_false_per_clip": 0.06666666666666668,
+        "delay_median_ms": 110.0,
+        "off_direction": 1
+      },
+      "R5": {
+        "clean_success_rate": 0.9649572649572649,
+        "no_issue_rate": 0.03418803418803419,
+        "background_false_per_clip": 0.06666666666666668,
+        "delay_median_ms": 110.0,
+        "off_direction": 1
+      }
+    },
+    "S-P1": {
+      "epoch": 60,
+      "R0": {
+        "clean_success_rate": 0.96864406779661,
+        "no_issue_rate": 0.02203389830508475,
+        "background_false_per_clip": 0.15625,
+        "delay_median_ms": 60.0,
+        "off_direction": 11
+      },
+      "R4": {
+        "clean_success_rate": 0.9491525423728813,
+        "no_issue_rate": 0.048305084745762714,
+        "background_false_per_clip": 0.06875,
+        "delay_median_ms": 110.0,
+        "off_direction": 3
+      },
+      "R5": {
+        "clean_success_rate": 0.9491525423728813,
+        "no_issue_rate": 0.048305084745762714,
+        "background_false_per_clip": 0.0625,
+        "delay_median_ms": 110.0,
+        "off_direction": 3
+      }
+    },
+    "S-P2": {
+      "epoch": 60,
+      "R0": {
+        "clean_success_rate": 0.9666666666666666,
+        "no_issue_rate": 0.02478632478632479,
+        "background_false_per_clip": 0.06875,
+        "delay_median_ms": 60.0,
+        "off_direction": 10
+      },
+      "R4": {
+        "clean_success_rate": 0.9547008547008546,
+        "no_issue_rate": 0.0452991452991453,
+        "background_false_per_clip": 0.03125,
+        "delay_median_ms": 108.0,
+        "off_direction": 0
+      },
+      "R5": {
+        "clean_success_rate": 0.9547008547008546,
+        "no_issue_rate": 0.0452991452991453,
+        "background_false_per_clip": 0.03125,
+        "delay_median_ms": 108.0,
+        "off_direction": 0
+      }
+    },
+    "S-P3": {
+      "epoch": 40,
+      "R0": {
+        "clean_success_rate": 0.9761702127659573,
+        "no_issue_rate": 0.017872340425531916,
+        "background_false_per_clip": 0.13125,
+        "delay_median_ms": 60.0,
+        "off_direction": 7
+      },
+      "R4": {
+        "clean_success_rate": 0.9557446808510639,
+        "no_issue_rate": 0.04340425531914894,
+        "background_false_per_clip": 0.03125,
+        "delay_median_ms": 110.0,
+        "off_direction": 1
+      },
+      "R5": {
+        "clean_success_rate": 0.9557446808510639,
+        "no_issue_rate": 0.04340425531914894,
+        "background_false_per_clip": 0.03125,
+        "delay_median_ms": 110.0,
+        "off_direction": 1
+      }
+    },
+    "S-P4": {
+      "epoch": 60,
+      "R0": {
+        "clean_success_rate": 0.9717948717948717,
+        "no_issue_rate": 0.023076923076923078,
+        "background_false_per_clip": 0.1625,
+        "delay_median_ms": 60.0,
+        "off_direction": 6
+      },
+      "R4": {
+        "clean_success_rate": 0.9418803418803419,
+        "no_issue_rate": 0.05641025641025641,
+        "background_false_per_clip": 0.06875,
+        "delay_median_ms": 110.0,
+        "off_direction": 2
+      },
+      "R5": {
+        "clean_success_rate": 0.9418803418803419,
+        "no_issue_rate": 0.05641025641025641,
+        "background_false_per_clip": 0.06875,
+        "delay_median_ms": 110.0,
+        "off_direction": 2
+      }
+    },
+    "S-P5": {
+      "epoch": 60,
+      "R0": {
+        "clean_success_rate": 0.9721518987341771,
+        "no_issue_rate": 0.016877637130801686,
+        "background_false_per_clip": 0.1125,
+        "delay_median_ms": 56.0,
+        "off_direction": 13
+      },
+      "R4": {
+        "clean_success_rate": 0.9451476793248945,
+        "no_issue_rate": 0.05063291139240507,
+        "background_false_per_clip": 0.03125,
+        "delay_median_ms": 104.0,
+        "off_direction": 5
+      },
+      "R5": {
+        "clean_success_rate": 0.9476793248945148,
+        "no_issue_rate": 0.05063291139240507,
+        "background_false_per_clip": 0.03125,
+        "delay_median_ms": 104.0,
+        "off_direction": 2
+      }
+    }
+  },
+  "aggregate": {
+    "R0": {
+      "s_mean_clean_success_rate": 0.9710855435516565,
+      "c_clean_success_rate": 0.9846153846153847,
+      "off_direction_total": 49,
+      "background_false_mean": 0.13520833333333335,
+      "s_mean_no_issue_rate": 0.020929424744933246,
+      "delay_median_mean_ms": 59.333333333333336
+    },
+    "R4": {
+      "s_mean_clean_success_rate": 0.9493252198260074,
+      "c_clean_success_rate": 0.9649572649572649,
+      "off_direction_total": 12,
+      "background_false_mean": 0.04965277777777779,
+      "s_mean_no_issue_rate": 0.04881033063334368,
+      "delay_median_mean_ms": 108.66666666666667
+    },
+    "R5": {
+      "s_mean_clean_success_rate": 0.9498315489399314,
+      "c_clean_success_rate": 0.9649572649572649,
+      "off_direction_total": 9,
+      "background_false_mean": 0.04861111111111111,
+      "s_mean_no_issue_rate": 0.04881033063334368,
+      "delay_median_mean_ms": 108.66666666666667
+    }
+  }
+}

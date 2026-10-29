@@ -1,0 +1,341 @@
+{
+  "tag": "zoon_computer-accsub-20261029",
+  "label": "newtcnrotwarpaccsub",
+  "split": "S-P5",
+  "epoch": 30,
+  "scoring": "extreme_window",
+  "created_kst": "2026-10-29T23:52:17+09:00",
+  "total": 22,
+  "counts": {
+    "kind": {
+      "wrong_direction": 13,
+      "early": 5,
+      "late_unmatched": 4
+    },
+    "phase": {
+      "r~r+300": 3,
+      "끝점~복귀 피크": 10,
+      "가는 피크~끝점": 5,
+      "r+300 뒤": 4
+    },
+    "opposite": {
+      "False": 2,
+      "True": 20
+    },
+    "after_correct": {
+      "False": 18,
+      "True": 4
+    },
+    "clip_has_correct": {
+      "False": 7,
+      "True": 15
+    },
+    "held_out": {
+      "P2": 1,
+      "P3": 5,
+      "P4": 16
+    }
+  },
+  "rebound_dps": {
+    "median_by_direction": {
+      "UP": 58.1,
+      "DOWN": 33.39,
+      "LEFT": 27.3,
+      "RIGHT": 31.36
+    },
+    "after_correct_clips": {
+      "data/sessions/phone-20261025-160407/raw_right.15.csv": 41.86,
+      "data/sessions/phone-20261025-160407/raw_right.5.csv": 48.86,
+      "data/sessions/phone-20261025-160407/raw_up.14.csv": 135.17,
+      "data/sessions/phone-20261025-160407/raw_up.15.csv": 170.1
+    }
+  },
+  "events": [
+    {
+      "seed": 20261021,
+      "held_out": "P2",
+      "source_path": "data/sessions/phone-20261025-154609/raw_up.14.csv",
+      "truth": "UP",
+      "issued": "RIGHT",
+      "kind": "wrong_direction",
+      "opposite": false,
+      "phase": "r~r+300",
+      "t_minus_r_ms": 140,
+      "after_correct": false,
+      "clip_has_correct": false
+    },
+    {
+      "seed": 20261021,
+      "held_out": "P3",
+      "source_path": "data/sessions/phone-20261025-155510/raw_right.6.csv",
+      "truth": "RIGHT",
+      "issued": "LEFT",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -200,
+      "after_correct": false,
+      "clip_has_correct": false
+    },
+    {
+      "seed": 20261021,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.11.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -230,
+      "after_correct": false,
+      "clip_has_correct": false
+    },
+    {
+      "seed": 20261021,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.11.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "r~r+300",
+      "t_minus_r_ms": 270,
+      "after_correct": false,
+      "clip_has_correct": false
+    },
+    {
+      "seed": 20261021,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.12.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "early",
+      "opposite": true,
+      "phase": "가는 피크~끝점",
+      "t_minus_r_ms": -200,
+      "after_correct": false,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261021,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.14.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "early",
+      "opposite": true,
+      "phase": "가는 피크~끝점",
+      "t_minus_r_ms": -270,
+      "after_correct": false,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261021,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.15.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -240,
+      "after_correct": false,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261021,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.16.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -180,
+      "after_correct": false,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261021,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.5.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -140,
+      "after_correct": false,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261021,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.6.csv",
+      "truth": "UP",
+      "issued": "RIGHT",
+      "kind": "wrong_direction",
+      "opposite": false,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -190,
+      "after_correct": false,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261021,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.8.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -230,
+      "after_correct": false,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261022,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.14.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "late_unmatched",
+      "opposite": true,
+      "phase": "r+300 뒤",
+      "t_minus_r_ms": 330,
+      "after_correct": true,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261022,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.15.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "late_unmatched",
+      "opposite": true,
+      "phase": "r+300 뒤",
+      "t_minus_r_ms": 310,
+      "after_correct": true,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261023,
+      "held_out": "P3",
+      "source_path": "data/sessions/phone-20261025-155510/raw_right.6.csv",
+      "truth": "RIGHT",
+      "issued": "LEFT",
+      "kind": "early",
+      "opposite": true,
+      "phase": "가는 피크~끝점",
+      "t_minus_r_ms": -250,
+      "after_correct": false,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261024,
+      "held_out": "P3",
+      "source_path": "data/sessions/phone-20261025-155510/raw_right.6.csv",
+      "truth": "RIGHT",
+      "issued": "LEFT",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -150,
+      "after_correct": false,
+      "clip_has_correct": false
+    },
+    {
+      "seed": 20261024,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_right.15.csv",
+      "truth": "RIGHT",
+      "issued": "LEFT",
+      "kind": "late_unmatched",
+      "opposite": true,
+      "phase": "r+300 뒤",
+      "t_minus_r_ms": 340,
+      "after_correct": true,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261024,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_right.5.csv",
+      "truth": "RIGHT",
+      "issued": "LEFT",
+      "kind": "late_unmatched",
+      "opposite": true,
+      "phase": "r+300 뒤",
+      "t_minus_r_ms": 370,
+      "after_correct": true,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261024,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.14.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "r~r+300",
+      "t_minus_r_ms": 280,
+      "after_correct": false,
+      "clip_has_correct": false
+    },
+    {
+      "seed": 20261025,
+      "held_out": "P3",
+      "source_path": "data/sessions/phone-20261025-155510/raw_right.6.csv",
+      "truth": "RIGHT",
+      "issued": "LEFT",
+      "kind": "early",
+      "opposite": true,
+      "phase": "가는 피크~끝점",
+      "t_minus_r_ms": -250,
+      "after_correct": false,
+      "clip_has_correct": false
+    },
+    {
+      "seed": 20261025,
+      "held_out": "P3",
+      "source_path": "data/sessions/phone-20261025-155510/raw_up.14.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "early",
+      "opposite": true,
+      "phase": "가는 피크~끝점",
+      "t_minus_r_ms": -290,
+      "after_correct": false,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261025,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.16.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -180,
+      "after_correct": false,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261025,
+      "held_out": "P4",
+      "source_path": "data/sessions/phone-20261025-160407/raw_up.8.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -230,
+      "after_correct": false,
+      "clip_has_correct": true
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+WARNING:tensorflow:From C:\Users\zoonc\Desktop\RingPilot\ml\.venv\Lib\site-packages\keras\src\backend\common\global_state.py:82: The name tf.reset_default_graph is deprecated. Please use tf.compat.v1.reset_default_graph instead.
+
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+Traceback (most recent call last):
+  File "C:\Users\zoonc\Desktop\RingPilot\ml\v2_return.py", line 731, in <module>
+    main()
+  File "C:\Users\zoonc\Desktop\RingPilot\ml\v2_return.py", line 721, in main
+    cmd_run(args.label, args.split, args.seed, args.tag, args.save_models)
+  File "C:\Users\zoonc\Desktop\RingPilot\ml\v2_return.py", line 496, in cmd_run
+    scores, _ = fit(d["x_train"], d["y_train"], x_val, seed, epochs, save_dir=save_dir)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\zoonc\Desktop\RingPilot\ml\v2_return.py", line 364, in <lambda>
+    return d, lambda *args, **kw: v2.fit_snapshots(*args, model_fn=tcn, **kw)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\zoonc\Desktop\RingPilot\ml\v2.py", line 651, in fit_snapshots
+    hist = model.fit(ds, epochs=max(epochs), verbose=0, shuffle=False, callbacks=[snap])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\zoonc\Desktop\RingPilot\ml\.venv\Lib\site-packages\keras\src\utils\traceback_utils.py", line 122, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "C:\Users\zoonc\Desktop\RingPilot\ml\v2.py", line 631, in on_epoch_end
+    self.scores[epoch + 1] = self.model(x_val, training=False).numpy()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: Exception encountered when calling Conv1D.call().
+
+[1m{{function_node __wrapped__SpaceToBatchND_device_/job:localhost/replica:0/task:0/device:CPU:0}} OOM when allocating tensor with shape[26928,22,16] and type float on /job:localhost/replica:0/task:0/device:CPU:0 by allocator cpu [Op:SpaceToBatchND] name: [0m
+
+Arguments received by Conv1D.call():
+  \u2022 inputs=tf.Tensor(shape=(3366, 160, 16), dtype=float32)

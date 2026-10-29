@@ -1,0 +1,8 @@
+WARNING:tensorflow:From C:\Users\zoonc\Desktop\RingPilot\ml\.venv\Lib\site-packages\keras\src\backend\common\global_state.py:82: The name tf.reset_default_graph is deprecated. Please use tf.compat.v1.reset_default_graph instead.
+
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+newtcnrotwarpnoacc S-P4 seed 20261025 fold 0: 162.7s
+newtcnrotwarpnoacc S-P4 seed 20261025 fold 1: 157.2s
+newtcnrotwarpnoacc S-P4 seed 20261025 fold 2: 157.9s
+newtcnrotwarpnoacc S-P4 seed 20261025 fold 3: 161.7s
+saved C:\Users\zoonc\Desktop\RingPilot\ml\runs\return-label-01\noacc-zoon-pc-20261029\results\newtcnrotwarpnoacc-S-P4\seed-20261025.json

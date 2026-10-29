@@ -1,0 +1,85 @@
+{
+  "tag": "zoon_computer-accsub-20261029",
+  "label": "newtcnrotwarpaccsub",
+  "split": "C",
+  "epoch": 40,
+  "scoring": "extreme_window",
+  "created_kst": "2026-10-29T23:52:13+09:00",
+  "total": 3,
+  "counts": {
+    "kind": {
+      "late_unmatched": 2,
+      "wrong_direction": 1
+    },
+    "phase": {
+      "r+300 뒤": 2,
+      "끝점~복귀 피크": 1
+    },
+    "opposite": {
+      "True": 3
+    },
+    "after_correct": {
+      "True": 2,
+      "False": 1
+    },
+    "clip_has_correct": {
+      "True": 2,
+      "False": 1
+    },
+    "held_out": {
+      "None": 3
+    }
+  },
+  "rebound_dps": {
+    "median_by_direction": {
+      "UP": 58.1,
+      "DOWN": 33.39,
+      "LEFT": 27.3,
+      "RIGHT": 31.36
+    },
+    "after_correct_clips": {
+      "data/sessions/phone-20261025-150714/raw_up.1.csv": 89.18
+    }
+  },
+  "events": [
+    {
+      "seed": 20261022,
+      "held_out": null,
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.1.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "late_unmatched",
+      "opposite": true,
+      "phase": "r+300 뒤",
+      "t_minus_r_ms": 460,
+      "after_correct": true,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261024,
+      "held_out": null,
+      "source_path": "data/sessions/phone-20261025-155510/raw_right.6.csv",
+      "truth": "RIGHT",
+      "issued": "LEFT",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -150,
+      "after_correct": false,
+      "clip_has_correct": false
+    },
+    {
+      "seed": 20261025,
+      "held_out": null,
+      "source_path": "data/sessions/phone-20261025-150714/raw_up.1.csv",
+      "truth": "UP",
+      "issued": "DOWN",
+      "kind": "late_unmatched",
+      "opposite": true,
+      "phase": "r+300 뒤",
+      "t_minus_r_ms": 360,
+      "after_correct": true,
+      "clip_has_correct": true
+    }
+  ]
+}

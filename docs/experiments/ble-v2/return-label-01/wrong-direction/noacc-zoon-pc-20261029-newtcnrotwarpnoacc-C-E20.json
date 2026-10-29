@@ -1,0 +1,68 @@
+{
+  "tag": "noacc-zoon-pc-20261029",
+  "label": "newtcnrotwarpnoacc",
+  "split": "C",
+  "epoch": 20,
+  "scoring": "extreme_window",
+  "created_kst": "2026-10-29T22:39:28+09:00",
+  "total": 2,
+  "counts": {
+    "kind": {
+      "early": 1,
+      "wrong_direction": 1
+    },
+    "phase": {
+      "가는 피크~끝점": 1,
+      "끝점~복귀 피크": 1
+    },
+    "opposite": {
+      "True": 2
+    },
+    "after_correct": {
+      "False": 2
+    },
+    "clip_has_correct": {
+      "True": 2
+    },
+    "held_out": {
+      "None": 2
+    }
+  },
+  "rebound_dps": {
+    "median_by_direction": {
+      "UP": 58.1,
+      "DOWN": 33.39,
+      "LEFT": 27.3,
+      "RIGHT": 31.36
+    },
+    "after_correct_clips": {}
+  },
+  "events": [
+    {
+      "seed": 20261022,
+      "held_out": null,
+      "source_path": "data/sessions/phone-20261025-161530/raw_right.3.csv",
+      "truth": "RIGHT",
+      "issued": "LEFT",
+      "kind": "early",
+      "opposite": true,
+      "phase": "가는 피크~끝점",
+      "t_minus_r_ms": -320,
+      "after_correct": false,
+      "clip_has_correct": true
+    },
+    {
+      "seed": 20261024,
+      "held_out": null,
+      "source_path": "data/sessions/phone-20261025-161530/raw_right.3.csv",
+      "truth": "RIGHT",
+      "issued": "LEFT",
+      "kind": "wrong_direction",
+      "opposite": true,
+      "phase": "끝점~복귀 피크",
+      "t_minus_r_ms": -270,
+      "after_correct": false,
+      "clip_has_correct": true
+    }
+  ]
+}

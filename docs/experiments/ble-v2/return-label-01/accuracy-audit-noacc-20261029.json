@@ -1,0 +1,125 @@
+{
+  "created_kst": "2026-10-29T23:59:22+09:00",
+  "tag": "noacc-zoon-pc-20261029",
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "numpy": "2.5.4",
+  "checks": {
+    "identical_file_groups": [],
+    "raw_hashes_and_split_invariants": "passed",
+    "weak_excluded": false,
+    "score_replay_folds_matched": 125,
+    "unique_direction_clips": 294,
+    "independent_event_count_matches_summary": true
+  },
+  "panels": {
+    "C": {
+      "epoch": 20,
+      "direction_clips_per_seed": [
+        234,
+        234,
+        234,
+        234,
+        234
+      ],
+      "recomputed_clean_rate": 0.9846153846153847,
+      "strict_one_event_rate": 0.9846153846153847,
+      "extra_same_direction_cases": []
+    },
+    "S-P1": {
+      "epoch": 60,
+      "direction_clips_per_seed": [
+        236,
+        236,
+        236,
+        236,
+        236
+      ],
+      "recomputed_clean_rate": 0.96864406779661,
+      "strict_one_event_rate": 0.96864406779661,
+      "extra_same_direction_cases": []
+    },
+    "S-P2": {
+      "epoch": 60,
+      "direction_clips_per_seed": [
+        234,
+        234,
+        234,
+        234,
+        234
+      ],
+      "recomputed_clean_rate": 0.9666666666666666,
+      "strict_one_event_rate": 0.9666666666666666,
+      "extra_same_direction_cases": []
+    },
+    "S-P3": {
+      "epoch": 40,
+      "direction_clips_per_seed": [
+        235,
+        235,
+        235,
+        235,
+        235
+      ],
+      "recomputed_clean_rate": 0.9761702127659573,
+      "strict_one_event_rate": 0.9761702127659573,
+      "extra_same_direction_cases": []
+    },
+    "S-P4": {
+      "epoch": 60,
+      "direction_clips_per_seed": [
+        234,
+        234,
+        234,
+        234,
+        234
+      ],
+      "recomputed_clean_rate": 0.9717948717948717,
+      "strict_one_event_rate": 0.9709401709401708,
+      "extra_same_direction_cases": [
+        {
+          "seed": 20261024,
+          "source": "data/sessions/phone-20261025-154609/raw_right.15.csv",
+          "events": [
+            [
+              2440,
+              4,
+              "correct"
+            ],
+            [
+              2640,
+              4,
+              "duplicate"
+            ]
+          ]
+        }
+      ]
+    },
+    "S-P5": {
+      "epoch": 60,
+      "direction_clips_per_seed": [
+        237,
+        237,
+        237,
+        237,
+        237
+      ],
+      "recomputed_clean_rate": 0.9721518987341771,
+      "strict_one_event_rate": 0.9721518987341771,
+      "extra_same_direction_cases": []
+    }
+  },
+  "s_mean_clean": 0.9710855435516565,
+  "s_mean_strict_one_event": 0.9709146033807163,
+  "limitations": [
+    "Uses saved predictions; does not rerun model inference or training.",
+    "Existing R0 replay implementation reused; event success counted separately from epoch_stats.",
+    "Exact duplicate file check only; no near-duplicate audit or independent ground-truth review.",
+    "Development validation score; epochs and model conditions selected using this dataset.",
+    "Clip reset and initial stationary calibration differ from continuous use."
+  ],
+  "source_sha256": {
+    "v2.py": "f316a3575a7fad690943ec5cfaafdc5add196114bfbe7d6be4a8460644a6840d",
+    "v2_return.py": "3b6458dcad0989db39ad6381be55419633e34021f63234c3bb45ced97cc456c5",
+    "v2_rules.py": "f5f751cec27490e3b90a50e9e3feb3578877130887eca9aca3f9da1b7a93a891"
+  }
+}
