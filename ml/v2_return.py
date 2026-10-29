@@ -20,6 +20,8 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
             0~890 ms(영점 구간)는 그대로, 900 ms부터 원본 시각 890 + (t − 890)/s 값을 보간하고 자이로는 영점을 뺀 뒤 1/s배.
             라벨 r' = 890 + s(r − 890). 배경·동작 시작 < 900 ms·양성 창 수가 줄어드는 사본·경계 점프 > 2 dps 사본은 회전만(newtcnrot 사본 그대로).
             계획: 같은 문서 §7(3차 개정)
+  newtcnrotwarpnoacc newtcnrotwarp에서 입력의 가속도 3채널을 뺀다(자이로 3 + 회전각 3 = 6채널). 증강·라벨·학습은 같다.
+            가속도에 섞인 중력이 손목 자세마다 달라 처음 보는 자세에서 무발행이 느는지 확인한다(2026-10-29).
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
@@ -72,8 +74,9 @@ SAMPLE_MS = 10.0
 # angle_norm: 회전각 채널을 fold 학습 창의 평균·표준편차로 정규화할지,
 # angle_bias: 회전각 영점("clip" = 클립 전체 중앙값(비인과), "precue" = 클립 0~900 ms 중앙값(인과)),
 # aug: 학습 원본 증강 설정(None = 증강 없음). 계획: docs/superpowers/plans/2026-10-27-v2-augmentation.md
+# drop_acc: 입력에서 가속도 3채널을 뺄지(정규화·회전각 계산 뒤에 뺀다)
 _BASE = {"label": "return", "angle": False, "model": "cnn", "hard": None, "angle_norm": False, "angle_bias": "clip",
-         "aug": None}
+         "aug": None, "drop_acc": False}
 CONDITIONS = {
     "old": {**_BASE, "label": "settled"},
     "new": {**_BASE},
@@ -88,6 +91,7 @@ CONDITIONS = {
                       "aug": {"kind": "rotate_warp", "rot_y_deg": 30, "tilt_deg": 15, "copies": 2,
                               "anchor_ms": 890, "scale_min": 0.8, "scale_max": 1.25, "max_jump_dps": 2.0}},
 }
+CONDITIONS["newtcnrotwarpnoacc"] = {**CONDITIONS["newtcnrotwarp"], "drop_acc": True}
 PRECUE_SAMPLES = 90       # 0~890 ms, 동작 신호(1000 ms) 전. 속도 변형은 이 행들을 건드리지 않는다(900 ms부터)
 AUG_SEED = 20261027       # 증강 난수(학습 seed와 별개, 클립 경로·사본 번호와 함께 쓴다)
 ANGLE = slice(6, 9)
@@ -312,6 +316,12 @@ def augmenter(aug):
     raise ValueError(f"알 수 없는 증강 설정: {aug}")
 
 
+def drop_acc(d):
+    """학습·검증 입력에서 가속도 3채널(0~2)을 뺀다. 회전각 정규화가 채널 위치(ANGLE)를 쓰므로 그 뒤에 부른다."""
+    d["x_train"] = d["x_train"][:, :, 3:]
+    d["val"] = [(r, x[:, :, 3:], y, meta) for r, x, y, meta in d["val"]]
+
+
 def prepare_fold(label, by_path, nb, split, k):
     """조건 label의 fold k 학습·검증 집합과 학습 함수를 돌려준다."""
     cond = CONDITIONS[label]
@@ -322,6 +332,8 @@ def prepare_fold(label, by_path, nb, split, k):
     d["train_aug_stats"] = dict(getattr(augment_fn, "stats", {}))
     if cond["angle_norm"]:
         normalize_angle(d)
+    if cond["drop_acc"]:
+        drop_acc(d)
     if cond["model"] == "tcn":
         return d, lambda *args: v2.fit_snapshots(*args, model_fn=tcn)
     return d, v2.fit_snapshots
