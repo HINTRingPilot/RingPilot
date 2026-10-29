@@ -23,6 +23,8 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
+  extreme_window [끝점, r+200 ms] (2026-10-29부터 주 채점). 끝점 = 가는 동작 주축 자이로가 0을 지나 복귀가 시작되는 순간.
+              복귀 중 같은 방향 발행은 일러도 정답이다. 이전 결과는 저장된 발행 기록으로 다시 분류한다(rescored).
 새 e는 tools/derive-return-labels.js가 만든 data/annotations/ble-v2-return/records.json에서 읽는다.
 요약은 모든 방향 클립으로 계산하고, data/annotations/ble-v2/weak-gestures.json의 약한 동작 검출률을 by_epoch[E]["weak"]에 따로 적는다.
 
@@ -56,7 +58,8 @@ CANDIDATES = ROOT / "data/annotations/ble-v2"          # *-candidates.json의 ma
 EXP = "return-label-01"
 OUT = DOC / EXP
 RUNS = ROOT / "ml/runs" / EXP
-SCORINGS = ("old_window", "new_window")
+SCORINGS = ("old_window", "new_window", "extreme_window")
+EXTREME_AFTER_R_MS = 200   # extreme_window의 끝 = r + 200 ms
 # 쓰는 분할(사용자 결정). 2026-10-27 오전 C·S-P2·S-P5, 같은 날 newtcnnorm부터 C·S-P5.
 # 이전 결과는 6개 분할(v2.SPLIT_NAMES)이나 세 분할로 남아 있다.
 SPLITS = ("C", "S-P5")
@@ -334,6 +337,8 @@ def success_window(path, by_path, nb, scoring):
     if scoring == "old_window":
         return old_e, old_e + v2.MATCH_MS, old_e
     n = nb[path]
+    if scoring == "extreme_window":
+        return n["extreme_ms"], n["event_ms"] + EXTREME_AFTER_R_MS, n["event_ms"]
     return n["score_start_ms"], n["score_end_ms"], n["event_ms"]
 
 
@@ -486,6 +491,26 @@ def load_weak():
     return frozenset(e["source_path"] for e in data["entries"])
 
 
+def rescored(res, scoring, by_path, nb, source="new_window"):
+    """결과에 scoring 채점이 없으면 source 채점의 발행 기록(시각, 방향)을 scoring 구간으로 다시 분류해 채운다.
+    발행 규칙은 채점 구간과 무관하므로, 같은 발행을 다시 분류한 것은 학습 직후 그 구간으로 채점한 것과 같다."""
+    for fold in res["folds"]:
+        for ep in fold["per_epoch"].values():
+            if scoring in ep:
+                continue
+            totals, per_source = Counter(), []
+            for p in ep[source]["per_source"]:
+                if p["source_path"] not in by_path:      # 지금 데이터에서 빠진 원본(예: 라벨 감사 제외)은 다시 채점하지 않는다
+                    continue
+                events = [{"timestamp_ms": t, "class_index": c} for t, c, _ in p["events"]]
+                counts, delays, kinds = classify(by_path[p["source_path"]], events,
+                                                 success_window(p["source_path"], by_path, nb, scoring))
+                totals.update(counts)
+                per_source.append({"source_path": p["source_path"], "counts": counts, "delays_ms": delays, "events": kinds})
+            ep[scoring] = {"totals": dict(totals), "per_source": per_source}
+    return res
+
+
 def epoch_stats(seed_results, epoch, scoring, skip=frozenset(), only=None):
     """seed별로 fold를 합친 뒤 seed 평균을 낸다. skip의 방향 클립은 세지 않고, only를 주면 그 방향 클립만 센다."""
     per_seed = []
@@ -528,6 +553,7 @@ def cmd_summarize(name="summary.json", tag=None, exclude_weak=False, splits=SPLI
     labels = [lab for lab in LABELS if all(result_path(lab, sp, s, tag).exists() for sp in splits for s in v2.SEEDS)]
     weak = load_weak()
     skip = weak if exclude_weak else frozenset()
+    _, by_path, nb = load()
     summary = {"experiment": EXP, "created_kst": now(), "rule": "E는 seed 평균 selection_score 최대, 같으면 작은 E",
                "tag": tag, "labels": labels, "splits": list(splits),
                "weak_gestures": {"file": WEAK_GESTURES.relative_to(ROOT).as_posix(), "sha256": digest(WEAK_GESTURES),
@@ -535,7 +561,8 @@ def cmd_summarize(name="summary.json", tag=None, exclude_weak=False, splits=SPLI
                "panels": {}}
     for lab in labels:
         for sp in summary.get("splits", SPLITS):
-            res = [json.loads(result_path(lab, sp, s, tag).read_text(encoding="utf-8")) for s in v2.SEEDS]
+            res = [rescored(json.loads(result_path(lab, sp, s, tag).read_text(encoding="utf-8")), "extreme_window", by_path, nb)
+                   for s in v2.SEEDS]
             panel = {}
             for sc in SCORINGS:
                 by_e = {str(e): epoch_stats(res, e, sc, skip) for e in v2.EPOCH_CANDIDATES}

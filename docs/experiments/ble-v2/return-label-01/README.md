@@ -324,3 +324,23 @@ newhard·newpre는 채택하지 않았으므로 `ml/v2_return.py`에서 해당 �
 - 판단: 아직 채택하지 않는다. 문턱 0.6은 결과를 본 뒤 고른 값이고, 학습량 혼입도 남아 있다. 튜닝 후보로 남긴다(앞쪽 구간 없이 뒤쪽만, 더한 창 수를 줄여 학습량 맞추기, 문턱과 함께 탐색).
 - 파일: `summary-soft.json`, `results/soft-20261029/`, `logs/soft-20261029/`.
 - 롤백(같은 날, 사용자 요청): 부드러운 라벨 코드(`newtcnrotwarpsoft` 조건, `soft_weight`·`soft_window_fn`·`soft_chooser`, 속도 사본의 복귀 피크 이동, `v2.fit_snapshots`의 categorical 손실, `ml/test_v2_soft.py`)를 되돌렸다. 기록·결과 파일과 run-all·summarize `--splits` 옵션은 남겼다. 다시 시험하려면 커밋 `2a5b9b1`의 코드를 쓴다.
+
+## 채점 구간 변경: extreme_window = [끝점, r+200 ms] — 2026-10-29
+
+- 사용자 결정: 옳은 방향이면 빨리 발행되는 것은 나쁘지 않다. 채점 시작을 복귀 피크에서 **끝점**(가는 동작 주축 자이로가 0을 지나 복귀가 시작되는 순간, `extreme_ms`)으로 당기고, 끝은 r+500에서 **r+200**으로 줄인다. 끝점은 294개 모두에 있고 복귀 피크보다 40~390 ms(중앙값 160) 앞이다.
+- 계기: newtcnrotwarp(이 PC, S-P5, E30)의 같은 방향 조기 발행 13건은 모두 끝점 뒤, 복귀 피크 10~60 ms 앞(판정 한 칸 차)이었다. 가는 동작·끝점에서 터진 발행은 없었다.
+- 코드: `ml/v2_return.py` `SCORINGS`에 `extreme_window` 추가(`EXTREME_AFTER_R_MS = 200`), `rescored()`가 저장된 결과의 new_window 발행 기록(시각·방향)을 새 구간으로 다시 분류한다. 발행 규칙은 구간과 무관하므로 재학습 없이 같다. `summarize`가 자동으로 적용한다. 새 실행은 세 구간 모두로 채점한다.
+- 다시 채점(선택 E는 구간마다 다시 고름, 약한 동작 포함 평가, C의 zoon 결과는 지금 데이터에 없는 P5 2개 제외):
+
+| 결과 | 분할 | new_window(복귀 피크~r+500) | extreme_window(끝점~r+200) | 같은 방향 시점 오류 |
+|---|---|---|---|---|
+| 이 PC newtcnrot | C | 98.97% (E40) | 99.15% (E40) | 3 → 1 |
+| 이 PC newtcnrot | S-P5 | 94.09% (E20) | 94.85% (E60) | 7 → 6 |
+| 이 PC newtcnrotwarp | S-P5 | 95.78% (E30) | **96.37%** (E30) | 13 → 6 |
+| zoon newtcnrot | S-P5 | 94.01% (E20) | 94.35% (E20) | 8 → 4 |
+| zoon newtcnrotwarp | S-P5 | 95.27% (E40) | 95.86% (E40) | 13 → 6 |
+| zoon newtcnrot | C | 98.80% (E20) | 99.15% (E20) | 4 → 0 |
+| zoon newtcnrotwarp | C | 98.80% (E60) | 99.23% (E60) | 5 → 0 |
+
+- 남은 같은 방향 시점 오류는 모두 늦은 발행이다. 이 PC newtcnrotwarp S-P5의 6건은 `raw_right.13`(2건)·`raw_right.15`(4건, P1~P4 세션)에서 r+210~270 ms에 발행돼 r+200을 조금 넘었다(이전 구간에서는 정답). 무발행·다른 방향 발행 수는 구간과 무관해 그대로다.
+- 이전 표의 수치(new_window)는 당시 기준으로 그대로 둔다. 이후 비교는 extreme_window로 한다.
