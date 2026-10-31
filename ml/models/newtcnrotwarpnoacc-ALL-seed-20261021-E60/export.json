@@ -1,0 +1,106 @@
+{
+  "label": "newtcnrotwarpnoacc",
+  "condition": {
+    "label": "return",
+    "angle": true,
+    "model": "tcn",
+    "hard": null,
+    "angle_norm": true,
+    "angle_bias": "precue",
+    "aug": {
+      "kind": "rotate_warp",
+      "rot_y_deg": 30,
+      "tilt_deg": 15,
+      "copies": 2,
+      "anchor_ms": 890,
+      "scale_min": 0.8,
+      "scale_max": 1.25,
+      "max_jump_dps": 2.0
+    },
+    "drop_acc": true
+  },
+  "split": "ALL",
+  "seed": 20261021,
+  "epoch": 60,
+  "fold": null,
+  "tag": "all-20261031",
+  "created_kst": "2026-10-31T14:18:48+09:00",
+  "model_file": "e60.keras",
+  "code_sha256": {
+    "v2.py": "f316a3575a7fad690943ec5cfaafdc5add196114bfbe7d6be4a8460644a6840d",
+    "v2_return.py": "6bd3ef48885e592623048a6dd5b739450fbc3c53902f1e2b3b51d63fdc43c14a",
+    "model.py": "38b3ca204b22c7647ce09ec8d9eea3650689de81ecdc0647aa0b01fecbf84b20"
+  },
+  "records_sha256": "0a227a6448aadf377dc0d76255323a7f332dc23c8d50f5b23a560c0f8f78fb2c",
+  "new_records_sha256": "fa54b3522c56e76b5b2833ae0a40517a02902de74febd4d913a6f5bbb19fe2a6",
+  "train_sources": 334,
+  "train_windows_selected": [
+    2646,
+    639,
+    684,
+    657,
+    666
+  ],
+  "input_channels": [
+    "gyrX",
+    "gyrY",
+    "gyrZ",
+    "angX",
+    "angY",
+    "angZ"
+  ],
+  "window": 160,
+  "stride": 5,
+  "sample_ms": 10.0,
+  "classes": [
+    "NONE",
+    "UP",
+    "DOWN",
+    "LEFT",
+    "RIGHT"
+  ],
+  "norm_mean_6axis": [
+    -1.0025568001904013,
+    -1.9603841911801825,
+    3.1451086159898467,
+    1.9471565989847177,
+    -4.319813705583845,
+    -0.21887125634518353
+  ],
+  "norm_std_6axis": [
+    5.976517161739739,
+    4.382848396869975,
+    5.821123494250576,
+    39.29012273836601,
+    71.10387081612524,
+    39.48661421685082
+  ],
+  "acc_mode": null,
+  "acc_mean": null,
+  "acc_std": null,
+  "angle_mean": [
+    0.019029829316229655,
+    -0.0013378862411296934,
+    0.01686608869097768
+  ],
+  "angle_std": [
+    0.28213801423210205,
+    0.3819236241400891,
+    0.29482324203126226
+  ],
+  "angle_scale_deg": 45.0,
+  "angle_bias": "precue",
+  "precue_samples": 90,
+  "recipe": "6축 = (raw - norm_mean) / norm_std. 회전각 = 창 안에서 (자이로 raw - 영점) × 0.01 s 누적, 창 첫 값 빼기, ÷ angle_scale_deg, (값 - angle_mean) / angle_std. 영점은 angle_bias(precue = 클립 0~890 ms 자이로 중앙값). drop_acc면 6축 정규화 뒤 가속도 3채널을 뺀다. acc_mode precue_sub면 가속도 = (원시 가속도 - 클립 0~890 ms 평균 - acc_mean) / acc_std. 채널 순서는 input_channels",
+  "env": {
+    "python": "3.12.10",
+    "numpy": "2.5.4",
+    "tensorflow": "2.21.0",
+    "os": "Windows-11-10.0.26200-SP0",
+    "cpu": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+    "logical_cpus": 16,
+    "venv": "C:\\Users\\user\\Desktop\\prj\\watch\\ml\\.venv",
+    "TF_ENABLE_ONEDNN_OPTS": "0",
+    "TF_DETERMINISTIC_OPS": "1"
+  }
+}

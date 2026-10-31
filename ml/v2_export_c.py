@@ -5,6 +5,7 @@
 사용 (ml/.venv/Scripts/python.exe ml/v2_export_c.py <명령>):
   export <모델.keras> <prep.json> [출력.h]                 가중치·전처리 값·계산 칸 표 헤더 작성(기본은 스케치의 src)
   check --split S-P5 --seed N --fold K --epoch E --tag T  실제 검증 클립으로 C(PC 빌드)와 Keras 비교(클립·연속 스트림)
+  verify <모델.keras> <prep.json>                          전체 클립을 이어 붙인 연속 스트림으로 C(PC 빌드)와 Keras 비교
 C 컴파일러: 환경 변수 RINGPILOT_CC(공백으로 나눈 명령) 또는 PATH의 gcc·clang.
 """
 import argparse
@@ -203,7 +204,7 @@ def check_stream(exe, model, prep, clips, work):
     ts = np.arange(len(raw)) * prep["sample_ms"]
     bias, static = vs.still_estimates(raw)
     x, times = vs.stream_inputs(raw, ts, prep, bias, static)
-    keras = model(x, training=False).numpy()
+    keras = model.predict(x, batch_size=512, verbose=0)
     events = [(e["timestamp_ms"], e["class_index"]) for e in v2.issue_events(times, keras)]
     index, scores, issued, c_bias = run_stream(exe, raw[:, GYRO], work)
     c_events = [(int(ts[i]), int(c)) for i, c in zip(index, issued) if c >= 0]
@@ -259,6 +260,22 @@ def cmd_check(split_name, seed, fold, epoch, tag, label="newtcnrotwarpnoacc"):
     return result
 
 
+def cmd_verify(model_path, prep_path):
+    """학습에 쓴 클립도 포함한다. 성능이 아니라 C와 Keras가 같은지만 본다."""
+    import tensorflow as tf
+    model = tf.keras.models.load_model(model_path)
+    prep = json.loads(Path(prep_path).read_text(encoding="utf-8"))
+    _, by_path = v2.load_records()
+    clips = [v2.read_sensor(ROOT / p)[1] for p in sorted(by_path)]
+    with tempfile.TemporaryDirectory() as work:
+        write_header(model, prep, Path(work) / "gesture_weights.h")
+        exe = Path(work) / "host_check.exe"
+        build_host(work, exe)
+        result = check_stream(exe, model, prep, clips, work)
+    print(json.dumps({"clips": len(clips), **result}, ensure_ascii=False, indent=2))
+    return result
+
+
 def main():
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -267,6 +284,9 @@ def main():
     e.add_argument("prep")
     e.add_argument("out", nargs="?", default=str(C_DIR / "gesture_weights.h"))
     e.add_argument("--source", default="")
+    y = sub.add_parser("verify")
+    y.add_argument("model")
+    y.add_argument("prep")
     c = sub.add_parser("check")
     c.add_argument("--split", default="S-P5")
     c.add_argument("--seed", type=int, default=20261021)
@@ -277,6 +297,8 @@ def main():
     if args.cmd == "export":
         import tensorflow as tf
         write_header(tf.keras.models.load_model(args.model), json.loads(Path(args.prep).read_text(encoding="utf-8")), args.out, args.source)
+    elif args.cmd == "verify":
+        cmd_verify(args.model, args.prep)
     else:
         cmd_check(args.split, args.seed, args.fold, args.epoch, args.tag)
 

@@ -65,6 +65,7 @@ EXTREME_AFTER_R_MS = 300   # extreme_window의 끝 = r + 300 ms(2026-10-29 r+200
 # 쓰는 분할(사용자 결정). 2026-10-27 오전 C·S-P2·S-P5, 같은 날 newtcnnorm부터 C·S-P5.
 # 이전 결과는 6개 분할(v2.SPLIT_NAMES)이나 세 분할로 남아 있다.
 SPLITS = ("C", "S-P5")
+ALL_DATA = "ALL"            # export 전용: 분할 없이 records의 원본 전부로 학습한다
 ANGLE_SCALE_DEG = 45.0
 SAMPLE_S = 0.01
 SAMPLE_MS = 10.0
@@ -553,13 +554,14 @@ def cmd_run_all(parallel, labels=LABELS, tag=None, splits=SPLITS, save_models=Fa
 
 def cmd_export(label, split_name, seed, epoch, fold=None, tag=None):
     """label 조건을 E까지 학습해 모델(e<E>.keras)과 전처리 값(export.json)을 저장한다(깃 제외 ml/runs/).
-    fold가 None이면 분할의 학습 원본 전체로 학습한다(배포 후보). fold를 주면 그 fold 검증 채점도 기록한다."""
+    fold가 None이면 분할의 학습 원본 전체로 학습한다. fold를 주면 그 fold 검증 채점도 기록한다.
+    split_name이 ALL이면 records의 원본 전부(334개, 다섯 세션)로 학습한다(배포 후보). 남는 검증 자료가 없으므로 성능은 새 세션으로 잰다."""
     name = f"{label}-{split_name}-seed-{seed}-E{epoch}-" + ("all" if fold is None else f"fold{fold}")
     folder = run_dir(tag) / "export" / name
     if folder.exists():
         raise FileExistsError(f"{folder}가 이미 있다")
     _, by_path, nb = load()
-    split = v2.load_split(split_name)
+    split = {"train_sources": sorted(by_path)} if split_name == ALL_DATA else v2.load_split(split_name)
     d, fit = prepare_fold(label, by_path, nb, split, fold)
     x_val = np.concatenate([c[1] for c in d["val"]]) if d["val"] else d["x_train"][:1]
     scores, _ = fit(d["x_train"], d["y_train"], x_val, seed, (epoch,), save_dir=folder)
@@ -706,7 +708,7 @@ def main():
     a.add_argument("--save-models", action="store_true")
     x = sub.add_parser("export")
     x.add_argument("--label", choices=LABELS, required=True)
-    x.add_argument("--split", choices=v2.SPLIT_NAMES, required=True)
+    x.add_argument("--split", choices=(*v2.SPLIT_NAMES, ALL_DATA), required=True, help="ALL = 원본 전부로 학습")
     x.add_argument("--seed", type=int, required=True)
     x.add_argument("--epoch", type=int, required=True)
     x.add_argument("--fold", type=int, help="생략하면 분할의 학습 원본 전체로 학습한다(배포 후보)")
