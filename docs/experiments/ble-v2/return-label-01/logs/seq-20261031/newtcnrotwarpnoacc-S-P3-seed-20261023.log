@@ -1,0 +1,8 @@
+WARNING:tensorflow:From C:\Users\user\Desktop\prj\watch\ml\.venv\Lib\site-packages\keras\src\backend\common\global_state.py:82: The name tf.reset_default_graph is deprecated. Please use tf.compat.v1.reset_default_graph instead.
+
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+newtcnrotwarpnoacc S-P3 seed 20261023 fold 0: 158.3s
+newtcnrotwarpnoacc S-P3 seed 20261023 fold 1: 147.9s
+newtcnrotwarpnoacc S-P3 seed 20261023 fold 2: 148.7s
+newtcnrotwarpnoacc S-P3 seed 20261023 fold 3: 1011.6s
+saved C:\Users\user\Desktop\prj\watch\ml\runs\return-label-01\seq-20261031\results\newtcnrotwarpnoacc-S-P3\seed-20261023.json
