@@ -22,6 +22,9 @@ v2_cal.py와 같은 분할·fold·seed·NONE 추출·모델·학습(60 epoch, 1�
             계획: 같은 문서 §7(3차 개정)
   newtcnrotwarpnoacc newtcnrotwarp에서 입력의 가속도 3채널을 뺀다(자이로 3 + 회전각 3 = 6채널). 증강·라벨·학습은 같다.
             가속도에 섞인 중력이 손목 자세마다 달라 처음 보는 자세에서 무발행이 느는지 확인한다(2026-10-29).
+  newtcnrotwarpnoaccseq newtcnrotwarpnoacc + 앞 동작 합성 사본. 방향 원본마다 사본 2개를 더한다: 정지 0~890 ms + 다른 학습 클립의 동작
+            (시작~r+100 ms, 영점 맞춤) + 간격 0~500 ms(정지) + 이 클립의 동작. 앞 동작 정답 구간까지의 창은 버리고, 뒤 동작만 방향으로 라벨한다.
+            앞 동작이 판정 창에 남은 입력을 학습한다. 신호 전에 움직인 클립은 합성하지 않는다. 회전만 적용한다(2026-10-31).
 각 학습 결과를 두 채점으로 모두 매긴다. 발행 규칙(v2.issue_events)과 E 선택 규칙은 그대로다.
   old_window  [e, e+500 ms]
   new_window  [복귀 피크, r+500 ms]
@@ -95,6 +98,7 @@ CONDITIONS = {
 CONDITIONS["newtcnrotwarpnoacc"] = {**CONDITIONS["newtcnrotwarp"], "drop_acc": True}
 # acc: 가속도 3채널 처리("precue_sub" = 클립 0~890 ms 평균(시작 자세의 중력)을 빼고 fold 학습 창으로 정규화). 계획 Task 4
 CONDITIONS["newtcnrotwarpaccsub"] = {**CONDITIONS["newtcnrotwarp"], "acc": "precue_sub"}
+CONDITIONS["newtcnrotwarpnoaccseq"] = {**CONDITIONS["newtcnrotwarpnoacc"], "seq": {"copies": 2, "gap_max_ms": 500, "prior_tail_ms": 100}}
 PRECUE_SAMPLES = 90       # 0~890 ms, 동작 신호(1000 ms) 전. 속도 변형은 이 행들을 건드리지 않는다(900 ms부터)
 AUG_SEED = 20261027       # 증강 난수(학습 seed와 별개, 클립 경로·사본 번호와 함께 쓴다)
 ANGLE = slice(6, 9)
@@ -325,6 +329,58 @@ def rotate_warp_augmenter(aug, starts=None):
     return augment
 
 
+def compose_sequence(raw, start_ms, r_ms, prior_raw, prior_start_ms, prior_r_ms, gap_ms, prior_tail_ms):
+    """정지 구간 + 앞 동작 + 간격 + 이 클립의 동작을 원본과 같은 행 수로 잇는다. (새 raw, 유효 행 수, 새 r, 앞 동작의 새 r)를 돌려준다.
+    앞 동작은 시작~r+tail만 쓰고 자이로 영점을 이 클립에 맞춘다. 영점 구간(첫 PRECUE_SAMPLES행)은 이 클립의 것이라 회전각 영점이 그대로다."""
+    bias = np.median(raw[:PRECUE_SAMPLES, 3:6], axis=0)
+    prior_bias = np.median(prior_raw[:PRECUE_SAMPLES, 3:6], axis=0)
+    prior = prior_raw[int(prior_start_ms / SAMPLE_MS):int((prior_r_ms + prior_tail_ms) / SAMPLE_MS)].copy()
+    prior[:, 3:6] += bias - prior_bias
+    gap = np.resize(raw[:PRECUE_SAMPLES], (int(gap_ms / SAMPLE_MS), raw.shape[1]))
+    start = int(start_ms / SAMPLE_MS)
+    joined = np.concatenate([raw[:PRECUE_SAMPLES], prior, gap, raw[start:]])
+    valid = min(len(joined), len(raw))
+    out = np.resize(raw[:PRECUE_SAMPLES], raw.shape)     # 원본 범위 밖 행은 유효 행 뒤라 쓰이지 않는다
+    out[:valid] = joined[:valid]
+    shift_ms = (PRECUE_SAMPLES + len(prior) + len(gap) - start) * SAMPLE_MS
+    prior_r2 = (PRECUE_SAMPLES + (prior_r_ms - prior_start_ms) / SAMPLE_MS) * SAMPLE_MS
+    return out, valid, r_ms + shift_ms, prior_r2
+
+
+def seq_augmenter(base, aug, seq, pool, nb, starts=None):
+    """base 사본에 앞 동작 합성 사본을 더한다. pool은 앞 동작을 고를 방향 원본 경로로, fold의 학습 원본만 넣는다(검증 혼입 방지)."""
+    starts = motion_starts() if starts is None else starts
+    usable = sorted(p for p in pool if starts[p] >= PRECUE_SAMPLES * SAMPLE_MS)
+    cache = {}
+
+    def read(path):
+        if path not in cache:
+            cache[path] = v2.read_sensor(ROOT / path)[1]
+        return cache[path]
+
+    def augment(record, ts, raw):
+        copies = base(record, ts, raw)
+        path = record["source_path"]
+        if record["completion_ms"] is None or starts[path] < PRECUE_SAMPLES * SAMPLE_MS:
+            return copies
+        bias = np.median(raw[:PRECUE_SAMPLES, 3:6], axis=0)
+        for c in range(1, seq["copies"] + 1):
+            rng = clip_rng(path, 100 + c)
+            others = [p for p in usable if p != path]
+            prior = others[int(rng.integers(len(others)))]
+            gap = float(rng.uniform(0, seq["gap_max_ms"]))
+            rot = random_rotation(rng, aug["rot_y_deg"], aug["tilt_deg"])
+            joined, valid, r2, prior_r2 = compose_sequence(raw, starts[path], record["completion_ms"], read(prior), starts[prior],
+                                                           nb[prior]["event_ms"], gap, seq["prior_tail_ms"])
+            if positive_windows(r2, len(raw), valid) != positive_windows(record["completion_ms"], len(raw), len(raw)):
+                continue                               # 뒤 동작이 클립 끝으로 밀려 양성 창이 줄면 만들지 않는다
+            copies.append(({**record, "source_path": f"{path}#seq{c}", "completion_ms": r2,
+                            "first_valid_ms": prior_r2 + v2.POSITIVE_MS}, rotate_raw(joined, rot, bias), valid))
+        return copies
+    augment.stats = getattr(base, "stats", {})
+    return augment
+
+
 def augmenter(aug):
     """조건의 aug 설정으로 v2.fold_sets(augment_fn=...)에 넘길 함수를 만든다. None이면 증강하지 않는다."""
     if aug is None:
@@ -349,6 +405,10 @@ def prepare_fold(label, by_path, nb, split, k):
                  if cond["angle"] else None)
     none_fn = outbound_none_chooser(nb) if cond["hard"] == "outbound" else None
     augment_fn = augmenter(cond["aug"])
+    if cond.get("seq"):
+        val = set() if k is None else set(split["cv"]["folds"][k]["validation_sources"])
+        pool = [p for p in split["train_sources"] if p not in val and by_path[p]["completion_ms"] is not None]
+        augment_fn = seq_augmenter(augment_fn, cond["aug"], cond["seq"], pool, nb)
     rb = relabel(by_path, nb, label)
     if k is None:
         d = v2.build_sets([rb[p] for p in split["train_sources"]], [], window_fn=window_fn, none_fn=none_fn, augment_fn=augment_fn)

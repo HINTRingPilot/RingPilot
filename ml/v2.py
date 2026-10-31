@@ -541,7 +541,9 @@ def augment_chunks(recs, mean, std, root, window_fn, augment_fn):
             if not 0 < valid_rows <= len(raw):
                 raise ValueError(f"valid_rows {valid_rows}가 1~{len(raw)} 밖이다: {rc['source_path']}. 만들지 않는 사본은 None으로 돌려준다")
             x, y, meta = window_fn(rc, ts, raw_c, mean, std)
-            keep = np.array([m["timestamp_ms"] <= ts[valid_rows - 1] for m in meta])
+            # first_valid_ms: 합성 사본에서 앞 동작의 정답 구간까지는 라벨이 맞지 않으므로 그 뒤 창만 쓴다
+            first_valid = rc.get("first_valid_ms", 0)
+            keep = np.array([first_valid <= m["timestamp_ms"] <= ts[valid_rows - 1] for m in meta])
             excluded += int((~keep).sum())
             chunks.append((rc, x[keep], y[keep], [m for m, k in zip(meta, keep) if k]))
     return chunks, skipped, excluded
