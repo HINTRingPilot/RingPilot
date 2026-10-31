@@ -1,6 +1,7 @@
 // 제스처 추론 펌웨어(firmware/imu_ble_stream 복사본 + 추론). 기존 IMU 스트림·상태 알림은 그대로라 지금 앱이 그대로 붙는다.
 // 추가: 100 Hz 샘플마다 src/gesture_runtime(온라인 영점·입력 처리·TCN·발행 규칙)을 돌리고, 발행을 BLE 알림으로 보낸다.
 // 발행 패킷: [순번 uint8][클래스 uint8(1=UP 2=DOWN 3=LEFT 4=RIGHT)][점수×1000 uint16 LE][슬롯 uint32 LE].
+// 발행하면 LED가 0.7초 켜진다: 위 = 빨강, 아래 = 파랑, 왼쪽 = 흰색, 오른쪽 = 노랑(상태 표시의 짧은 초록·파랑 깜빡임과 헷갈리지 않게 초록은 쓰지 않는다).
 // 시리얼 명령: l = 지연 통계, r = 통계 초기화, ? = 상태. 판정 시간은 DWT 사이클로 잰다(이 코어의 micros()는 약 1 ms 단위다). 측정 조건·기록은 docs/experiments/ble-v2/latency-01/README.md.
 // 센서 읽기는 우선순위 높은 태스크(samplerTask)가 10 ms마다 해서, loop에서 도는 추론이 읽기를 밀지 않는다. 읽은 값은 잠금 없는
 // 대기열 두 개(BLE 전송용 ring, 판정용 gyroQueue)로 loop에 넘긴다. 각 대기열은 태스크만 head를, loop만 tail을 바꾼다. 가득 차면 새 값을 버리고 센다.
@@ -106,6 +107,10 @@ static uint32_t maxReadGapUs = 0;
 static uint32_t maxReadUs = 0;         // I2C 읽기 한 번(6축)에 걸린 시간
 static uint32_t lateReads = 0;         // 직전 읽기에서 12 ms 넘게 지난 읽기(주기 10 ms)
 static uint32_t earlyReads = 0;        // 직전 읽기에서 8 ms 안에 온 읽기
+
+static const uint32_t kGestureLedMs = 700;
+static uint32_t gestureLedUntil = 0;
+static bool gestureLedOn = false;
 
 static uint32_t pressStart = 0;
 static bool pauseCueShown = false;
@@ -216,8 +221,35 @@ static bool imuStart() {
   return imu.begin() == 0;
 }
 
+// 시리얼 확인용. 발행과, 발행되지 않은 방향 후보(점수 0.5 이상)를 슬롯 시각과 함께 찍는다. 판정 시간 측정에는 들어가지 않는다.
+static void printDecision(const GrDecision& d, uint32_t slot) {
+  static const char* const kNames[GT_CLASSES] = {"NONE", "UP", "DOWN", "LEFT", "RIGHT"};
+  int top = 0;
+  for (int n = 1; n < GT_CLASSES; n++) {
+    if (d.scores[n] > d.scores[top]) top = n;
+  }
+  if (d.issued < 0 && (top == 0 || d.scores[top] < 0.5f)) return;
+  Serial.print(d.issued >= 0 ? "GESTURE " : "cand ");
+  Serial.print(kNames[d.issued >= 0 ? d.issued : top]);
+  Serial.print(" ");
+  Serial.print(d.scores[d.issued >= 0 ? d.issued : top], 2);
+  Serial.print(" t=");
+  Serial.println(slot * 0.01f, 2);
+}
+
+static void showGestureLed(int8_t cls) {
+  ledsOff();
+  if (cls == 1 || cls == 3 || cls == 4) digitalWrite(LED_RED, LOW);
+  if (cls == 2 || cls == 3) digitalWrite(LED_BLUE, LOW);
+  if (cls == 3 || cls == 4) digitalWrite(LED_GREEN, LOW);
+  gestureLedUntil = millis() + kGestureLedMs;
+  gestureLedOn = true;
+  blinkLit = false;
+}
+
 static void sendGesture(const GrDecision& d, uint32_t slot) {
   issuedCount++;
+  showGestureLed(d.issued);
   if (!connected() || !gestureEvent.notifyEnabled(connHandle)) return;
   uint8_t packet[8];
   const uint16_t score = static_cast<uint16_t>(d.scores[d.issued] * 1000.0f);
@@ -248,6 +280,7 @@ static void pushGesture(const float gyro[3], uint32_t slot, uint32_t readCycles)
   decisionLagUs[decisionCount % kLatencyHistory] = (t1 - readCycles) / kCyclesPerUs;
   decisionCount++;
   if (decision.issued >= 0) sendGesture(decision, slot);
+  if (Serial) printDecision(decision, slot);
 }
 
 static void printPercentiles(const char* label, const uint32_t* values, uint32_t n) {
@@ -540,6 +573,11 @@ static void pollCenterSwitch(uint32_t nowMs) {
 // delay()를 쓰면 그동안 샘플이 빠지므로 켜고 끄는 시점을 나눠 처리한다.
 static void pollLed(uint32_t nowMs) {
   if (pressStart != 0) return;  // 누르는 동안에는 버튼 안내 LED가 우선
+  if (gestureLedOn) {
+    if (static_cast<int32_t>(nowMs - gestureLedUntil) < 0) return;
+    ledsOff();
+    gestureLedOn = false;
+  }
   if (blinkLit && nowMs - lastBlink >= 30) {
     ledsOff();
     blinkLit = false;
