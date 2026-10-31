@@ -1,0 +1,7 @@
+2026-10-31 14:44:04.434,286741409,gesture,seq=1 dir=UP score=0.999 slot=15070
+2026-10-31 14:44:17.110,286754085,gesture,seq=2 dir=UP score=0.999 slot=16340
+2026-10-31 14:44:19.154,286756129,gesture,seq=3 dir=UP score=0.999 slot=16545
+2026-10-31 14:44:21.007,286757979,gesture,seq=4 dir=UP score=0.999 slot=16730
+2026-10-31 14:44:22.274,286759246,gesture,seq=5 dir=DOWN score=0.972 slot=16855
+2026-10-31 14:44:22.613,286759584,gesture,seq=6 dir=UP score=1.0 slot=16890
+2026-10-31 14:44:24.273,286761244,gesture,seq=7 dir=UP score=0.999 slot=17055
