@@ -2,8 +2,9 @@
 // 추가: 100 Hz 샘플마다 src/gesture_runtime(온라인 영점·입력 처리·TCN·발행 규칙)을 돌리고, 발행을 BLE 알림으로 보낸다.
 // 발행 패킷: [순번 uint8][클래스 uint8(1=UP 2=DOWN 3=LEFT 4=RIGHT)][점수×1000 uint16 LE][슬롯 uint32 LE].
 // 시리얼 명령: l = 지연 통계, r = 통계 초기화, ? = 상태. 판정 시간은 DWT 사이클로 잰다(이 코어의 micros()는 약 1 ms 단위다). 측정 조건·기록은 docs/experiments/ble-v2/latency-01/README.md.
-// 샘플링은 구독 여부와 상관없이 돌아 BLE 없이도 추론 시간을 잴 수 있다. 판정이 길면 다음 읽기가 밀린다(재읽기·간격으로 잰다).
-// 20 ms를 넘겨 슬롯이 통째로 비면 직전 값으로 채우고 센다.
+// 센서 읽기는 우선순위 높은 태스크(samplerTask)가 10 ms마다 해서, loop에서 도는 추론이 읽기를 밀지 않는다. 읽은 값은 잠금 없는
+// 대기열 두 개(BLE 전송용 ring, 판정용 gyroQueue)로 loop에 넘긴다. 각 대기열은 태스크만 head를, loop만 tail을 바꾼다. 가득 차면 새 값을 버리고 센다.
+// I2C는 imuMutex로 지킨다. 샘플링은 구독 여부와 상관없이 돌아 BLE 없이도 추론 시간을 잴 수 있다. 슬롯이 비면 판정 입력만 직전 값으로 채우고 센다.
 //
 // IMU 6축을 BLE 알림으로 스트리밍하는 펌웨어. 100 Hz, ±4 g, ±2000 dps로 읽어
 // (빠른 동작에서 ±1000 dps 포화를 피하려고 자이로 범위를 이전 USB 수집 펌웨어의 ±1000보다 넓혔다)
@@ -22,7 +23,9 @@
 
 #include "src/gesture_runtime.h"
 
-static const uint32_t kSampleIntervalUs = 10000;  // 100 Hz
+static const uint32_t kSampleRateHz = 100;
+static const uint32_t kCyclesPerUs = F_CPU / 1000000;
+static const uint16_t kGyroQueueSize = 64;         // 판정 대기열, 약 0.64초 분량
 static const uint8_t kCenterPin = 1;               // D1, 사용자 확인
 static const uint32_t kDebounceMs = 30;            // 이보다 짧은 누름은 접점 튐으로 무시
 static const uint32_t kPauseHoldMs = 1000;         // 이 시간 미만은 클릭, 이상은 일시정지
@@ -60,14 +63,12 @@ BLECharacteristic imuStatus("b27a2002-8c5e-4b62-9a21-33dd714e9001");
 BLECharacteristic gestureEvent("b27a2003-8c5e-4b62-9a21-33dd714e9001");  // 기존 특성 뒤에 더해 기존 핸들을 유지한다
 
 static Sample ring[kRingSize];
-static uint32_t ringHead = 0;  // 다음에 쓸 위치(누적 개수)
-static uint32_t ringTail = 0;  // 다음에 보낼 위치(누적 개수)
+static volatile uint32_t ringHead = 0;  // 다음에 쓸 위치(누적 개수). 태스크만 바꾼다
+static volatile uint32_t ringTail = 0;  // 다음에 보낼 위치(누적 개수). loop만 바꾼다
 static uint32_t droppedSamples = 0;
 static uint32_t sentPackets = 0;
-static uint32_t lastSlot = 0;
-static bool haveSample = false;
-static uint64_t elapsedUs = 0;
-static uint32_t lastMicros = 0;
+static SemaphoreHandle_t imuMutex = nullptr;
+static bool haveRead = false;      // 읽기 태스크 쪽: 직전 읽기가 있는지
 static uint16_t connHandle = BLE_CONN_HANDLE_INVALID;
 
 static DeviceState state = STATE_STREAMING;
@@ -75,8 +76,22 @@ static uint32_t triggerMs = 0;            // 부팅(0) 또는 재개 클릭을 �
 static bool awaitingFirstData = true;     // 트리거 이후 첫 데이터 패킷을 아직 못 보냈는지
 static uint32_t clickCount = 0;           // 짧은 클릭 수. 마우스 클릭 연결 전까지는 세기만 한다
 
+struct GyroItem {
+  uint32_t slot;
+  uint32_t readCycles;
+  float gyro[3];
+};
+
+static GyroItem gyroQueue[kGyroQueueSize];
+static volatile uint32_t gyroHead = 0;   // 태스크만 바꾼다
+static volatile uint32_t gyroTail = 0;   // loop만 바꾼다
+static volatile bool gestureRestart = false;  // loop에서 판정 상태를 초기화한다
+static uint32_t queueDropped = 0;
+static bool haveConsumed = false;  // loop 쪽: 직전 판정 입력이 있는지
+static uint32_t lastConsumedSlot = 0;
 static float lastGyro[3] = {0.0f, 0.0f, 0.0f};
 static uint32_t decisionUs[kLatencyHistory];
+static uint32_t decisionLagUs[kLatencyHistory];  // 판정에 쓴 마지막 샘플을 읽은 순간부터 판정 완료까지
 static uint32_t decisionCount = 0;
 static uint32_t sampleOnlyMaxUs = 0;
 static uint32_t filledSlots = 0;
@@ -86,8 +101,9 @@ static uint8_t gestureSeq = 0;
 static int16_t lastRaw[6] = {0, 0, 0, 0, 0, 0};
 static uint32_t repeatedReads = 0;     // 6축이 직전 읽기와 모두 같은 횟수(센서가 새 값을 내기 전에 읽음)
 static uint32_t totalReads = 0;
-static uint32_t lastReadUs = 0;
+static uint32_t lastReadCycles = 0;
 static uint32_t maxReadGapUs = 0;
+static uint32_t maxReadUs = 0;         // I2C 읽기 한 번(6축)에 걸린 시간
 static uint32_t lateReads = 0;         // 직전 읽기에서 12 ms 넘게 지난 읽기(주기 10 ms)
 static uint32_t earlyReads = 0;        // 직전 읽기에서 8 ms 안에 온 읽기
 
@@ -200,12 +216,6 @@ static bool imuStart() {
   return imu.begin() == 0;
 }
 
-static void updateClock() {
-  uint32_t now = micros();
-  elapsedUs += static_cast<uint32_t>(now - lastMicros);  // micros() 순환(약 71분)에 대비해 누적
-  lastMicros = now;
-}
-
 static void sendGesture(const GrDecision& d, uint32_t slot) {
   issuedCount++;
   if (!connected() || !gestureEvent.notifyEnabled(connHandle)) return;
@@ -224,45 +234,53 @@ static void startCycleCounter() {
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-static void pushGesture(const float gyro[3], uint32_t slot) {
+static void pushGesture(const float gyro[3], uint32_t slot, uint32_t readCycles) {
   GrDecision decision;
   const uint32_t t0 = DWT->CYCCNT;
   const int decided = gr_push(gyro, &decision);
-  const uint32_t us = (DWT->CYCCNT - t0) / (F_CPU / 1000000);
+  const uint32_t t1 = DWT->CYCCNT;
+  const uint32_t us = (t1 - t0) / kCyclesPerUs;
   if (!decided) {
     if (us > sampleOnlyMaxUs) sampleOnlyMaxUs = us;
     return;
   }
   decisionUs[decisionCount % kLatencyHistory] = us;
+  decisionLagUs[decisionCount % kLatencyHistory] = (t1 - readCycles) / kCyclesPerUs;
   decisionCount++;
   if (decision.issued >= 0) sendGesture(decision, slot);
 }
 
-static void printLatency() {
+static void printPercentiles(const char* label, const uint32_t* values, uint32_t n) {
   static uint32_t sorted[kLatencyHistory];
-  const uint32_t n = decisionCount < kLatencyHistory ? decisionCount : kLatencyHistory;
-  Serial.print("Instruction cache: "); Serial.println((NRF_NVMC->ICACHECNF & NVMC_ICACHECNF_CACHEEN_Msk) ? "on" : "off");
-  Serial.print("Decisions: "); Serial.println(decisionCount);
-  if (n > 0) {
-    memcpy(sorted, decisionUs, n * sizeof(uint32_t));
-    for (uint32_t i = 1; i < n; i++) {
-      const uint32_t v = sorted[i];
-      uint32_t j = i;
-      while (j > 0 && sorted[j - 1] > v) {
-        sorted[j] = sorted[j - 1];
-        j--;
-      }
-      sorted[j] = v;
+  if (n == 0) return;
+  memcpy(sorted, values, n * sizeof(uint32_t));
+  for (uint32_t i = 1; i < n; i++) {
+    const uint32_t v = sorted[i];
+    uint32_t j = i;
+    while (j > 0 && sorted[j - 1] > v) {
+      sorted[j] = sorted[j - 1];
+      j--;
     }
-    Serial.print("Decision us median/p95/max: ");
-    Serial.print(sorted[n / 2]); Serial.print(" / ");
-    Serial.print(sorted[n * 95 / 100]); Serial.print(" / ");
-    Serial.println(sorted[n - 1]);
+    sorted[j] = v;
   }
+  Serial.print(label);
+  Serial.print(" median/p95/max: ");
+  Serial.print(sorted[n / 2]); Serial.print(" / ");
+  Serial.print(sorted[n * 95 / 100]); Serial.print(" / ");
+  Serial.println(sorted[n - 1]);
+}
+
+static void printLatency() {
+  const uint32_t n = decisionCount < kLatencyHistory ? decisionCount : kLatencyHistory;
+  Serial.print("Decisions: "); Serial.println(decisionCount);
+  printPercentiles("Decision us", decisionUs, n);
+  printPercentiles("Sample-to-decision us", decisionLagUs, n);
   Serial.print("Sample-only max us: "); Serial.println(sampleOnlyMaxUs);
   Serial.print("Reads/repeated: "); Serial.print(totalReads); Serial.print(" / "); Serial.println(repeatedReads);
   Serial.print("Read gap max us, >12ms, <8ms: ");
   Serial.print(maxReadGapUs); Serial.print(", "); Serial.print(lateReads); Serial.print(", "); Serial.println(earlyReads);
+  Serial.print("Read max us: "); Serial.println(maxReadUs);
+  Serial.print("Gyro queue dropped: "); Serial.println(queueDropped);
   Serial.print("Filled slots: "); Serial.println(filledSlots);
   Serial.print("Reset gaps: "); Serial.println(resetGaps);
   Serial.print("Issued: "); Serial.println(issuedCount);
@@ -282,60 +300,100 @@ static void resetLatency() {
   repeatedReads = 0;
   totalReads = 0;
   maxReadGapUs = 0;
+  maxReadUs = 0;
+  queueDropped = 0;
   lateReads = 0;
   earlyReads = 0;
 }
 
+// 읽기 태스크에서 부른다. loop가 무엇을 하든 끼어들어 10 ms마다 읽는다.
 static void takeSample(uint32_t slot) {
-  if (ringHead - ringTail >= kRingSize) {
-    ringTail++;  // 가장 오래된 샘플을 버린다
-    droppedSamples++;
-  }
-  Sample& s = ring[ringHead % kRingSize];
-  s.slot = slot;
+  const uint32_t t0 = DWT->CYCCNT;
+  int16_t v[6];
   // 단위 환산 없이 센서 원시값을 보낸다. 반올림 손실이 없고 크기(샘플당 12바이트)는 같다.
-  s.v[0] = imu.readRawAccelX();
-  s.v[1] = imu.readRawAccelY();
-  s.v[2] = imu.readRawAccelZ();
-  s.v[3] = imu.readRawGyroX();
-  s.v[4] = imu.readRawGyroY();
-  s.v[5] = imu.readRawGyroZ();
-  ringHead++;
+  v[0] = imu.readRawAccelX();
+  v[1] = imu.readRawAccelY();
+  v[2] = imu.readRawAccelZ();
+  v[3] = imu.readRawGyroX();
+  v[4] = imu.readRawGyroY();
+  v[5] = imu.readRawGyroZ();
+  const uint32_t t1 = DWT->CYCCNT;
 
-  const uint32_t readUs = micros();
-  if (haveSample) {
-    const uint32_t gap = readUs - lastReadUs;
+  const uint32_t readUs = (t1 - t0) / kCyclesPerUs;
+  if (readUs > maxReadUs) maxReadUs = readUs;
+  if (haveRead) {
+    const uint32_t gap = (t1 - lastReadCycles) / kCyclesPerUs;
     if (gap > maxReadGapUs) maxReadGapUs = gap;
     if (gap > 12000) lateReads++;
     if (gap < 8000) earlyReads++;
-    if (memcmp(lastRaw, s.v, sizeof(lastRaw)) == 0) repeatedReads++;
+    if (memcmp(lastRaw, v, sizeof(lastRaw)) == 0) repeatedReads++;
     totalReads++;
   }
-  lastReadUs = readUs;
-  memcpy(lastRaw, s.v, sizeof(lastRaw));
+  lastReadCycles = t1;
+  memcpy(lastRaw, v, sizeof(lastRaw));
+  haveRead = true;
 
-  const float gyro[3] = {s.v[3] * kGyroDpsPerLsb, s.v[4] * kGyroDpsPerLsb, s.v[5] * kGyroDpsPerLsb};
-  if (haveSample && slot > lastSlot + 1) {
-    const uint32_t missed = slot - lastSlot - 1;
-    if (missed > kMaxFilledSlots) {
-      gr_reset();
-      resetGaps++;
-    } else {
-      for (uint32_t i = 1; i <= missed; i++) pushGesture(lastGyro, lastSlot + i);  // 모델은 끊기지 않은 100 Hz 입력을 가정한다
-      filledSlots += missed;
-    }
+  if (ringHead - ringTail >= kRingSize) {
+    droppedSamples++;  // loop가 못 따라오면 새 샘플을 버린다
+  } else {
+    Sample& sample = ring[ringHead % kRingSize];
+    sample.slot = slot;
+    memcpy(sample.v, v, sizeof(v));
+    ringHead = ringHead + 1;
   }
-  memcpy(lastGyro, gyro, sizeof(gyro));
-  pushGesture(gyro, slot);
+
+  if (gyroHead - gyroTail >= kGyroQueueSize) {
+    queueDropped++;
+  } else {
+    GyroItem& item = gyroQueue[gyroHead % kGyroQueueSize];
+    item.slot = slot;
+    item.readCycles = t1;
+    for (int a = 0; a < 3; a++) item.gyro[a] = v[a + 3] * kGyroDpsPerLsb;
+    gyroHead = gyroHead + 1;
+  }
 }
 
-static void pollSampling() {
-  uint32_t slot = static_cast<uint32_t>(elapsedUs / kSampleIntervalUs);
-  if (haveSample && slot == lastSlot) return;
-  // 늦어서 건너뛴 슬롯은 스트림에서는 채우지 않는다(수신 쪽에서 슬롯 번호 간격으로 확인). 판정 입력만 takeSample에서 채운다.
-  takeSample(slot);
-  lastSlot = slot;
-  haveSample = true;
+static void samplerTask(void* arg) {
+  (void) arg;
+  const TickType_t base = xTaskGetTickCount();
+  uint32_t slot = 0;
+  for (;;) {
+    // 틱은 1024 Hz라 슬롯 시각을 올림해서 기다린다(간격 약 9.8~10.7 ms, 평균 10 ms)
+    const TickType_t target = base + static_cast<TickType_t>(((static_cast<uint64_t>(slot) + 1) * configTICK_RATE_HZ + kSampleRateHz - 1) / kSampleRateHz);
+    const int32_t wait = static_cast<int32_t>(target - xTaskGetTickCount());
+    if (wait > 0) vTaskDelay(wait);
+    slot = static_cast<uint32_t>(static_cast<uint64_t>(xTaskGetTickCount() - base) * kSampleRateHz / configTICK_RATE_HZ);
+    xSemaphoreTake(imuMutex, portMAX_DELAY);
+    if (state == STATE_STREAMING) takeSample(slot);
+    xSemaphoreGive(imuMutex);
+  }
+}
+
+// loop에서 판정 대기열을 비운다. 판정 입력은 끊기지 않은 100 Hz여야 하므로 빈 슬롯은 직전 값으로 채운다.
+static void drainGesture() {
+  if (gestureRestart) {
+    gestureRestart = false;
+    gr_reset();
+    haveConsumed = false;
+  }
+  while (gyroTail != gyroHead) {
+    const GyroItem item = gyroQueue[gyroTail % kGyroQueueSize];
+    gyroTail = gyroTail + 1;
+    if (haveConsumed && item.slot > lastConsumedSlot + 1) {
+      const uint32_t missed = item.slot - lastConsumedSlot - 1;
+      if (missed > kMaxFilledSlots) {
+        gr_reset();
+        resetGaps++;
+      } else {
+        for (uint32_t i = 1; i <= missed; i++) pushGesture(lastGyro, lastConsumedSlot + i, item.readCycles);
+        filledSlots += missed;
+      }
+    }
+    memcpy(lastGyro, item.gyro, sizeof(lastGyro));
+    lastConsumedSlot = item.slot;
+    haveConsumed = true;
+    pushGesture(item.gyro, item.slot, item.readCycles);
+  }
 }
 
 // 알림 1개를 보낼 수 있으면 보낸다. 한 패킷 안의 샘플은 슬롯이 연속이어야 한다.
@@ -373,20 +431,25 @@ static void pollSending() {
 }
 
 static void enterPause() {
+  xSemaphoreTake(imuMutex, portMAX_DELAY);
   state = STATE_PAUSED;
   imuPowerDown();
   ringTail = ringHead;
-  haveSample = false;
-  gr_reset();
+  gyroTail = gyroHead;
+  haveRead = false;
+  xSemaphoreGive(imuMutex);
+  gestureRestart = true;
   requestConnParams(kPausedInterval, kPausedLatency, kPausedTimeout);
   sendStatus(EVENT_PAUSED);
 }
 
 static void resumeStreaming(uint32_t releaseMs) {
+  xSemaphoreTake(imuMutex, portMAX_DELAY);
+  imuStart();
   state = STATE_STREAMING;
+  xSemaphoreGive(imuMutex);
   triggerMs = releaseMs;
   awaitingFirstData = true;
-  imuStart();
   requestConnParams(kStreamInterval, kStreamLatency, kStreamTimeout);
   sendStatus(EVENT_RESUMED);
 }
@@ -417,6 +480,7 @@ static void waitForRelease() {
 }
 
 static void powerOff() {
+  xSemaphoreTake(imuMutex, portMAX_DELAY);  // 읽기 태스크를 멈춘다. System OFF라 돌려주지 않는다
   for (int i = 0; i < 3; i++) {
     digitalWrite(LED_RED, LOW);
     delay(120);
@@ -552,12 +616,12 @@ void setup() {
 
   triggerMs = 0;  // 부팅 시점. 부트로더 시간은 포함되지 않는다
   awaitingFirstData = true;
-  lastMicros = micros();
+  imuMutex = xSemaphoreCreateMutex();
+  xTaskCreate(samplerTask, "imu", 512, nullptr, TASK_PRIO_HIGH, nullptr);
 }
 
 void loop() {
   uint32_t nowMs = millis();
-  updateClock();
   flushStatus();
   pollCenterSwitch(nowMs);
   pollLed(nowMs);
@@ -570,12 +634,12 @@ void loop() {
   }
 
   if (state == STATE_STREAMING) {
-    pollSampling();               // 추론은 구독과 상관없이 돈다
+    drainGesture();               // 추론은 구독과 상관없이 돈다
     if (dataSubscribed()) pollSending();
     else ringTail = ringHead;     // 구독 전에 쌓인 과거 데이터는 보내지 않는다
+    delay(1);                     // 할 일이 없을 때 CPU를 쉬게 한다. 읽기는 태스크가 하므로 밀리지 않는다
   } else {
     ringTail = ringHead;          // 일시정지 중 쌓인 과거 데이터는 보내지 않는다
-    haveSample = false;
     delay(kIdleLoopDelayMs);      // 코어가 저전력 대기에 들어갈 수 있게 쉰다
   }
 }
