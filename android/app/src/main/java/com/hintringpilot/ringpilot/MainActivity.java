@@ -78,6 +78,8 @@ public final class MainActivity extends Activity {
     private Button sessionButton;
     private Button pauseButton;
     private Button continuousButton;
+    private Button swipeButton;
+    private boolean swipeControl = false;  // 수집 중 스와이프가 나가지 않도록 기본은 끈다
     private volatile String connectionText = "연결 준비 중";
     private final ArrayDeque<String> recentEvents = new ArrayDeque<>();
 
@@ -202,6 +204,9 @@ public final class MainActivity extends Activity {
         row3.addView(button("링 다시 연결", v -> connectRing()), weight());
         layout.addView(row3, matchWidth());
 
+        swipeButton = button("스와이프 제어 켜기", v -> toggleSwipeControl());
+        layout.addView(swipeButton, matchWidth());
+
         TextView help = text(13);
         help.setText("방향 안내: 방향 음성 → '삑'(기록 시작, 가만히) → '삐빅'(1초 뒤, 지금 동작) → 4초 후 자동 저장.\n"
                 + "잘못했으면 '방금 것 다시'. 링 일시정지·연결 끊김 중에는 안내가 기다립니다.\n"
@@ -307,6 +312,27 @@ public final class MainActivity extends Activity {
         }
     }
 
+    private void toggleSwipeControl() {
+        swipeControl = !swipeControl;
+        swipeButton.setText(swipeControl ? "스와이프 제어 끄기" : "스와이프 제어 켜기");
+        if (swipeControl && SwipeAccessibilityService.getCurrent() == null) {
+            event("접근성 설정에서 'RingPilot 스와이프'를 켜세요.");
+            startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
+        } else {
+            event(swipeControl ? "스와이프 제어 켬. 이제 다른 앱으로 가도 됩니다." : "스와이프 제어 끔");
+        }
+    }
+
+    private void applyGesture(String direction, double score) {
+        String result = "수신만";
+        if (swipeControl) {
+            SwipeAccessibilityService service = SwipeAccessibilityService.getCurrent();
+            if (service == null) result = "접근성 서비스 꺼짐";
+            else result = service.swipe(direction) ? "스와이프" : "스와이프 실패";
+        }
+        event(String.format(Locale.US, "제스처 %s (%.2f) → %s", direction, score, result));
+    }
+
     private final Runnable statsTicker = new Runnable() {
         @Override
         public void run() {
@@ -346,6 +372,11 @@ public final class MainActivity extends Activity {
         @Override
         public void onConnectionText(String text) {
             connectionText = text;
+        }
+
+        @Override
+        public void onGesture(String direction, int sequence, double score) {
+            mainHandler.post(() -> applyGesture(direction, score));
         }
     };
 

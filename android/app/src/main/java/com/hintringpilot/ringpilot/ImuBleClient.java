@@ -33,12 +33,17 @@ final class ImuBleClient {
         void onSamples(long firstSlot, short[] raw, int count);
 
         void onConnectionText(String text);
+
+        /** 보드(firmware/gesture_infer)가 발행한 제스처. direction은 UP, DOWN, LEFT, RIGHT다. */
+        void onGesture(String direction, int sequence, double score);
     }
 
     static final String DEVICE_NAME = "RingPilot-IMU";
     private static final UUID SERVICE_UUID = UUID.fromString("b27a2000-8c5e-4b62-9a21-33dd714e9001");
     private static final UUID DATA_UUID = UUID.fromString("b27a2001-8c5e-4b62-9a21-33dd714e9001");
     private static final UUID STATUS_UUID = UUID.fromString("b27a2002-8c5e-4b62-9a21-33dd714e9001");
+    private static final UUID GESTURE_UUID = UUID.fromString("b27a2003-8c5e-4b62-9a21-33dd714e9001");
+    private static final String[] GESTURE_NAMES = {"NONE", "UP", "DOWN", "LEFT", "RIGHT"};
     private static final UUID CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     private static final long RETRY_DELAY_MS = 300;
 
@@ -163,6 +168,7 @@ final class ImuBleClient {
         @Override
         public void onMtuChanged(BluetoothGatt g, int mtu, int statusCode) {
             record("mtu", "mtu=" + mtu + " status=" + statusCode);
+            refreshGattCache(g);
             g.discoverServices();
         }
 
@@ -191,6 +197,12 @@ final class ImuBleClient {
                 long now = SystemClock.elapsedRealtime();
                 record("subscribed", disconnectedAt >= 0 ? "since_disconnect_ms=" + (now - disconnectedAt) : "");
                 listener.onConnectionText("수신 중");
+                // 수집 펌웨어(imu_ble_stream)에는 이 특성이 없다. 없으면 건너뛴다
+                BluetoothGattCharacteristic gesture = g.getService(SERVICE_UUID).getCharacteristic(GESTURE_UUID);
+                record("gesture_characteristic", gesture != null ? "found" : "missing");
+                if (gesture != null) enableNotify(g, gesture);
+            } else if (GESTURE_UUID.equals(chr)) {
+                record("gesture_subscribed", "");
             }
         }
 
@@ -204,6 +216,16 @@ final class ImuBleClient {
             handleNotification(characteristic.getUuid(), value);
         }
     };
+
+    /** 본딩된 기기의 GATT 목록은 휴대폰에 캐시된다. 펌웨어에 특성이 추가돼도 보이도록 비운다(숨은 API, 실패하면 캐시를 그대로 쓴다). */
+    private void refreshGattCache(BluetoothGatt g) {
+        try {
+            Object ok = g.getClass().getMethod("refresh").invoke(g);
+            record("gatt_refresh", String.valueOf(ok));
+        } catch (ReflectiveOperationException e) {
+            record("gatt_refresh", "failed " + e.getClass().getSimpleName());
+        }
+    }
 
     private void enableNotify(BluetoothGatt g, BluetoothGattCharacteristic characteristic) {
         BluetoothGattDescriptor cccd = characteristic == null ? null : characteristic.getDescriptor(CCCD_UUID);
@@ -219,6 +241,7 @@ final class ImuBleClient {
         if (value == null) return;
         if (STATUS_UUID.equals(uuid)) handleStatus(value);
         else if (DATA_UUID.equals(uuid)) handleData(value);
+        else if (GESTURE_UUID.equals(uuid)) handleGesture(value);
     }
 
     private void handleStatus(byte[] v) {
@@ -261,6 +284,16 @@ final class ImuBleClient {
             default:
                 record("status_unknown", "event=" + event);
         }
+    }
+
+    private void handleGesture(byte[] v) {
+        if (v.length < 8) return;
+        int sequence = v[0] & 0xFF;
+        int index = v[1] & 0xFF;
+        if (index < 1 || index >= GESTURE_NAMES.length) return;
+        double score = ((v[2] & 0xFF) | ((v[3] & 0xFF) << 8)) / 1000.0;
+        record("gesture", "seq=" + sequence + " dir=" + GESTURE_NAMES[index] + " score=" + score + " slot=" + readU32(v, 4));
+        listener.onGesture(GESTURE_NAMES[index], sequence, score);
     }
 
     private void handleData(byte[] v) {
