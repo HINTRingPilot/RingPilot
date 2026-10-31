@@ -1,10 +1,10 @@
-"""저장한 TCN 모델을 C 헤더로 내보내고, firmware/gesture_tcn의 C 추론이 Keras와 같은지 확인한다(계획 Task 7a).
+"""저장한 TCN 모델을 C 헤더로 내보내고, firmware/gesture_infer/src의 C 코드가 파이썬과 같은지 확인한다(계획 Task 7a).
 
 마지막 시점 출력에 필요한 칸만 계산한다. 기본 dilation에서 블록별 93·45·21·9·3·1칸이다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_export_c.py <명령>):
-  export <모델.keras> <prep.json> <출력.h>                 가중치·전처리 값·계산 칸 표 헤더 작성
-  check --split S-P5 --seed N --fold K --epoch E --tag T  실제 검증 클립으로 C(PC 빌드)와 Keras 비교
+  export <모델.keras> <prep.json> [출력.h]                 가중치·전처리 값·계산 칸 표 헤더 작성(기본은 스케치의 src)
+  check --split S-P5 --seed N --fold K --epoch E --tag T  실제 검증 클립으로 C(PC 빌드)와 Keras 비교(클립·연속 스트림)
 C 컴파일러: 환경 변수 RINGPILOT_CC(공백으로 나눈 명령) 또는 PATH의 gcc·clang.
 """
 import argparse
@@ -21,7 +21,8 @@ import numpy as np
 import v2
 
 ROOT = Path(__file__).resolve().parents[1]
-C_DIR = ROOT / "firmware/gesture_tcn"
+C_DIR = ROOT / "firmware/gesture_infer/src"
+HOST_SOURCE = ROOT / "firmware/gesture_host/host_check.c"
 GYRO = slice(3, 6)
 INPUT_CHANNELS = ["gyrX", "gyrY", "gyrZ", "angX", "angY", "angZ"]
 KERNEL = 3
@@ -68,7 +69,7 @@ def dilations_of(model):
     return [layer.dilation_rate[0] for layer in model.layers if layer.name.endswith("_conv")]
 
 
-def write_header(model, prep, path):
+def write_header(model, prep, path, source=""):
     if prep["input_channels"] != INPUT_CHANNELS:
         raise ValueError(f"C 입력 처리는 {INPUT_CHANNELS}만 지원한다: {prep['input_channels']}")
     dilations = dilations_of(model)
@@ -79,7 +80,7 @@ def write_header(model, prep, path):
     dense_kernel, dense_bias = model.get_layer("event").get_weights()
     positions, sources = source_table(dilations, window)
     total = sum(len(p) for p in positions)
-    text = f"""/* ml/v2_export_c.py가 만든 파일. 직접 고치지 않는다. */
+    text = f"""/* ml/v2_export_c.py가 만든 파일. 직접 고치지 않는다. 모델: {source or '지정 없음'} */
 #ifndef GESTURE_WEIGHTS_H
 #define GESTURE_WEIGHTS_H
 
@@ -153,12 +154,19 @@ def find_cc():
     return None
 
 
+HOST_FLAGS = ["-std=c99", "-D_POSIX_C_SOURCE=199309L", "-O2", "-Wall", "-Wextra", "-Werror"]
+
+
 def build_host(header_dir, exe):
+    """header_dir의 gesture_weights.h로 PC용 프로그램을 빌드한다. 같은 폴더 헤더가 먼저 읽히므로 소스를 header_dir로 복사해 빌드한다."""
     cc = find_cc()
     if cc is None:
         raise RuntimeError("C 컴파일러가 없다(RINGPILOT_CC 또는 gcc·clang)")
-    subprocess.run([*cc, "-std=c99", "-O2", "-Wall", "-Wextra", "-Werror", f"-I{header_dir}", f"-I{C_DIR}",
-                    str(C_DIR / "gesture_tcn.c"), str(C_DIR / "host_check.c"), "-lm", "-o", str(exe)], check=True)
+    header_dir = Path(header_dir)
+    for name in ("gesture_tcn.c", "gesture_tcn.h", "gesture_runtime.c", "gesture_runtime.h"):
+        shutil.copy(C_DIR / name, header_dir / name)
+    subprocess.run([*cc, *HOST_FLAGS, f"-I{header_dir}", str(header_dir / "gesture_tcn.c"), str(header_dir / "gesture_runtime.c"),
+                    str(HOST_SOURCE), "-lm", "-o", str(exe)], check=True)
 
 
 def run_predict(exe, x, work):
@@ -179,6 +187,31 @@ def run_prepare(exe, gyro, bias, work):
     return out[:, :size].reshape(n, window, -1), out[:, size:]
 
 
+def run_stream(exe, gyro, work):
+    """샘플별 자이로 → (샘플 번호, 점수, 발행, 영점)."""
+    a, b = Path(work) / "stream.in", Path(work) / "stream.out"
+    np.asarray(gyro, dtype=np.float32).tofile(a)
+    subprocess.run([str(exe), "stream", str(a), str(b)], check=True)
+    out = np.fromfile(b, dtype=np.dtype([("index", "<i4"), ("scores", "<f4", 5), ("issued", "<i4"), ("bias", "<f4", 3)]))
+    return out["index"], out["scores"], out["issued"], out["bias"]
+
+
+def check_stream(exe, model, prep, clips, work):
+    """클립을 이어 붙인 연속 스트림에서 C 런타임(온라인 영점·입력 처리·추론·발행 규칙)을 파이썬 기준과 비교한다."""
+    import v2_stream as vs
+    raw = np.concatenate(clips)
+    ts = np.arange(len(raw)) * prep["sample_ms"]
+    bias, static = vs.still_estimates(raw)
+    x, times = vs.stream_inputs(raw, ts, prep, bias, static)
+    keras = model(x, training=False).numpy()
+    events = [(e["timestamp_ms"], e["class_index"]) for e in v2.issue_events(times, keras)]
+    index, scores, issued, c_bias = run_stream(exe, raw[:, GYRO], work)
+    c_events = [(int(ts[i]), int(c)) for i, c in zip(index, issued) if c >= 0]
+    return {"samples": len(raw), "decisions": len(x), "same_decision_times": [int(ts[i]) for i in index] == times,
+            "max_error_bias": float(np.abs(c_bias - bias[index]).max()), "max_error_scores": float(np.abs(scores - keras).max()),
+            "issued_events": len(events), "same_events": events == c_events}
+
+
 def cmd_check(split_name, seed, fold, epoch, tag, label="newtcnrotwarpnoacc"):
     import tensorflow as tf
     import v2_return as vr
@@ -187,9 +220,10 @@ def cmd_check(split_name, seed, fold, epoch, tag, label="newtcnrotwarpnoacc"):
     prep = json.loads((model_path / "prep.json").read_text(encoding="utf-8"))
     _, by_path, nb = vr.load()
     d, _ = vr.prepare_fold(label, by_path, nb, v2.load_split(split_name), fold)
-    gyros, biases, keras_x, sizes, times = [], [], [], [], []
+    gyros, biases, keras_x, sizes, times, clips = [], [], [], [], [], []
     for record, x, _, meta in d["val"]:
         _, raw = v2.read_sensor(ROOT / record["source_path"])
+        clips.append(raw)
         bias = np.median(raw[:vr.PRECUE_SAMPLES, GYRO], axis=0)
         ends = np.arange(v2.WINDOW - 1, len(raw), v2.STRIDE)
         gyros.append(np.stack([raw[e - (v2.WINDOW - 1):e + 1, GYRO] for e in ends]))
@@ -206,6 +240,7 @@ def cmd_check(split_name, seed, fold, epoch, tag, label="newtcnrotwarpnoacc"):
         build_host(work, exe)
         same_input = run_predict(exe, x, work)
         c_x, c_scores = run_prepare(exe, gyro, bias, work)
+        stream = check_stream(exe, model, prep, clips, work)
     issues = lambda scores: [[(e["timestamp_ms"], e["class_index"]) for e in v2.issue_events(t, scores[o:o + n])]
                              for t, o, n in zip(times, np.cumsum([0, *sizes[:-1]]), sizes)]    # 시각·방향만 비교(점수 값은 소수점 차이가 있다)
     keras_events, c_events = issues(keras_scores), issues(c_scores)
@@ -218,7 +253,8 @@ def cmd_check(split_name, seed, fold, epoch, tag, label="newtcnrotwarpnoacc"):
               "max_error_input": float(np.abs(c_x - x).max()),
               "max_error_full_pipeline": float(np.abs(c_scores - keras_scores).max()),
               "clips_with_different_events": sum(a != b for a, b in zip(keras_events, c_events)),
-              "issued_events": sum(len(e) for e in keras_events), "header_bytes": len(header.encode("utf-8"))}
+              "issued_events": sum(len(e) for e in keras_events), "header_bytes": len(header.encode("utf-8")),
+              "stream": stream}
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return result
 
@@ -229,7 +265,8 @@ def main():
     e = sub.add_parser("export")
     e.add_argument("model")
     e.add_argument("prep")
-    e.add_argument("out")
+    e.add_argument("out", nargs="?", default=str(C_DIR / "gesture_weights.h"))
+    e.add_argument("--source", default="")
     c = sub.add_parser("check")
     c.add_argument("--split", default="S-P5")
     c.add_argument("--seed", type=int, default=20261021)
@@ -239,7 +276,7 @@ def main():
     args = p.parse_args()
     if args.cmd == "export":
         import tensorflow as tf
-        write_header(tf.keras.models.load_model(args.model), json.loads(Path(args.prep).read_text(encoding="utf-8")), args.out)
+        write_header(tf.keras.models.load_model(args.model), json.loads(Path(args.prep).read_text(encoding="utf-8")), args.out, args.source)
     else:
         cmd_check(args.split, args.seed, args.fold, args.epoch, args.tag)
 

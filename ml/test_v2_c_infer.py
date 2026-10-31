@@ -1,4 +1,4 @@
-"""C 추론(firmware/gesture_tcn) 점검. 학습하지 않고 무작위 가중치 모델로 Keras와 비교한다. C 컴파일러가 없으면 빌드 테스트는 건너뛴다."""
+"""C 추론(firmware/gesture_infer/src) 점검. 학습하지 않고 무작위 가중치 모델로 Keras와 비교한다. C 컴파일러가 없으면 빌드 테스트는 건너뛴다."""
 import tempfile
 import unittest
 from pathlib import Path
@@ -81,6 +81,17 @@ class HostBuildTests(unittest.TestCase):
         expected = (angle / 45.0 - self.prep["angle_mean"]) / self.prep["angle_std"]
         np.testing.assert_allclose(x[:, :, 3:], expected, atol=1e-4)
         self.assertEqual(np.abs(angle[:, 0]).max(), 0.0)
+
+    def test_stream_runtime_matches_python(self):
+        rng = np.random.default_rng(5)
+        prep = {**self.prep, "acc_mode": None, "angle_bias": "precue", "precue_samples": 90}
+        raw = rng.normal(0, 1, size=(900, 6))           # 정지 구간 + 움직임 구간
+        raw[300:500, 3:6] += 150 * np.sin(np.arange(200) / 15.0)[:, None]
+        result = ex.check_stream(self.exe, self.model, prep, [raw], self.work.name)
+        self.assertTrue(result["same_decision_times"])
+        self.assertTrue(result["same_events"])
+        self.assertLess(result["max_error_bias"], 1e-4)
+        self.assertLess(result["max_error_scores"], 1e-4)
 
 
 if __name__ == "__main__":

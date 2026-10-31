@@ -53,7 +53,8 @@
 - [x] 🤖 저장 모델과 `prep.json`에서 가중치를 C 배열로 내보내는 스크립트(`ml/v2_export_c.py`, 2026-10-31)
 - [x] 🤖 C 추론 구현(`firmware/gesture_tcn/`, 2026-10-31): Conv1D(인과·팽창)·ReLU·Add·Dense·softmax, 마지막 시점에 필요한 위치만 계산(블록별 93·45·21·9·3·1). 입력 처리는 `ml/v2_stream.stream_inputs`와 같게
 - [x] 🤖 PC 호스트 빌드로 Keras 출력과 비교(2026-10-31, 점수 최대 오차 8.9e-7, 발행 동일. S-P5 seed 20261021 fold 0 E60, 66클립)
-- [ ] 🙋 보드 업로드 → 🤝 100 Hz 수집·BLE를 켠 채 추론 1회 시간 median/p95/max, RAM·Flash 측정(50 ms 안인지)
+- [x] 🤖 C 온라인 영점·발행 규칙과 측정용 스케치(`firmware/gesture_infer`, 2026-10-31, 보드용 컴파일과 PC 비교까지. 보드 실행 전)
+- [ ] 🙋 보드 업로드 → 🤝 `docs/experiments/ble-v2/latency-01/README.md`의 조건 A·B로 판정 시간 median/p95/max, 채운 슬롯 측정(기준 p95 10 ms 미만)
 - [ ] 🤝 실제 지연 체감(r+300 ms가 괜찮은지) — 보드에서 명령을 보낼 수 있게 된 뒤
 
 ### 3. 제어 모드 앱 — 보드가 판정 결과를 보낼 수 있게 된 뒤

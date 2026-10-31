@@ -1,0 +1,75 @@
+{
+  "experiment": "latency-01",
+  "created_kst": "2026-10-31T11:34:49+09:00",
+  "model": "newtcnrotwarpnoacc S-P5 seed 20261021 fold 0 E60",
+  "windows": 1000,
+  "warmup_discarded": 50,
+  "c_passes": 5,
+  "macs_c": 96368,
+  "macs_keras_full": 675920,
+  "env": {
+    "python": "3.12.10",
+    "numpy": "2.5.4",
+    "tensorflow": "2.21.0",
+    "os": "Windows-11-10.0.26200-SP0",
+    "cpu": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+    "logical_cpus": 16,
+    "venv": "C:\\Users\\user\\Desktop\\prj\\watch\\ml\\.venv",
+    "TF_ENABLE_ONEDNN_OPTS": "0",
+    "TF_DETERMINISTIC_OPS": "1",
+    "machine": "AMD64",
+    "processor": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+    "tf_threads": 1,
+    "c_compiler": "zig cc 0.16.0",
+    "c_flags": [
+      "-std=c99",
+      "-D_POSIX_C_SOURCE=199309L",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror"
+    ]
+  },
+  "paths": {
+    "python_prepare": {
+      "n": 950,
+      "median_ms": 0.0797,
+      "p95_ms": 0.16747499999999996,
+      "p99_ms": 0.28694,
+      "max_ms": 0.6722,
+      "median_share_of_50ms": 0.001594
+    },
+    "keras_eager": {
+      "n": 950,
+      "median_ms": 30.32845,
+      "p95_ms": 38.242659999999994,
+      "p99_ms": 41.269828,
+      "max_ms": 42.9838,
+      "median_share_of_50ms": 0.606569
+    },
+    "keras_tf_function": {
+      "n": 950,
+      "median_ms": 0.7254499999999999,
+      "p95_ms": 1.3621199999999993,
+      "p99_ms": 1.742718,
+      "max_ms": 2.3887,
+      "median_share_of_50ms": 0.014509
+    },
+    "c_prepare": {
+      "n": 4950,
+      "median_ms": 0.0011,
+      "p95_ms": 0.0019,
+      "p99_ms": 0.0028,
+      "max_ms": 0.0281,
+      "median_share_of_50ms": 2.2000000000000003e-05
+    },
+    "c_predict": {
+      "n": 4950,
+      "median_ms": 0.0282,
+      "p95_ms": 0.0494,
+      "p99_ms": 0.08023000000000066,
+      "max_ms": 0.7132,
+      "median_share_of_50ms": 0.0005639999999999999
+    }
+  }
+}
