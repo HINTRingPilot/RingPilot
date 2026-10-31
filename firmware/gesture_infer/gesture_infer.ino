@@ -1,8 +1,9 @@
 // 제스처 추론 펌웨어(firmware/imu_ble_stream 복사본 + 추론). 기존 IMU 스트림·상태 알림은 그대로라 지금 앱이 그대로 붙는다.
 // 추가: 100 Hz 샘플마다 src/gesture_runtime(온라인 영점·입력 처리·TCN·발행 규칙)을 돌리고, 발행을 BLE 알림으로 보낸다.
 // 발행 패킷: [순번 uint8][클래스 uint8(1=UP 2=DOWN 3=LEFT 4=RIGHT)][점수×1000 uint16 LE][슬롯 uint32 LE].
-// 시리얼 명령: l = 지연 통계, r = 통계 초기화, ? = 상태. 측정 조건·기록은 docs/experiments/ble-v2/latency-01/README.md.
-// 샘플링은 구독 여부와 상관없이 돌아 BLE 없이도 추론 시간을 잴 수 있다. 판정이 샘플 주기를 넘겨 건너뛴 슬롯은 직전 값으로 채우고 센다.
+// 시리얼 명령: l = 지연 통계, r = 통계 초기화, ? = 상태. 판정 시간은 DWT 사이클로 잰다(이 코어의 micros()는 약 1 ms 단위다). 측정 조건·기록은 docs/experiments/ble-v2/latency-01/README.md.
+// 샘플링은 구독 여부와 상관없이 돌아 BLE 없이도 추론 시간을 잴 수 있다. 판정이 길면 다음 읽기가 밀린다(재읽기·간격으로 잰다).
+// 20 ms를 넘겨 슬롯이 통째로 비면 직전 값으로 채우고 센다.
 //
 // IMU 6축을 BLE 알림으로 스트리밍하는 펌웨어. 100 Hz, ±4 g, ±2000 dps로 읽어
 // (빠른 동작에서 ±1000 dps 포화를 피하려고 자이로 범위를 이전 USB 수집 펌웨어의 ±1000보다 넓혔다)
@@ -82,6 +83,13 @@ static uint32_t filledSlots = 0;
 static uint32_t resetGaps = 0;
 static uint32_t issuedCount = 0;
 static uint8_t gestureSeq = 0;
+static int16_t lastRaw[6] = {0, 0, 0, 0, 0, 0};
+static uint32_t repeatedReads = 0;     // 6축이 직전 읽기와 모두 같은 횟수(센서가 새 값을 내기 전에 읽음)
+static uint32_t totalReads = 0;
+static uint32_t lastReadUs = 0;
+static uint32_t maxReadGapUs = 0;
+static uint32_t lateReads = 0;         // 직전 읽기에서 12 ms 넘게 지난 읽기(주기 10 ms)
+static uint32_t earlyReads = 0;        // 직전 읽기에서 8 ms 안에 온 읽기
 
 static uint32_t pressStart = 0;
 static bool pauseCueShown = false;
@@ -210,11 +218,17 @@ static void sendGesture(const GrDecision& d, uint32_t slot) {
   gestureEvent.notify(connHandle, packet, sizeof(packet));
 }
 
+static void startCycleCounter() {
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
 static void pushGesture(const float gyro[3], uint32_t slot) {
   GrDecision decision;
-  const uint32_t t0 = micros();
+  const uint32_t t0 = DWT->CYCCNT;
   const int decided = gr_push(gyro, &decision);
-  const uint32_t us = micros() - t0;
+  const uint32_t us = (DWT->CYCCNT - t0) / (F_CPU / 1000000);
   if (!decided) {
     if (us > sampleOnlyMaxUs) sampleOnlyMaxUs = us;
     return;
@@ -227,6 +241,7 @@ static void pushGesture(const float gyro[3], uint32_t slot) {
 static void printLatency() {
   static uint32_t sorted[kLatencyHistory];
   const uint32_t n = decisionCount < kLatencyHistory ? decisionCount : kLatencyHistory;
+  Serial.print("Instruction cache: "); Serial.println((NRF_NVMC->ICACHECNF & NVMC_ICACHECNF_CACHEEN_Msk) ? "on" : "off");
   Serial.print("Decisions: "); Serial.println(decisionCount);
   if (n > 0) {
     memcpy(sorted, decisionUs, n * sizeof(uint32_t));
@@ -245,6 +260,9 @@ static void printLatency() {
     Serial.println(sorted[n - 1]);
   }
   Serial.print("Sample-only max us: "); Serial.println(sampleOnlyMaxUs);
+  Serial.print("Reads/repeated: "); Serial.print(totalReads); Serial.print(" / "); Serial.println(repeatedReads);
+  Serial.print("Read gap max us, >12ms, <8ms: ");
+  Serial.print(maxReadGapUs); Serial.print(", "); Serial.print(lateReads); Serial.print(", "); Serial.println(earlyReads);
   Serial.print("Filled slots: "); Serial.println(filledSlots);
   Serial.print("Reset gaps: "); Serial.println(resetGaps);
   Serial.print("Issued: "); Serial.println(issuedCount);
@@ -261,6 +279,11 @@ static void resetLatency() {
   filledSlots = 0;
   resetGaps = 0;
   issuedCount = 0;
+  repeatedReads = 0;
+  totalReads = 0;
+  maxReadGapUs = 0;
+  lateReads = 0;
+  earlyReads = 0;
 }
 
 static void takeSample(uint32_t slot) {
@@ -278,6 +301,18 @@ static void takeSample(uint32_t slot) {
   s.v[4] = imu.readRawGyroY();
   s.v[5] = imu.readRawGyroZ();
   ringHead++;
+
+  const uint32_t readUs = micros();
+  if (haveSample) {
+    const uint32_t gap = readUs - lastReadUs;
+    if (gap > maxReadGapUs) maxReadGapUs = gap;
+    if (gap > 12000) lateReads++;
+    if (gap < 8000) earlyReads++;
+    if (memcmp(lastRaw, s.v, sizeof(lastRaw)) == 0) repeatedReads++;
+    totalReads++;
+  }
+  lastReadUs = readUs;
+  memcpy(lastRaw, s.v, sizeof(lastRaw));
 
   const float gyro[3] = {s.v[3] * kGyroDpsPerLsb, s.v[4] * kGyroDpsPerLsb, s.v[5] * kGyroDpsPerLsb};
   if (haveSample && slot > lastSlot + 1) {
@@ -504,6 +539,7 @@ void setup() {
   gestureEvent.setFixedLen(8);
   gestureEvent.begin();
   gr_reset();
+  startCycleCounter();
 
   Bluefruit.Advertising.addFlags(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
   Bluefruit.Advertising.addTxPower();
