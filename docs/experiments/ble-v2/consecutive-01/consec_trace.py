@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT / "ml"))
 import tensorflow as tf  # noqa: E402
 import v2  # noqa: E402
