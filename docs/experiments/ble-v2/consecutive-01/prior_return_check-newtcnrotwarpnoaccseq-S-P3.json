@@ -1,0 +1,41 @@
+{
+ "label": "newtcnrotwarpnoaccseq",
+ "split": "S-P3",
+ "folds": [
+  {
+   "fold": 0,
+   "seq_copies": 326,
+   "excluded_prior_return_windows": 4,
+   "chosen_total": 5142
+  },
+  {
+   "fold": 1,
+   "seq_copies": 324,
+   "excluded_prior_return_windows": 5,
+   "chosen_total": 5094
+  },
+  {
+   "fold": 2,
+   "seq_copies": 326,
+   "excluded_prior_return_windows": 4,
+   "chosen_total": 5106
+  },
+  {
+   "fold": 3,
+   "seq_copies": 338,
+   "excluded_prior_return_windows": 8,
+   "chosen_total": 5232
+  }
+ ],
+ "nearest_wrong": {
+  "DOWN": 15,
+  "NONE": 24
+ },
+ "nearest_correct": {
+  "UP": 39
+ },
+ "nearest_wrong_source": {
+  "copy": 34,
+  "original": 5
+ }
+}

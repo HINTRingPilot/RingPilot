@@ -1,0 +1,40 @@
+{
+ "label": "newtcnrotwarpnoacc",
+ "split": "S-P3",
+ "folds": [
+  {
+   "fold": 0,
+   "seq_copies": 0,
+   "excluded_prior_return_windows": 0,
+   "chosen_total": 3186
+  },
+  {
+   "fold": 1,
+   "seq_copies": 0,
+   "excluded_prior_return_windows": 0,
+   "chosen_total": 3150
+  },
+  {
+   "fold": 2,
+   "seq_copies": 0,
+   "excluded_prior_return_windows": 0,
+   "chosen_total": 3150
+  },
+  {
+   "fold": 3,
+   "seq_copies": 0,
+   "excluded_prior_return_windows": 0,
+   "chosen_total": 3204
+  }
+ ],
+ "nearest_wrong": {
+  "NONE": 10
+ },
+ "nearest_correct": {
+  "UP": 10
+ },
+ "nearest_wrong_source": {
+  "original": 7,
+  "copy": 3
+ }
+}

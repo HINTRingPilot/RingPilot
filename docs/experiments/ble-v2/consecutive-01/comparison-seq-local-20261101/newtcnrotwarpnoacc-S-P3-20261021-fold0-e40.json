@@ -1,0 +1,46 @@
+{
+ "label": "newtcnrotwarpnoacc",
+ "split": "S-P3",
+ "seed": 20261021,
+ "fold": 0,
+ "epoch": 40,
+ "selected_E": 40,
+ "estimates": "still",
+ "events": [
+  {
+   "timestamp_ms": 10890,
+   "class_index": 1,
+   "score": 0.999998927116394
+  },
+  {
+   "timestamp_ms": 11490,
+   "class_index": 1,
+   "score": 0.9025998711585999
+  },
+  {
+   "timestamp_ms": 23540,
+   "class_index": 1,
+   "score": 0.9994029998779297
+  },
+  {
+   "timestamp_ms": 25590,
+   "class_index": 1,
+   "score": 0.9999977350234985
+  },
+  {
+   "timestamp_ms": 27490,
+   "class_index": 1,
+   "score": 0.9999674558639526
+  },
+  {
+   "timestamp_ms": 29040,
+   "class_index": 1,
+   "score": 0.9999934434890747
+  },
+  {
+   "timestamp_ms": 30740,
+   "class_index": 1,
+   "score": 0.9999884366989136
+  }
+ ]
+}

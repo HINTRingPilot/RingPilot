@@ -1,0 +1,37 @@
+{
+ "label": "reference-ALL",
+ "epoch": 60,
+ "estimates": "still",
+ "events": [
+  {
+   "timestamp_ms": 10890,
+   "class_index": 1,
+   "score": 0.9999994039535522
+  },
+  {
+   "timestamp_ms": 23640,
+   "class_index": 1,
+   "score": 0.9999997615814209
+  },
+  {
+   "timestamp_ms": 25640,
+   "class_index": 1,
+   "score": 0.9999963045120239
+  },
+  {
+   "timestamp_ms": 27540,
+   "class_index": 1,
+   "score": 0.9999991655349731
+  },
+  {
+   "timestamp_ms": 29090,
+   "class_index": 1,
+   "score": 1.0
+  },
+  {
+   "timestamp_ms": 30740,
+   "class_index": 1,
+   "score": 0.9999860525131226
+  }
+ ]
+}

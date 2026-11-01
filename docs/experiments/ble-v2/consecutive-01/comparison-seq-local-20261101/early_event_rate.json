@@ -1,0 +1,22 @@
+{
+ "newtcnrotwarpnoacc-comfortable": {
+  "targets": 200,
+  "event_in_early_window": 25,
+  "score08_in_early_window": 47
+ },
+ "newtcnrotwarpnoacc-fast": {
+  "targets": 200,
+  "event_in_early_window": 0,
+  "score08_in_early_window": 9
+ },
+ "newtcnrotwarpnoaccseq-comfortable": {
+  "targets": 200,
+  "event_in_early_window": 75,
+  "score08_in_early_window": 80
+ },
+ "newtcnrotwarpnoaccseq-fast": {
+  "targets": 200,
+  "event_in_early_window": 57,
+  "score08_in_early_window": 95
+ }
+}

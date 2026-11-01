@@ -39,10 +39,12 @@
 
 - 계획의 명령·함수가 지금 코드에 있고 맞물림을 확인했다: `run-all`의 `--save-models`·`--splits`, `summarize`의 `panels["<label>-<split>"].extreme_window.selected_E`(모든 seed 결과가 있는 조건만 들어감), `vr.model_dir`, `prep.json`이 `vs.stream_inputs`에 필요한 키를 담음, `v2.issue_events`(R0), `v2.configure_tf()`가 tensorflow를 돌려줌, `v2.EPOCH_CANDIDATES`에 60 포함.
 - 시작 전 커밋: 지난 분석(`consec_ablation.*`, README·진행기록·`consec_trace.py`)과 이 계획·TODO를 먼저 커밋해 실행 코드 식별값을 깨끗한 HEAD로 남긴다.
-- 병렬 수: 이 PC는 논리 코어 20개·메모리 약 32 GB다. 병렬 2로 첫 작업 시간·메모리를 본 뒤 여유가 있으면 4~5로 다시 실행한다(완료 JSON은 건너뜀, 학습은 스레드 1·결정성 연산이라 병렬 수가 결과를 바꾸지 않음).
+- 병렬 수: 이 PC는 논리 코어 20개·메모리 약 32 GB다. `run-all`은 미완료 작업의 로그가 있으면 재시작을 거부하므로(로그 보호) 중간에 병렬 수를 바꾸기 어렵다. 그래서 처음부터 병렬 4로 실행하고 메모리를 관찰한다(학습은 스레드 1·결정성 연산이라 병렬 수가 결과를 바꾸지 않음). 메모리가 부족하면 중단하고 미완료 로그를 확인한 뒤 새 태그로 다시 한다.
 - 소요 시간(추정): 과거 회전 증강 S-P5 seed 1회 290~485 s(병렬 3). seq는 방향 사본이 더 붙어 더 길다. 20개 작업 대략 1~3시간으로 보고 첫 작업 시간으로 고친다.
 - idle/other 분리: `summarize`는 배경 오발행을 합친 값만 낸다. Task 2에서 결과 JSON의 클립별 분류(`background_false`)와 원본 경로의 종류로 나눠 세는 작은 스크립트를 만든다.
 - 합성 쌍 평가 시간: `v2_seq_eval` 1회가 간격 7 × seed 5 × fold 5 = 175번 모델을 불러온다. 4회 실행이라 오래 걸릴 수 있다.
+- 집계 도구(학습 중 준비): `docs/experiments/ble-v2/consecutive-01/seq_compare.py`의 `background`(Task 2 idle/other 분리), `replay`(Task 4 배치와 같은 재생 + 전체 세션 모델 참고선), `score`(시간순 일대일 대응, 구간별 집계). 기존 seq-20261031 결과로 `background`를, 전체 세션 모델 재생으로 `replay`·`score`를 시험했고 README 값(빠른 위 1/5, 편한 간격 5/5)을 재현했다. 시험 출력은 저장소 밖에 썼다.
+- 실측 소요(첫 작업): noacc S-P3 fold 1개 86.6 s(병렬 4). 전체 예상을 약 1시간 안팎으로 고친다.
 - 표본 크기: 33초 기록의 빠른 구간 실패 동작은 4개뿐이다. Task 5 기준은 그대로 두고 결과 문서에 작은 표본을 한계로 적는다.
 
 ## Task 0. 실행 환경과 비교 조건 고정

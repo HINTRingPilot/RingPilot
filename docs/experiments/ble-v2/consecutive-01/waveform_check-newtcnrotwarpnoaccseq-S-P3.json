@@ -1,0 +1,636 @@
+{
+ "summary": {
+  "wrong_nearest": {
+   "DOWN": 39
+  },
+  "correct_nearest": {
+   "UP": 39
+  }
+ },
+ "rows": [
+  {
+   "fold": 0,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 47.29824192374559
+  },
+  {
+   "fold": 0,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 31.296283061345783
+  },
+  {
+   "fold": 0,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 51.681070387044976
+  },
+  {
+   "fold": 0,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 32.307380878046246
+  },
+  {
+   "fold": 0,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 47.29824192374559
+  },
+  {
+   "fold": 0,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 31.296283061345783
+  },
+  {
+   "fold": 0,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 51.681070387044976
+  },
+  {
+   "fold": 0,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 32.307380878046246
+  },
+  {
+   "fold": 0,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 47.29824192374559
+  },
+  {
+   "fold": 0,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 31.296283061345783
+  },
+  {
+   "fold": 0,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 51.681070387044976
+  },
+  {
+   "fold": 0,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 32.307380878046246
+  },
+  {
+   "fold": 0,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 47.29824192374559
+  },
+  {
+   "fold": 0,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 31.296283061345783
+  },
+  {
+   "fold": 0,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 51.681070387044976
+  },
+  {
+   "fold": 0,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 32.307380878046246
+  },
+  {
+   "fold": 0,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 47.29824192374559
+  },
+  {
+   "fold": 0,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 31.296283061345783
+  },
+  {
+   "fold": 0,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 51.681070387044976
+  },
+  {
+   "fold": 0,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 32.307380878046246
+  },
+  {
+   "fold": 1,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 53.741544567735225
+  },
+  {
+   "fold": 1,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.423434216203542
+  },
+  {
+   "fold": 1,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 51.27463418484117
+  },
+  {
+   "fold": 1,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 27.6262833405151
+  },
+  {
+   "fold": 1,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 53.741544567735225
+  },
+  {
+   "fold": 1,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.423434216203542
+  },
+  {
+   "fold": 1,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 51.27463418484117
+  },
+  {
+   "fold": 1,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 28.010904142912576
+  },
+  {
+   "fold": 1,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 53.741544567735225
+  },
+  {
+   "fold": 1,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.423434216203542
+  },
+  {
+   "fold": 1,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 51.27463418484117
+  },
+  {
+   "fold": 1,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 28.010904142912576
+  },
+  {
+   "fold": 1,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 53.741544567735225
+  },
+  {
+   "fold": 1,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.423434216203542
+  },
+  {
+   "fold": 1,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 53.741544567735225
+  },
+  {
+   "fold": 1,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.423434216203542
+  },
+  {
+   "fold": 1,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 51.27463418484117
+  },
+  {
+   "fold": 1,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 28.010904142912576
+  },
+  {
+   "fold": 2,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 52.72575818236313
+  },
+  {
+   "fold": 2,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 33.932075010596265
+  },
+  {
+   "fold": 2,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 57.72699582050725
+  },
+  {
+   "fold": 2,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.644139245914047
+  },
+  {
+   "fold": 2,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 52.72575818236313
+  },
+  {
+   "fold": 2,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 33.932075010596265
+  },
+  {
+   "fold": 2,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 57.72699582050725
+  },
+  {
+   "fold": 2,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.644139245914047
+  },
+  {
+   "fold": 2,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 52.72575818236313
+  },
+  {
+   "fold": 2,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 33.932075010596265
+  },
+  {
+   "fold": 2,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 57.72699582050725
+  },
+  {
+   "fold": 2,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.644139245914047
+  },
+  {
+   "fold": 2,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 52.72575818236313
+  },
+  {
+   "fold": 2,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 33.932075010596265
+  },
+  {
+   "fold": 2,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 57.72699582050725
+  },
+  {
+   "fold": 2,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.644139245914047
+  },
+  {
+   "fold": 2,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 52.72575818236313
+  },
+  {
+   "fold": 2,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 33.932075010596265
+  },
+  {
+   "fold": 2,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 57.72699582050725
+  },
+  {
+   "fold": 2,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.644139245914047
+  },
+  {
+   "fold": 3,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 47.8506630332432
+  },
+  {
+   "fold": 3,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 34.180255141608406
+  },
+  {
+   "fold": 3,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 55.606466891086065
+  },
+  {
+   "fold": 3,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.480690599902438
+  },
+  {
+   "fold": 3,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 47.8506630332432
+  },
+  {
+   "fold": 3,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 34.180255141608406
+  },
+  {
+   "fold": 3,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 55.606466891086065
+  },
+  {
+   "fold": 3,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.480690599902438
+  },
+  {
+   "fold": 3,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 47.89197687745061
+  },
+  {
+   "fold": 3,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 34.180255141608406
+  },
+  {
+   "fold": 3,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 55.606466891086065
+  },
+  {
+   "fold": 3,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.480690599902438
+  },
+  {
+   "fold": 3,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 47.8506630332432
+  },
+  {
+   "fold": 3,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 34.180255141608406
+  },
+  {
+   "fold": 3,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 55.606466891086065
+  },
+  {
+   "fold": 3,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.480690599902438
+  },
+  {
+   "fold": 3,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 47.8506630332432
+  },
+  {
+   "fold": 3,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 34.180255141608406
+  },
+  {
+   "fold": 3,
+   "kind": "wrong",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "DOWN",
+   "nearest_dist": 55.606466891086065
+  },
+  {
+   "fold": 3,
+   "kind": "correct",
+   "wrong_dir": "DOWN",
+   "target_dir": "UP",
+   "nearest_label": "UP",
+   "nearest_dist": 30.480690599902438
+  }
+ ]
+}

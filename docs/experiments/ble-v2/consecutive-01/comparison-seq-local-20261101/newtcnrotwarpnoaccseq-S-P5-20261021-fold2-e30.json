@@ -1,0 +1,91 @@
+{
+ "label": "newtcnrotwarpnoaccseq",
+ "split": "S-P5",
+ "seed": 20261021,
+ "fold": 2,
+ "epoch": 30,
+ "selected_E": 30,
+ "estimates": "still",
+ "events": [
+  {
+   "timestamp_ms": 10890,
+   "class_index": 1,
+   "score": 0.9999996423721313
+  },
+  {
+   "timestamp_ms": 11490,
+   "class_index": 1,
+   "score": 0.9971795082092285
+  },
+  {
+   "timestamp_ms": 11990,
+   "class_index": 1,
+   "score": 0.9989864230155945
+  },
+  {
+   "timestamp_ms": 12440,
+   "class_index": 1,
+   "score": 0.9999542236328125
+  },
+  {
+   "timestamp_ms": 12990,
+   "class_index": 1,
+   "score": 0.999994158744812
+  },
+  {
+   "timestamp_ms": 16940,
+   "class_index": 1,
+   "score": 0.907012939453125
+  },
+  {
+   "timestamp_ms": 17690,
+   "class_index": 2,
+   "score": 0.9761147499084473
+  },
+  {
+   "timestamp_ms": 18390,
+   "class_index": 1,
+   "score": 0.9985561966896057
+  },
+  {
+   "timestamp_ms": 19640,
+   "class_index": 1,
+   "score": 0.8489108681678772
+  },
+  {
+   "timestamp_ms": 23540,
+   "class_index": 1,
+   "score": 0.9999393224716187
+  },
+  {
+   "timestamp_ms": 25590,
+   "class_index": 1,
+   "score": 1.0
+  },
+  {
+   "timestamp_ms": 27490,
+   "class_index": 1,
+   "score": 0.9999681711196899
+  },
+  {
+   "timestamp_ms": 28790,
+   "class_index": 2,
+   "score": 0.9998428821563721
+  },
+  {
+   "timestamp_ms": 29040,
+   "class_index": 1,
+   "score": 0.9999998807907104
+  },
+  {
+   "timestamp_ms": 30490,
+   "class_index": 2,
+   "score": 0.9273827075958252
+  },
+  {
+   "timestamp_ms": 30740,
+   "class_index": 1,
+   "score": 0.9999994039535522
+  }
+ ]
+}

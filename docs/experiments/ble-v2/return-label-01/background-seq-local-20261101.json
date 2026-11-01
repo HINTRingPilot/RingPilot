@@ -1,0 +1,331 @@
+{
+ "newtcnrotwarpnoacc-S-P3-e40": {
+  "label": "newtcnrotwarpnoacc",
+  "split": "S-P3",
+  "epoch": 40,
+  "selected": true,
+  "per_seed": [
+   {
+    "seed": 20261021,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 3
+   },
+   {
+    "seed": 20261022,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 2
+   },
+   {
+    "seed": 20261023,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 4
+   },
+   {
+    "seed": 20261024,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 6
+   },
+   {
+    "seed": 20261025,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 7
+   }
+  ],
+  "idle_false": 0,
+  "idle_clips": 60,
+  "other_false": 22,
+  "other_clips": 100
+ },
+ "newtcnrotwarpnoacc-S-P3-e60": {
+  "label": "newtcnrotwarpnoacc",
+  "split": "S-P3",
+  "epoch": 60,
+  "selected": false,
+  "per_seed": [
+   {
+    "seed": 20261021,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 1
+   },
+   {
+    "seed": 20261022,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 5
+   },
+   {
+    "seed": 20261023,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 8
+   },
+   {
+    "seed": 20261024,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 4
+   },
+   {
+    "seed": 20261025,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 10
+   }
+  ],
+  "idle_false": 0,
+  "idle_clips": 60,
+  "other_false": 28,
+  "other_clips": 100
+ },
+ "newtcnrotwarpnoacc-S-P5-e60": {
+  "label": "newtcnrotwarpnoacc",
+  "split": "S-P5",
+  "epoch": 60,
+  "selected": true,
+  "per_seed": [
+   {
+    "seed": 20261021,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 3
+   },
+   {
+    "seed": 20261022,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 3
+   },
+   {
+    "seed": 20261023,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 3
+   },
+   {
+    "seed": 20261024,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 5
+   },
+   {
+    "seed": 20261025,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 5
+   }
+  ],
+  "idle_false": 0,
+  "idle_clips": 60,
+  "other_false": 19,
+  "other_clips": 100
+ },
+ "newtcnrotwarpnoaccseq-S-P3-e40": {
+  "label": "newtcnrotwarpnoaccseq",
+  "split": "S-P3",
+  "epoch": 40,
+  "selected": true,
+  "per_seed": [
+   {
+    "seed": 20261021,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 18
+   },
+   {
+    "seed": 20261022,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 15
+   },
+   {
+    "seed": 20261023,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 16
+   },
+   {
+    "seed": 20261024,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 17
+   },
+   {
+    "seed": 20261025,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 21
+   }
+  ],
+  "idle_false": 0,
+  "idle_clips": 60,
+  "other_false": 87,
+  "other_clips": 100
+ },
+ "newtcnrotwarpnoaccseq-S-P3-e60": {
+  "label": "newtcnrotwarpnoaccseq",
+  "split": "S-P3",
+  "epoch": 60,
+  "selected": false,
+  "per_seed": [
+   {
+    "seed": 20261021,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 19
+   },
+   {
+    "seed": 20261022,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 15
+   },
+   {
+    "seed": 20261023,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 16
+   },
+   {
+    "seed": 20261024,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 16
+   },
+   {
+    "seed": 20261025,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 18
+   }
+  ],
+  "idle_false": 0,
+  "idle_clips": 60,
+  "other_false": 84,
+  "other_clips": 100
+ },
+ "newtcnrotwarpnoaccseq-S-P5-e30": {
+  "label": "newtcnrotwarpnoaccseq",
+  "split": "S-P5",
+  "epoch": 30,
+  "selected": true,
+  "per_seed": [
+   {
+    "seed": 20261021,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 15
+   },
+   {
+    "seed": 20261022,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 17
+   },
+   {
+    "seed": 20261023,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 17
+   },
+   {
+    "seed": 20261024,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 12
+   },
+   {
+    "seed": 20261025,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 11
+   }
+  ],
+  "idle_false": 0,
+  "idle_clips": 60,
+  "other_false": 72,
+  "other_clips": 100
+ },
+ "newtcnrotwarpnoaccseq-S-P5-e60": {
+  "label": "newtcnrotwarpnoaccseq",
+  "split": "S-P5",
+  "epoch": 60,
+  "selected": false,
+  "per_seed": [
+   {
+    "seed": 20261021,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 17
+   },
+   {
+    "seed": 20261022,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 16
+   },
+   {
+    "seed": 20261023,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 21
+   },
+   {
+    "seed": 20261024,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 16
+   },
+   {
+    "seed": 20261025,
+    "idle_clips": 12,
+    "idle_false": 0,
+    "other_clips": 20,
+    "other_false": 16
+   }
+  ],
+  "idle_false": 0,
+  "idle_clips": 60,
+  "other_false": 86,
+  "other_clips": 100
+ }
+}

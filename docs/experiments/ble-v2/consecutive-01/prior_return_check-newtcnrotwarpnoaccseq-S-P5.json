@@ -1,0 +1,40 @@
+{
+ "label": "newtcnrotwarpnoaccseq",
+ "split": "S-P5",
+ "folds": [
+  {
+   "fold": 0,
+   "seq_copies": 332,
+   "excluded_prior_return_windows": 13,
+   "chosen_total": 5214
+  },
+  {
+   "fold": 1,
+   "seq_copies": 330,
+   "excluded_prior_return_windows": 14,
+   "chosen_total": 5166
+  },
+  {
+   "fold": 2,
+   "seq_copies": 338,
+   "excluded_prior_return_windows": 8,
+   "chosen_total": 5232
+  },
+  {
+   "fold": 3,
+   "seq_copies": 332,
+   "excluded_prior_return_windows": 10,
+   "chosen_total": 5178
+  }
+ ],
+ "nearest_wrong": {
+  "NONE": 26,
+  "DOWN": 10
+ },
+ "nearest_correct": {
+  "UP": 36
+ },
+ "nearest_wrong_source": {
+  "copy": 36
+ }
+}

@@ -1,0 +1,66 @@
+{
+ "label": "newtcnrotwarpnoacc",
+ "split": "S-P3",
+ "seed": 20261024,
+ "fold": 0,
+ "epoch": 40,
+ "selected_E": 40,
+ "estimates": "still",
+ "events": [
+  {
+   "timestamp_ms": 10890,
+   "class_index": 1,
+   "score": 1.0
+  },
+  {
+   "timestamp_ms": 11390,
+   "class_index": 1,
+   "score": 0.983059823513031
+  },
+  {
+   "timestamp_ms": 12540,
+   "class_index": 1,
+   "score": 0.9999984502792358
+  },
+  {
+   "timestamp_ms": 13040,
+   "class_index": 1,
+   "score": 0.9774399995803833
+  },
+  {
+   "timestamp_ms": 16890,
+   "class_index": 1,
+   "score": 0.9999996423721313
+  },
+  {
+   "timestamp_ms": 23540,
+   "class_index": 1,
+   "score": 1.0
+  },
+  {
+   "timestamp_ms": 25590,
+   "class_index": 1,
+   "score": 1.0
+  },
+  {
+   "timestamp_ms": 27440,
+   "class_index": 1,
+   "score": 0.9999997615814209
+  },
+  {
+   "timestamp_ms": 28790,
+   "class_index": 2,
+   "score": 0.9999839067459106
+  },
+  {
+   "timestamp_ms": 29040,
+   "class_index": 1,
+   "score": 1.0
+  },
+  {
+   "timestamp_ms": 30740,
+   "class_index": 1,
+   "score": 1.0
+  }
+ ]
+}
