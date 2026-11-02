@@ -10,7 +10,7 @@
 // IMU 6축을 BLE 알림으로 스트리밍하는 펌웨어. 100 Hz, ±4 g, ±2000 dps로 읽어
 // (빠른 동작에서 ±1000 dps 포화를 피하려고 자이로 범위를 이전 USB 수집 펌웨어의 ±1000보다 넓혔다)
 // 여러 샘플을 한 알림에 묶어 보낸다. USB 없이 배터리만으로 무선 수집을 시험하기 위한 것이다.
-// 센터 스위치(D1): 짧게(1초 미만) = 클릭(일시정지 중이면 재개), 1~3초 = 일시정지(연결 유지), 3초 이상 = System OFF.
+// 센터 스위치(D1): 짧게(0.5초 미만) = 클릭(일시정지 중이면 재개), 0.5~2초 = 일시정지(연결 유지), 2초 이상 = System OFF.
 // System OFF에서는 센터를 누르면 재부팅한다. 일시정지는 BLE 연결을 유지한 채 IMU를 끄고 연결 간격을 늘린다.
 // 데이터 패킷: [첫 샘플 슬롯 uint32 LE][샘플 수 uint8] + 샘플마다 accX,accY,accZ,gyrX,gyrY,gyrZ 센서 원시값 int16 LE.
 // 원시값 환산(±4 g, ±2000 dps 설정): 가속도 1 LSB = 0.122 mg, 자이로 1 LSB = 0.070 dps (LSM6DS3 라이브러리 calcAccel/calcGyro와 동일).
@@ -29,8 +29,8 @@ static const uint32_t kCyclesPerUs = F_CPU / 1000000;
 static const uint16_t kGyroQueueSize = 64;         // 판정 대기열, 약 0.64초 분량
 static const uint8_t kCenterPin = 1;               // D1, 사용자 확인
 static const uint32_t kDebounceMs = 30;            // 이보다 짧은 누름은 접점 튐으로 무시
-static const uint32_t kPauseHoldMs = 1000;         // 이 시간 미만은 클릭, 이상은 일시정지
-static const uint32_t kPowerOffHoldMs = 3000;      // 누르고 있는 동안 이 시간에 도달하면 System OFF
+static const uint32_t kPauseHoldMs = 500;          // 이 시간 미만은 클릭, 이상은 일시정지
+static const uint32_t kPowerOffHoldMs = 2000;      // 누르고 있는 동안 이 시간에 도달하면 System OFF
 static const uint8_t kChargeCurrentPin = 22;       // P0.13(HICHG). 입력(open)이면 50mA로 알려짐
 static const uint16_t kHeaderBytes = 5;
 static const uint16_t kSampleBytes = 12;
@@ -488,7 +488,7 @@ static void resumeStreaming(uint32_t releaseMs) {
 }
 
 static void printStatus() {
-  Serial.println("RingPilot-IMU: ? 상태 | 센터 <1s 클릭(일시정지 중이면 재개), 1~3s 일시정지, 3s+ System OFF");
+  Serial.println("RingPilot-IMU: ? 상태 | 센터 <0.5s 클릭(일시정지 중이면 재개), 0.5~2s 일시정지, 2s+ System OFF");
   Serial.print("State: "); Serial.println(state == STATE_PAUSED ? "PAUSED" : "STREAMING");
   Serial.print("Connected: "); Serial.println(connected());
   if (connected()) {
@@ -535,8 +535,8 @@ static void powerOff() {
   systemOff(kCenterPin, 0);
 }
 
-// 누르는 동안: 1초가 지나면 파란 LED를 켜 "지금 떼면 일시정지"를 알리고, 3초가 되면 바로 System OFF.
-// 뗄 때: 1초 미만이면 클릭, 1~3초면 일시정지. 판정을 뗄 때 하므로 3초 누름이 일시정지를 먼저 거치지 않는다.
+// 누르는 동안: 0.5초가 지나면 파란 LED를 켜 "지금 떼면 일시정지"를 알리고, 2초가 되면 바로 System OFF.
+// 뗄 때: 0.5초 미만이면 클릭, 0.5~2초면 일시정지. 판정을 뗄 때 하므로 2초 누름이 일시정지를 먼저 거치지 않는다.
 static void pollCenterSwitch(uint32_t nowMs) {
   bool pressed = digitalRead(kCenterPin) == LOW;
   if (pressed) {
