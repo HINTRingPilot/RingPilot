@@ -80,6 +80,7 @@ public final class MainActivity extends Activity {
     private Button continuousButton;
     private Button swipeButton;
     private boolean swipeControl = false;  // 수집 중 스와이프가 나가지 않도록 기본은 끈다
+    private boolean horizontalMode = false;  // 좌우 제스처로 전환한다. 켜지면 위 = 왼쪽, 아래 = 오른쪽 스와이프
     private volatile String connectionText = "연결 준비 중";
     private final ArrayDeque<String> recentEvents = new ArrayDeque<>();
 
@@ -323,12 +324,22 @@ public final class MainActivity extends Activity {
         }
     }
 
+    /** 좌우 제스처는 방향을 구분하지 않고 상하·좌우 모드를 바꾼다. 위·아래 제스처는 모드에 맞는 스와이프가 된다. */
     private void applyGesture(String direction, double score) {
         String result = "수신만";
         if (swipeControl) {
             SwipeAccessibilityService service = SwipeAccessibilityService.getCurrent();
-            if (service == null) result = "접근성 서비스 꺼짐";
-            else result = service.swipe(direction) ? "스와이프" : "스와이프 실패";
+            if (service == null) {
+                result = "접근성 서비스 꺼짐";
+            } else if ("LEFT".equals(direction) || "RIGHT".equals(direction)) {
+                horizontalMode = !horizontalMode;
+                result = horizontalMode ? "좌우 모드" : "상하 모드";
+                service.showBanner(result);
+            } else {
+                String swipe = direction;
+                if (horizontalMode) swipe = "UP".equals(direction) ? "LEFT" : "RIGHT";
+                result = service.swipe(swipe) ? "스와이프 " + swipe : "스와이프 실패";
+            }
         }
         event(String.format(Locale.US, "제스처 %s (%.2f) → %s", direction, score, result));
     }

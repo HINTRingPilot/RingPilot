@@ -2,9 +2,17 @@ package com.hintringpilot.ringpilot;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
+import android.graphics.Color;
 import android.graphics.Path;
+import android.graphics.PixelFormat;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
@@ -13,7 +21,10 @@ import java.lang.ref.WeakReference;
  * 현재 수집 화면에서는 호출하지 않는다. 다시 쓰려면 접근성 설정에서 'RingPilot 스와이프'를 켜야 한다.
  */
 public final class SwipeAccessibilityService extends AccessibilityService {
+    private static final long BANNER_MS = 1200;
     private static WeakReference<SwipeAccessibilityService> current = new WeakReference<>(null);
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private TextView banner;
 
     static SwipeAccessibilityService getCurrent() {
         return current.get();
@@ -27,10 +38,46 @@ public final class SwipeAccessibilityService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        handler.removeCallbacksAndMessages(null);
+        hideBanner();
         if (current.get() == this) {
             current.clear();
         }
         super.onDestroy();
+    }
+
+    /** 화면 위쪽에 글자를 잠깐 띄운다. 터치를 가로채지 않는다. 메인 스레드에서 부른다. */
+    void showBanner(String text) {
+        handler.removeCallbacksAndMessages(null);
+        hideBanner();
+        float density = getResources().getDisplayMetrics().density;
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextColor(Color.WHITE);
+        view.setTextSize(13);
+        view.setPadding((int) (14 * density), (int) (6 * density), (int) (14 * density), (int) (6 * density));
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(0xCC202124);
+        background.setCornerRadius(16 * density);
+        view.setBackground(background);
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                PixelFormat.TRANSLUCENT);
+        params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+        params.y = (int) (40 * density);
+        getSystemService(WindowManager.class).addView(view, params);
+        banner = view;
+        handler.postDelayed(this::hideBanner, BANNER_MS);
+    }
+
+    private void hideBanner() {
+        if (banner != null) {
+            getSystemService(WindowManager.class).removeView(banner);
+            banner = null;
+        }
     }
 
     boolean swipe(String direction) {
