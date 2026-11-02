@@ -199,16 +199,16 @@ def run_stream(exe, gyro, work):
 
 def check_stream(exe, model, prep, clips, work):
     """클립을 이어 붙인 연속 스트림에서 C 런타임(온라인 영점·입력 처리·추론·발행 규칙)을 파이썬 기준과 비교한다."""
+    import v2_erase as ve
     import v2_stream as vs
     raw = np.concatenate(clips)
     ts = np.arange(len(raw)) * prep["sample_ms"]
     bias, static = vs.still_estimates(raw)
-    x, times = vs.stream_inputs(raw, ts, prep, bias, static)
-    keras = model.predict(x, batch_size=512, verbose=0)
-    events = [(e["timestamp_ms"], e["class_index"]) for e in v2.issue_events(times, keras)]
+    raw_events, times, keras = ve.replay(lambda x: model.predict_on_batch(x), raw, ts, prep, bias, static, ve.MODES["issue150"], with_scores=True)
+    events = [(e["timestamp_ms"], e["class_index"]) for e in raw_events]
     index, scores, issued, c_bias = run_stream(exe, raw[:, GYRO], work)
     c_events = [(int(ts[i]), int(c)) for i, c in zip(index, issued) if c >= 0]
-    return {"samples": len(raw), "decisions": len(x), "same_decision_times": [int(ts[i]) for i in index] == times,
+    return {"samples": len(raw), "decisions": len(times), "same_decision_times": [int(ts[i]) for i in index] == times,
             "max_error_bias": float(np.abs(c_bias - bias[index]).max()), "max_error_scores": float(np.abs(scores - keras).max()),
             "issued_events": len(events), "same_events": events == c_events}
 

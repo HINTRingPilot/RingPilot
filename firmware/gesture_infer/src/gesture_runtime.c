@@ -9,6 +9,7 @@
 #define GR_MARGIN_THRESHOLD 0.2f
 #define GR_CONSECUTIVE 2
 #define GR_NONE_REARM 2
+#define GR_ERASE_AFTER_DECISIONS 3  /* 발행 뒤 입력을 지울 때까지의 판정 수(150 ms) */
 
 static float g_ring[GT_WINDOW][3];
 static float g_window[GT_WINDOW][3];
@@ -16,6 +17,9 @@ static float g_x[GT_WINDOW][GT_CHANNELS];
 static float g_bias[3];
 static uint32_t g_count;
 static int g_locked, g_candidate, g_candidate_count, g_none_count;
+static int g_erase_in;          /* 입력을 지울 때까지 남은 판정 수. 예약이 없으면 음수 */
+static uint32_t g_erased_until; /* 이 샘플 번호 앞은 g_erase_bias로 본다. 온라인 영점은 원래 값을 쓴다 */
+static float g_erase_bias[3];
 
 void gr_reset(void) {
   g_count = 0;
@@ -24,6 +28,8 @@ void gr_reset(void) {
   g_candidate = -1;
   g_candidate_count = 0;
   g_none_count = 0;
+  g_erase_in = -1;
+  g_erased_until = 0;
 }
 
 static float median_of_recent(int axis) {
@@ -89,6 +95,7 @@ static int issue_rule(const float scores[GT_CLASSES]) {
       g_candidate = -1;
       g_candidate_count = 0;
       g_none_count = 0;
+      g_erase_in = GR_ERASE_AFTER_DECISIONS;
       return top;
     }
   } else {
@@ -105,11 +112,16 @@ int gr_push(const float gyro[3], GrDecision *out) {
   if (g_count < GT_WINDOW || (g_count - GT_WINDOW) % GR_STRIDE != 0) return 0;
 
   for (int t = 0; t < GT_WINDOW; t++) {
-    memcpy(g_window[t], g_ring[(g_count - GT_WINDOW + t) % GT_WINDOW], sizeof g_window[0]);
+    const uint32_t sample = g_count - GT_WINDOW + t;
+    memcpy(g_window[t], sample < g_erased_until ? g_erase_bias : g_ring[sample % GT_WINDOW], sizeof g_window[0]);
   }
   gt_prepare((const float (*)[3])g_window, g_bias, g_x);
   gt_predict((const float (*)[GT_CHANNELS])g_x, out->scores);
   memcpy(out->bias, g_bias, sizeof g_bias);
   out->issued = (int8_t)issue_rule(out->scores);
+  if (g_erase_in >= 0 && g_erase_in-- == 0) {
+    g_erased_until = g_count;
+    memcpy(g_erase_bias, g_bias, sizeof g_bias);
+  }
   return 1;
 }

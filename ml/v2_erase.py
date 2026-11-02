@@ -22,8 +22,9 @@ LABEL = "newtcnrotwarpnoacc"
 PAIR_GAPS = (0, 100, 200, 300, 500, 800)
 
 
-def replay(predict, raw, ts, prep, bias, static, mode):
-    """발행 규칙(v2.issue_events와 같음)을 판정마다 따라가며, mode 시점에 그때까지의 자이로를 영점으로 바꾼다. 발행 목록을 돌려준다."""
+def replay(predict, raw, ts, prep, bias, static, mode, with_scores=False):
+    """발행 규칙(v2.issue_events와 같음)을 판정마다 따라가며, mode 시점에 그때까지의 자이로를 영점으로 바꾼다. 발행 목록을 돌려준다.
+    with_scores면 (발행 목록, 판정 시각, 판정 점수)를 돌려준다."""
     raw = raw.copy()
     window, stride = prep["window"], prep["stride"]
     x, times = vs.stream_inputs(raw, ts, prep, bias, static)
@@ -57,7 +58,7 @@ def replay(predict, raw, ts, prep, bias, static, mode):
             erase, pending = True, None
         if erase:
             end = ends[d]
-            raw[:end + 1, 3:6] = bias[:end + 1]
+            raw[:end + 1, 3:6] = bias[end]       # 보드와 같이 지우는 순간의 영점 하나로 바꾼다
             last = int(np.searchsorted(ends, end + window - 1, side="right"))    # 지운 행이 든 뒤쪽 창만 다시 계산한다
             if d + 1 < last:
                 lo = ends[d + 1] - (window - 1)
@@ -65,7 +66,7 @@ def replay(predict, raw, ts, prep, bias, static, mode):
                 redo, _ = vs.stream_inputs(raw[lo:hi], ts[lo:hi], prep, bias[lo:hi], static[lo:hi])
                 p[d + 1:last] = predict(redo)
         d += 1
-    return events
+    return (events, times, p) if with_scores else events
 
 
 def eval_clips(predict, prep, paths, by_path, nb, mode):

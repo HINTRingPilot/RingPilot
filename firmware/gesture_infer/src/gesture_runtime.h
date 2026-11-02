@@ -1,5 +1,6 @@
 /* 연속 스트림 판정: 샘플을 넣으면 온라인 영점, 입력 처리, TCN 추론, 발행 규칙을 수행한다.
- * 파이썬 기준은 ml/v2_stream.py(still_estimates, stream_inputs)와 ml/v2.py(issue_events)다. */
+ * 발행 3판정(150 ms) 뒤 그때까지의 자이로를 영점으로 바꿔, 앞 동작이 다음 판정 창에 남지 않게 한다.
+ * 파이썬 기준은 ml/v2_stream.py(still_estimates, stream_inputs)와 ml/v2_erase.py(replay)다. */
 #ifndef GESTURE_RUNTIME_H
 #define GESTURE_RUNTIME_H
 

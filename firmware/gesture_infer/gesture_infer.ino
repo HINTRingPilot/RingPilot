@@ -1,5 +1,5 @@
 // 제스처 추론 펌웨어(firmware/imu_ble_stream 복사본 + 추론). 기존 IMU 스트림·상태 알림은 그대로라 지금 앱이 그대로 붙는다.
-// 추가: 100 Hz 샘플마다 src/gesture_runtime(온라인 영점·입력 처리·TCN·발행 규칙)을 돌리고, 발행을 BLE 알림으로 보낸다.
+// 추가: 100 Hz 샘플마다 src/gesture_runtime(온라인 영점·입력 처리·TCN·발행 규칙·발행 뒤 입력 지우기)을 돌리고, 발행을 BLE 알림으로 보낸다.
 // 발행 패킷: [순번 uint8][클래스 uint8(1=UP 2=DOWN 3=LEFT 4=RIGHT)][점수×1000 uint16 LE][슬롯 uint32 LE].
 // 발행하면 LED가 0.7초 켜진다: 위 = 빨강, 아래 = 파랑, 왼쪽 = 흰색, 오른쪽 = 노랑(상태 표시의 짧은 초록·파랑 깜빡임과 헷갈리지 않게 초록은 쓰지 않는다).
 // 시리얼 명령: l = 지연 통계, r = 통계 초기화, ? = 상태. 판정 시간은 DWT 사이클로 잰다(이 코어의 micros()는 약 1 ms 단위다). 측정 조건·기록은 docs/experiments/ble-v2/latency-01/README.md.
