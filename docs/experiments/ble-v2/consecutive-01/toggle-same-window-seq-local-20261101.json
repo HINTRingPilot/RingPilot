@@ -1,0 +1,137 @@
+{
+ "S-P3": {
+  "none": {
+   "counts": {
+    "bg_clips_ge2_toggles": 3,
+    "DOWN_n": 305,
+    "DOWN_clean": 285,
+    "DOWN_app_ok": 285,
+    "LEFT_n": 295,
+    "LEFT_clean": 295,
+    "LEFT_app_ok": 295,
+    "RIGHT_n": 295,
+    "RIGHT_clean": 289,
+    "RIGHT_app_ok": 289,
+    "UP_n": 280,
+    "UP_clean": 276,
+    "UP_app_ok": 276
+   },
+   "toggle_gaps_ms": [
+    200,
+    200,
+    550,
+    600,
+    600,
+    600,
+    650
+   ],
+   "bg_clip_ms_median": 9990.0
+  },
+  "final": {
+   "counts": {
+    "bg_clips_ge2_toggles": 5,
+    "DOWN_n": 305,
+    "DOWN_clean": 285,
+    "DOWN_app_ok": 285,
+    "LEFT_n": 295,
+    "LEFT_clean": 295,
+    "LEFT_app_ok": 295,
+    "RIGHT_n": 295,
+    "RIGHT_clean": 290,
+    "RIGHT_app_ok": 293,
+    "UP_n": 280,
+    "UP_clean": 277,
+    "UP_app_ok": 277
+   },
+   "toggle_gaps_ms": [
+    400,
+    500,
+    550,
+    550,
+    550,
+    550,
+    550,
+    600,
+    600,
+    600,
+    600,
+    600,
+    600,
+    650,
+    650,
+    750,
+    750,
+    750,
+    800,
+    850
+   ],
+   "bg_clip_ms_median": 9990.0
+  }
+ },
+ "S-P5": {
+  "none": {
+   "counts": {
+    "bg_clips_ge2_toggles": 3,
+    "DOWN_n": 305,
+    "DOWN_clean": 292,
+    "DOWN_app_ok": 292,
+    "LEFT_n": 295,
+    "LEFT_clean": 295,
+    "LEFT_app_ok": 294,
+    "RIGHT_n": 300,
+    "RIGHT_clean": 294,
+    "RIGHT_app_ok": 296,
+    "UP_n": 285,
+    "UP_clean": 276,
+    "UP_app_ok": 276
+   },
+   "toggle_gaps_ms": [
+    200,
+    250,
+    2500
+   ],
+   "bg_clip_ms_median": 9990.0
+  },
+  "final": {
+   "counts": {
+    "bg_clips_ge2_toggles": 5,
+    "DOWN_n": 305,
+    "DOWN_clean": 292,
+    "DOWN_app_ok": 292,
+    "LEFT_n": 295,
+    "LEFT_clean": 295,
+    "LEFT_app_ok": 295,
+    "RIGHT_n": 300,
+    "RIGHT_clean": 296,
+    "RIGHT_app_ok": 299,
+    "UP_n": 285,
+    "UP_clean": 280,
+    "UP_app_ok": 280
+   },
+   "toggle_gaps_ms": [
+    500,
+    550,
+    550,
+    550,
+    550,
+    550,
+    600,
+    600,
+    600,
+    600,
+    600,
+    600,
+    600,
+    600,
+    700,
+    750,
+    800,
+    850,
+    850,
+    850,
+    2500
+   ],
+   "bg_clip_ms_median": 9990.0
+  }
+ }
+}
