@@ -80,7 +80,7 @@ public final class MainActivity extends Activity {
     private Button continuousButton;
     private Button swipeButton;
     private boolean swipeControl = false;  // 수집 중 스와이프가 나가지 않도록 기본은 끈다
-    private boolean horizontalMode = false;  // 좌우 제스처로 전환한다. 켜지면 위 = 왼쪽, 아래 = 오른쪽 스와이프
+    private final GestureRouter gestureRouter = new GestureRouter();
     private volatile String connectionText = "연결 준비 중";
     private final ArrayDeque<String> recentEvents = new ArrayDeque<>();
 
@@ -316,6 +316,7 @@ public final class MainActivity extends Activity {
     private void toggleSwipeControl() {
         swipeControl = !swipeControl;
         swipeButton.setText(swipeControl ? "스와이프 제어 끄기" : "스와이프 제어 켜기");
+        client.record("swipe_control", swipeControl ? "on" : "off");
         if (swipeControl && SwipeAccessibilityService.getCurrent() == null) {
             event("접근성 설정에서 'RingPilot 스와이프'를 켜세요.");
             startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
@@ -324,22 +325,23 @@ public final class MainActivity extends Activity {
         }
     }
 
-    /** 좌우 제스처는 방향을 구분하지 않고 상하·좌우 모드를 바꾼다. 위·아래 제스처는 모드에 맞는 스와이프가 된다. */
-    private void applyGesture(String direction, double score) {
+    /** 판단은 GestureRouter가 하고, 여기서는 실행하고 연결 기록에 남긴다. 실사용 시험 뒤 PC에서 맞춰 보기 위한 기록이다. */
+    private void applyGesture(String direction, int sequence, double score) {
+        SwipeAccessibilityService service = SwipeAccessibilityService.getCurrent();
+        GestureRouter.Action action = gestureRouter.route(direction, swipeControl, service != null);
+        client.record("app_gesture", action.logDetail(sequence, score));
         String result = "수신만";
-        if (swipeControl) {
-            SwipeAccessibilityService service = SwipeAccessibilityService.getCurrent();
-            if (service == null) {
-                result = "접근성 서비스 꺼짐";
-            } else if ("LEFT".equals(direction) || "RIGHT".equals(direction)) {
-                horizontalMode = !horizontalMode;
-                result = horizontalMode ? "좌우 모드" : "상하 모드";
-                service.showBanner(result);
-            } else {
-                String swipe = direction;
-                if (horizontalMode) swipe = "UP".equals(direction) ? "LEFT" : "RIGHT";
-                result = service.swipe(swipe) ? "스와이프 " + swipe : "스와이프 실패";
-            }
+        if (action.kind == GestureRouter.Kind.NO_SERVICE) {
+            result = "접근성 서비스 꺼짐";
+        } else if (action.kind == GestureRouter.Kind.MODE_CHANGED) {
+            result = action.horizontalAfter ? "좌우 모드" : "상하 모드";
+            service.showBanner(result);
+        } else if (action.kind == GestureRouter.Kind.SWIPE) {
+            String swipe = action.swipe;
+            boolean sent = service.swipe(swipe, completed -> client.record("swipe_result",
+                    GestureRouter.swipeDetail(sequence, swipe, completed ? "completed" : "cancelled")));
+            if (!sent) client.record("swipe_result", GestureRouter.swipeDetail(sequence, swipe, "not_dispatched"));
+            result = sent ? "스와이프 " + swipe : "스와이프 실패";
         }
         event(String.format(Locale.US, "제스처 %s (%.2f) → %s", direction, score, result));
     }
@@ -387,7 +389,7 @@ public final class MainActivity extends Activity {
 
         @Override
         public void onGesture(String direction, int sequence, double score) {
-            mainHandler.post(() -> applyGesture(direction, score));
+            mainHandler.post(() -> applyGesture(direction, sequence, score));
         }
     };
 

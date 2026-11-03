@@ -8,4 +8,8 @@ New-Item -ItemType Directory -Force $out | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Sidecar test compilation failed.' }
 & (Join-Path $JavaHome 'bin/java.exe') -cp $out com.hintringpilot.ringpilot.CaptureSidecarTest
 if ($LASTEXITCODE -ne 0) { throw 'Sidecar tests failed.' }
+& (Join-Path $JavaHome 'bin/javac.exe') --release 17 -encoding UTF-8 -d $out (Join-Path $root 'android/app/src/main/java/com/hintringpilot/ringpilot/GestureRouter.java') (Join-Path $root 'android/tests/GestureRouterTest.java')
+if ($LASTEXITCODE -ne 0) { throw 'Gesture router test compilation failed.' }
+& (Join-Path $JavaHome 'bin/java.exe') -cp $out com.hintringpilot.ringpilot.GestureRouterTest
+if ($LASTEXITCODE -ne 0) { throw 'Gesture router tests failed.' }
 

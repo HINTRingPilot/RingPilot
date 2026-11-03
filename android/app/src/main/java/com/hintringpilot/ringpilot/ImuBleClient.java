@@ -328,7 +328,7 @@ final class ImuBleClient {
                 | ((v[offset + 3] & 0xFFL) << 24);
     }
 
-    private synchronized void record(String event, String detail) {
+    synchronized void record(String event, String detail) {
         String wall = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(new Date());
         boolean header = !logFile.exists();
         try (FileWriter writer = new FileWriter(logFile, true)) {

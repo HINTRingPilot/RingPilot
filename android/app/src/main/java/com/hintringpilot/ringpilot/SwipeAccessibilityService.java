@@ -17,10 +17,15 @@ import android.widget.TextView;
 import java.lang.ref.WeakReference;
 
 /**
- * 화면에 위·아래·좌·우 스와이프를 주입한다. 제스처 인식 결과를 화면 조작으로 바꾸는 출력 경로로 보존하며,
- * 현재 수집 화면에서는 호출하지 않는다. 다시 쓰려면 접근성 설정에서 'RingPilot 스와이프'를 켜야 한다.
+ * 화면에 위·아래·좌·우 스와이프를 주입한다. 제스처 인식 결과를 화면 조작으로 바꾸는 출력 경로다.
+ * "스와이프 제어 켜기" 상태에서만 호출된다. 쓰려면 접근성 설정에서 'RingPilot 스와이프'를 켜야 한다.
  */
 public final class SwipeAccessibilityService extends AccessibilityService {
+    /** 주입이 끝나면 불린다. completed는 시스템이 주입을 마쳤다는 뜻이고, 앱 화면이 원하는 대로 움직였다는 뜻은 아니다. */
+    interface SwipeListener {
+        void onResult(boolean completed);
+    }
+
     private static final long BANNER_MS = 1200;
     private static WeakReference<SwipeAccessibilityService> current = new WeakReference<>(null);
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -80,7 +85,7 @@ public final class SwipeAccessibilityService extends AccessibilityService {
         }
     }
 
-    boolean swipe(String direction) {
+    boolean swipe(String direction, SwipeListener listener) {
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         float startX = metrics.widthPixels * 0.5f;
         float startY = metrics.heightPixels * 0.5f;
@@ -115,7 +120,17 @@ public final class SwipeAccessibilityService extends AccessibilityService {
         GestureDescription gesture = new GestureDescription.Builder()
                 .addStroke(new GestureDescription.StrokeDescription(path, 0, 400))
                 .build();
-        return dispatchGesture(gesture, null, null);
+        return dispatchGesture(gesture, new GestureResultCallback() {
+            @Override
+            public void onCompleted(GestureDescription gestureDescription) {
+                listener.onResult(true);
+            }
+
+            @Override
+            public void onCancelled(GestureDescription gestureDescription) {
+                listener.onResult(false);
+            }
+        }, null);
     }
 
     @Override
