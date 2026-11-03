@@ -204,7 +204,8 @@ def check_stream(exe, model, prep, clips, work):
     raw = np.concatenate(clips)
     ts = np.arange(len(raw)) * prep["sample_ms"]
     bias, static = vs.still_estimates(raw)
-    raw_events, times, keras = ve.replay(lambda x: model.predict_on_batch(x), raw, ts, prep, bias, static, ve.MODES["issue150"], with_scores=True)
+    raw_events, times, keras = ve.replay(lambda x: model.predict_on_batch(x), raw, ts, prep, bias, static, ve.MODES["issue150"], with_scores=True,
+                                       quiet_ms=ve.QUIET_MS)
     events = [(e["timestamp_ms"], e["class_index"]) for e in raw_events]
     index, scores, issued, c_bias = run_stream(exe, raw[:, GYRO], work)
     c_events = [(int(ts[i]), int(c)) for i, c in zip(index, issued) if c >= 0]

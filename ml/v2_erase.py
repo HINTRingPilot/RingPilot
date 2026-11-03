@@ -1,6 +1,7 @@
 """발행 뒤 입력 지우기(실험 consecutive-01). 재학습 없이 저장 모델로, 발행 뒤 자이로 이력을 영점 값으로 바꾸면 연속 동작이 살아나는지 본다.
 
 지우기 시점: none(안 지움), issue(발행 순간), issue150(발행 150 ms 뒤), rearm(잠금이 풀리는 순간). 지운 뒤 창은 회전각도 그만큼 다시 계산된다.
+quiet_ms를 주면 발행 없이 끝난 큰 움직임도 지운다(실험 field-01, 놓친 동작이 창에 남아 다음 동작까지 놓치는 문제).
 평가: ① 단일 클립 정검출(끝점~r+300 ms) ② 배경 클립 발행 ③ 합성 쌍(간격별) ④ 33초 연속 기록(온라인 영점).
 사용: ml/.venv/Scripts/python.exe ml/v2_erase.py --tag seq-20261031 --out erase.json
 """
@@ -19,11 +20,15 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs/experiments/ble-v2/consecutive-01"
 MODES = {"none": None, "issue": 0, "issue150": 3, "rearm": "rearm"}   # 숫자는 발행 뒤 판정 수(50 ms 단위)
 LABEL = vr.LABEL
+QUIET_MS = 150          # 보드 규칙: 큰 움직임 뒤 이만큼 정지하면 발행 없이도 지운다
+QUIET_BIG_DPS = 300     # 큰 움직임: 판정 사이 샘플 중 영점 뺀 |자이로|가 이 값을 넘음
+QUIET_STILL_DPS = 30    # 정지: 최근 quiet_ms 동안 영점 뺀 |자이로|가 모두 이 값 미만
 PAIR_GAPS = (0, 100, 200, 300, 500, 800)
 
 
-def replay(predict, raw, ts, prep, bias, static, mode, with_scores=False):
+def replay(predict, raw, ts, prep, bias, static, mode, with_scores=False, quiet_ms=None):
     """발행 규칙(v2.issue_events와 같음)을 판정마다 따라가며, mode 시점에 그때까지의 자이로를 영점으로 바꾼다. 발행 목록을 돌려준다.
+    quiet_ms를 주면 잠기지 않고 지우기 예약도 없는 동안 큰 움직임 뒤 quiet_ms 정지가 오면 지운다(보드 gesture_runtime.c와 같은 순서).
     with_scores면 (발행 목록, 판정 시각, 판정 점수)를 돌려준다."""
     raw = raw.copy()
     window, stride = prep["window"], prep["stride"]
@@ -32,6 +37,7 @@ def replay(predict, raw, ts, prep, bias, static, mode, with_scores=False):
     ends = np.arange(window - 1, len(raw), stride)
     events, pending = [], None
     locked, candidate, count, none_count = False, None, 0, 0
+    moved = False
     d = 0
     while d < len(times):
         s = p[d]
@@ -50,10 +56,17 @@ def replay(predict, raw, ts, prep, bias, static, mode, with_scores=False):
                 if count >= 2:
                     events.append({"timestamp_ms": int(times[d]), "class_index": top, "score": float(s[top])})
                     locked, candidate, count, none_count = True, None, 0, 0
+                    moved = False
                     if isinstance(mode, int):
                         pending = d + mode
             else:
                 candidate, count = None, 0
+        if quiet_ms and not locked and pending is None:
+            end = ends[d]
+            moved = moved or np.abs(raw[end - stride + 1:end + 1, 3:6] - bias[end]).max() > QUIET_BIG_DPS
+            q = int(quiet_ms / prep["sample_ms"])
+            if moved and np.abs(raw[end - q + 1:end + 1, 3:6] - bias[end]).max() < QUIET_STILL_DPS:
+                erase, moved = True, False
         if pending is not None and d >= pending:
             erase, pending = True, None
         if erase:

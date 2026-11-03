@@ -10,6 +10,9 @@
 #define GR_CONSECUTIVE 2
 #define GR_NONE_REARM 2
 #define GR_ERASE_AFTER_DECISIONS 3  /* 발행 뒤 입력을 지울 때까지의 판정 수(150 ms) */
+#define GR_QUIET_SAMPLES 15         /* 발행 없이 끝난 움직임: 이만큼(150 ms) 정지하면 지운다 */
+#define GR_QUIET_BIG_DPS 300.0f
+#define GR_QUIET_STILL_DPS 30.0f
 
 static float g_ring[GT_WINDOW][3];
 static float g_window[GT_WINDOW][3];
@@ -20,6 +23,7 @@ static int g_locked, g_candidate, g_candidate_count, g_none_count;
 static int g_erase_in;          /* 입력을 지울 때까지 남은 판정 수. 예약이 없으면 음수 */
 static uint32_t g_erased_until; /* 이 샘플 번호 앞은 g_erase_bias로 본다. 온라인 영점은 원래 값을 쓴다 */
 static float g_erase_bias[3];
+static int g_moved;             /* 마지막 발행·지우기 뒤 큰 움직임이 있었다 */
 
 void gr_reset(void) {
   g_count = 0;
@@ -30,6 +34,7 @@ void gr_reset(void) {
   g_none_count = 0;
   g_erase_in = -1;
   g_erased_until = 0;
+  g_moved = 0;
 }
 
 static float median_of_recent(int axis) {
@@ -68,6 +73,19 @@ static void update_bias(void) {
   }
 }
 
+/* 창 끝 n샘플의 영점 뺀 |자이로| 최댓값(지운 값 포함, 파이썬 replay와 같다) */
+static float recent_peak(int n) {
+  float peak = 0.0f;
+  for (int t = GT_WINDOW - n; t < GT_WINDOW; t++) {
+    for (int a = 0; a < 3; a++) {
+      const float v = g_window[t][a] - g_bias[a];
+      if (v > peak) peak = v;
+      if (-v > peak) peak = -v;
+    }
+  }
+  return peak;
+}
+
 static int issue_rule(const float scores[GT_CLASSES]) {
   int top = 0;
   for (int n = 1; n < GT_CLASSES; n++) {
@@ -95,6 +113,7 @@ static int issue_rule(const float scores[GT_CLASSES]) {
       g_candidate = -1;
       g_candidate_count = 0;
       g_none_count = 0;
+      g_moved = 0;
       g_erase_in = GR_ERASE_AFTER_DECISIONS;
       return top;
     }
@@ -119,7 +138,16 @@ int gr_push(const float gyro[3], GrDecision *out) {
   gt_predict((const float (*)[GT_CHANNELS])g_x, out->scores);
   memcpy(out->bias, g_bias, sizeof g_bias);
   out->issued = (int8_t)issue_rule(out->scores);
-  if (g_erase_in >= 0 && g_erase_in-- == 0) {
+  int erase = 0;
+  if (!g_locked && g_erase_in < 0) {
+    if (recent_peak(GR_STRIDE) > GR_QUIET_BIG_DPS) g_moved = 1;
+    if (g_moved && recent_peak(GR_QUIET_SAMPLES) < GR_QUIET_STILL_DPS) {
+      erase = 1;
+      g_moved = 0;
+    }
+  }
+  if (g_erase_in >= 0 && g_erase_in-- == 0) erase = 1;
+  if (erase) {
     g_erased_until = g_count;
     memcpy(g_erase_bias, g_bias, sizeof g_bias);
   }

@@ -59,6 +59,18 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(len(calls), 2)            # 처음 전체 + 발행 뒤 한 번
         self.assertLessEqual(calls[1], 160 // 5)   # 지운 행이 든 창은 판정 32개 이내다
 
+    def test_quiet_erases_unissued_motion(self):
+        ts, raw = fake_stream()
+        bias, static = vs.precue_estimates(raw)
+        never = lambda x: np.tile(np.array([1, 0, 0, 0, 0], np.float32), (len(x), 1))
+        calls = []
+        counted = lambda x: (calls.append(len(x)), never(x))[1]
+        self.assertEqual(ve.replay(counted, raw, ts, PREP, bias, static, None, quiet_ms=150), [])
+        self.assertEqual(len(calls), 2)            # 처음 전체 + 움직임(200~230행)이 끝나고 150 ms 정지 뒤 한 번
+        calls.clear()
+        ve.replay(counted, raw, ts, PREP, bias, static, None)
+        self.assertEqual(len(calls), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
