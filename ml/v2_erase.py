@@ -18,7 +18,7 @@ import v2_stream as vs
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs/experiments/ble-v2/consecutive-01"
 MODES = {"none": None, "issue": 0, "issue150": 3, "rearm": "rearm"}   # 숫자는 발행 뒤 판정 수(50 ms 단위)
-LABEL = "newtcnrotwarpnoacc"
+LABEL = vr.LABEL
 PAIR_GAPS = (0, 100, 200, 300, 500, 800)
 
 

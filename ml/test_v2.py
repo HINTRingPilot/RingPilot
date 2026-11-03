@@ -1,4 +1,4 @@
-"""BLE v2 데이터·창·채점 점검. 학습하지 않는다. 합성 데이터와 저장된 주석·분할만 읽는다."""
+"""BLE v2 데이터·창·발행 점검. 학습하지 않는다. 합성 데이터와 저장된 주석·분할만 읽는다."""
 import csv
 import hashlib
 import json
@@ -170,7 +170,7 @@ class WindowTests(unittest.TestCase):
 
 class EventTests(unittest.TestCase):
     def test_same_as_v1_on_random_scores(self):
-        # v1(ml/baseline.py, 2026-10-27 삭제)과 같던 발행·채점 출력의 지문
+        # v1(ml/baseline.py, 2026-10-27 삭제)과 같던 발행 출력의 지문. 2026-11-03 v1 채점 함수를 지우며 발행만으로 다시 잡았다
         rng = np.random.default_rng(7)
         out = []
         for trial in range(300):
@@ -178,11 +178,10 @@ class EventTests(unittest.TestCase):
             scores = rng.dirichlet(np.full(5, rng.choice([.15, .4, 1.0])), size=n)
             times = list(range(1590, 1590 + 50 * n, 50))
             events = v2.issue_events(times, scores)
-            e = int(rng.choice([None, 1900, 2400, 3000]) or 0) or None
-            record = {"completion_ms": e, "direction": "NONE" if e is None else "LEFT"}
-            out.append([events, v2.classify_events(record, events)])
+            rng.choice([None, 1900, 2400, 3000])     # 예전 지문과 난수 순서를 맞춘다
+            out.append(events)
         self.assertEqual(hashlib.sha256(json.dumps(out, sort_keys=True).encode()).hexdigest(),
-                         "d5903ddd8d7d78e6d2f184dc588db85a1905756a3b09402dcb77e62571db8414")
+                         "e596ea7e35265a681b6a8a7a42aa4b81693e18b9aba5099468bf35bce7aab03a")
 
     def test_choose_training_same_as_v1(self):
         rng = np.random.default_rng(3)
@@ -199,26 +198,17 @@ class EventTests(unittest.TestCase):
         # issue_events의 인자에 e가 없다는 것이 계약이다
         self.assertEqual(v2.issue_events.__code__.co_varnames[:2], ("times", "scores"))
 
-    def test_classification_order_and_clipped_horizon(self):
+    def test_classification_order(self):
+        import v2_return as vr
         r = {"completion_ms": 2000, "direction": "UP"}
         events = [{"timestamp_ms": t, "class_index": c} for t, c in [(1999, 1), (2000, 2), (2100, 1), (2200, 1), (2501, 1)]]
-        counts, delays, _ = v2.classify_events(r, events)
+        counts, delays, _ = vr.classify(r, events, (2000, 2500, 2000))
         self.assertEqual([counts[k] for k in ("early", "wrong_direction", "correct", "duplicate", "late_unmatched", "missed")], [1, 1, 1, 1, 1, 0])
         self.assertEqual(delays, [100])
-        clipped = {"completion_ms": 3600, "direction": "DOWN"}   # e+500 = 4100 > 3990
-        c, d, _ = v2.classify_events(clipped, [{"timestamp_ms": 3990, "class_index": 2}])
-        self.assertEqual((c["correct"], d), (1, [390]))
-        c, _, _ = v2.classify_events(clipped, [])
+        c, _, _ = vr.classify(r, [], (2000, 2500, 2000))
         self.assertEqual(c["missed"], 1)
-
-    def test_selection_score_excludes_background(self):
-        def src(name, **counts):
-            return {"source_path": f"data/sessions/x/{name}", "counts": counts}
-        per = [src("raw_up.1.csv", correct=1), src("raw_up.2.csv", missed=1, early=1, wrong_direction=1),
-               src("raw_up.3.csv", correct=1, duplicate=1), src("idle.1.csv", background_false=7)]
-        score, correct, unmatched, n = v2.selection_score(per)
-        self.assertEqual((correct, unmatched, n), (2, 3, 3))
-        self.assertAlmostEqual(score, (2 - 3) / 3)
+        c, _, _ = vr.classify({"completion_ms": None, "direction": "NONE"}, events[:2], None)
+        self.assertEqual(c["background_false"], 2)
 
 
 class SavedDataTests(unittest.TestCase):

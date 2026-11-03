@@ -1,4 +1,4 @@
-"""회전 + 속도 증강(newtcnrotwarp) 점검. 학습하지 않는다. 계획 docs/superpowers/plans/2026-10-27-v2-augmentation.md §7(3차 개정)."""
+"""회전 + 속도 증강 점검. 학습하지 않는다. 계획 docs/superpowers/plans/2026-10-27-v2-augmentation.md §7(3차 개정)."""
 import unittest
 
 import numpy as np
@@ -6,7 +6,7 @@ import numpy as np
 import v2
 import v2_return as vr
 
-AUG = vr.CONDITIONS["newtcnrotwarp"]["aug"]
+AUG = vr.AUG
 B = np.array([3.0, -10.0, 5.0])
 
 
@@ -84,15 +84,25 @@ class WarpRawTests(unittest.TestCase):
         self.assertEqual(vr.positive_windows(3900, 400, 400), 2)      # 3940, 3990
 
 
+def rotate_only(record, ts, raw):
+    """속도 변형 없이 회전만 한 사본(같은 난수에서 R을 먼저 뽑는다). 속도 조건을 못 넘는 사본의 기대값이다."""
+    bias = np.median(raw[:vr.PRECUE_SAMPLES, 3:6], axis=0)
+    out = []
+    for c in range(1, AUG["copies"] + 1):
+        rot = vr.random_rotation(vr.clip_rng(record["source_path"], c), AUG["rot_y_deg"], AUG["tilt_deg"])
+        out.append(({**record, "source_path": f"{record['source_path']}#rot{c}"}, vr.rotate_raw(raw, rot, bias), len(raw)))
+    return out
+
+
 class RotateWarpCopyTests(unittest.TestCase):
     def setUp(self):
         self.raw = bump_raw()
-        self.rot = vr.rotate_augmenter(vr.CONDITIONS["newtcnrot"]["aug"])
+        self.rot = rotate_only
 
     def gesture(self, name, e=2200):
         return {"source_path": f"x/{name}", "kind": "raw_up", "direction": "UP", "completion_ms": e}
 
-    def test_rotation_matches_newtcnrot_and_label_moves(self):
+    def test_rotation_matches_rotation_only_and_label_moves(self):
         rec = self.gesture("raw_up.1.csv")
         fn = vr.rotate_warp_augmenter(AUG, starts={rec["source_path"]: 1500})
         for c, ((rw, xw, nw), (rr, xr, nr)) in enumerate(zip(fn(rec, None, self.raw), self.rot(rec, None, self.raw)), 1):
@@ -103,7 +113,7 @@ class RotateWarpCopyTests(unittest.TestCase):
             self.assertEqual({**rw, "completion_ms": 2200}, {**rec, "source_path": rr["source_path"]})
         self.assertEqual(fn.stats["warp"], 2)
 
-    def test_ineligible_copies_equal_newtcnrot(self):
+    def test_ineligible_copies_are_rotation_only(self):
         bg = {"source_path": "x/idle.1.csv", "kind": "idle", "direction": "NONE", "completion_ms": None}
         early = self.gesture("raw_up.2.csv")
         recs = [bg, early]
@@ -172,17 +182,18 @@ class RotateWarpFoldTests(unittest.TestCase):
 
     def test_fold_keeps_copy_count_and_validation(self):
         split = v2.load_split("C")
-        d, _ = vr.prepare_fold("newtcnrotwarp", self.by_path, self.nb, split, 0)
-        rot, _ = vr.prepare_fold("newtcnrot", self.by_path, self.nb, split, 0)
-        self.assertEqual(d["train_aug_copies"], rot["train_aug_copies"])
+        d, _ = vr.prepare_fold(vr.LABEL, self.by_path, self.nb, split, 0)
+        plain = v2.fold_sets(vr.relabel(self.by_path, self.nb), split, 0)
+        self.assertEqual(d["train_aug_copies"], 2 * d["train_sources"])
         self.assertEqual(sum(d["train_aug_stats"].values()), d["train_aug_copies"])
         self.assertGreater(d["train_aug_stats"]["warp"], 0)
         self.assertEqual(d["train_aug_skipped"], 0)
         self.assertFalse(any("#" in c[0]["source_path"] for c in d["val"]))
-        np.testing.assert_array_equal(d["mean"], rot["mean"])
-        np.testing.assert_array_equal(d["std"], rot["std"])
-        for c, cr in zip(d["val"], rot["val"]):
-            np.testing.assert_array_equal(c[1][:, :, :6], cr[1][:, :, :6])
+        # 6축 정규화 통계와 검증 창의 자이로는 증강과 무관하다
+        np.testing.assert_array_equal(d["mean"], plain["mean"])
+        np.testing.assert_array_equal(d["std"], plain["std"])
+        for c, cp in zip(d["val"], plain["val"]):
+            np.testing.assert_array_equal(c[1][:, :, :3], cp[1][:, :, 3:6])
 
 
 if __name__ == "__main__":

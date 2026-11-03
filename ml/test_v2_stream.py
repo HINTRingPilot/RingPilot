@@ -1,4 +1,4 @@
-"""연속 스트림 재생 점검. 마지막 테스트는 fold 하나의 학습 집합을 두 조건으로 만든다(학습은 하지 않는다)."""
+"""연속 스트림 재생 점검. 마지막 테스트는 fold 하나의 학습 집합을 만든다(학습은 하지 않는다)."""
 import tempfile
 import unittest
 from pathlib import Path
@@ -49,7 +49,7 @@ class WindowTests(unittest.TestCase):
         # 클립 방식 영점(0~890 ms)을 고정해 넣으면 학습 때 만든 검증 입력과 같아야 한다(prep.json만으로 재현)
         _, by_path, nb = vr.load()
         split = v2.load_split("S-P5")
-        for label in ("newtcnrotwarpnoacc", "newtcnrotwarpaccsub"):
+        for label in (vr.LABEL,):
             d, _ = vr.prepare_fold(label, by_path, nb, split, 0)
             prep = vr.prep_values(label, d)
             for record, x_val, _, meta in d["val"][:3]:

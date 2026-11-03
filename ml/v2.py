@@ -1,19 +1,13 @@
-"""BLE v2: 자세별 5세션(4초 클립) 데이터 준비, 분할, 창 생성, 재생 채점.
+"""BLE v2: 자세별 5세션(4초 클립) 데이터 준비, 분할, 창 생성, 발행, 학습.
 
 사용: ml/.venv/Scripts/python.exe ml/v2.py <명령>
   annotate  완료 후보를 세션별로 저장하고 data/annotations/ble-v2/records.json 생성
   split     분할 6개(C 1개, S-P1~P5) 저장
   verify    주석·분할 불변식 검사
-  protocol  docs/experiments/ble-v2/results/protocol.json 저장(학습 전 1회)
-  smoke     코드 점검용 짧은 학습(결과를 저장하지 않는다)
 
-계획: docs/TrainingPlan.md "BLE v2 실험". 발행·채점 함수(issue_events, classify_events,
-choose_training)는 v1(ml/baseline.py, 2026-10-27 삭제)의 동작을 그대로 옮긴 것이고, test_v2.py가
-v1과 같던 출력의 지문으로 이를 확인한다. 3초 클립 전용 값(300행, 3000 ms 범위, 고정 세션 이름)만 바꿨다.
-
-다른 실험이 창 생성이나 입력 채널을 바꿀 때는 fold_sets(window_fn=...)와 fit_snapshots에 넘기는
-입력 채널 수로 바꾼다. 학습 데이터 증강은 fold_sets(augment_fn=...)로 학습 원본에만 사본을 더한다.
-기본값은 위 계획의 조건 그대로다.
+발행 함수(issue_events)와 NONE 추출(choose_training)은 v1(ml/baseline.py, 2026-10-27 삭제)의 동작을 그대로 옮긴 것이고,
+test_v2.py가 출력의 지문으로 이를 확인한다. 학습 조건(창 처리·증강·모델)은 v2_return.py가 정해 build_sets·fit_snapshots에 넘긴다.
+지난 기준선 보정(v2_cal.py, 2층 CNN, e 기준 채점)의 코드는 커밋 1162a44 이전 이력에 있다.
 """
 
 import argparse
@@ -23,7 +17,6 @@ import json
 import os
 import re
 import subprocess
-import time
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -198,7 +191,7 @@ def choose_training(y, meta, seed=SEED):
     return np.array(sorted(positive + none), dtype=np.int64)
 
 
-# ---------------------------------------------------------------- 발행·채점 (v1과 같은 동작)
+# ---------------------------------------------------------------- 발행 (v1과 같은 동작)
 
 def issue_events(times, scores):
     """파일마다 초기화. 두 번째 연속 조건 충족 시 발행하고 잠그며, 확실한 NONE 2회로 재무장한다."""
@@ -223,60 +216,7 @@ def issue_events(times, scores):
     return events
 
 
-def classify_events(record, events):
-    """완료 시각 e는 사후 채점에만 쓴다. 발행 과정에는 쓰지 않는다."""
-    e = record["completion_ms"]
-    matched = False
-    counts = Counter({k: 0 for k in ("correct", "missed", "wrong_direction", "duplicate", "early", "late_unmatched", "background_false")})
-    delays = []
-    annotated = []
-    for event in events:
-        event = dict(event)
-        t = event["timestamp_ms"]
-        if e is None:
-            kind = "background_false"
-        elif t < e:
-            kind = "early"
-        elif t > e + MATCH_MS:
-            kind = "late_unmatched"
-        elif event["class_index"] != CLASSES.index(record["direction"]):
-            kind = "wrong_direction"
-        elif matched:
-            kind = "duplicate"
-        else:
-            kind, matched = "correct", True
-            delays.append(t - e)
-        counts[kind] += 1
-        event["kind"] = kind
-        annotated.append(event)
-    if e is not None and not matched:
-        counts["missed"] = 1
-    return dict(counts), delays, annotated
-
-
 UNMATCHED_ON_GESTURE = ("wrong_direction", "duplicate", "early", "late_unmatched")
-
-
-def score_events(val_chunks, scores):
-    """검증·평가 원본을 파일별 독립 replay로 채점한다. NONE 창을 줄이지 않는다."""
-    totals, offset, per_source = Counter(), 0, []
-    for record, _, labels, meta in val_chunks:
-        n = len(labels)
-        events = issue_events([m["timestamp_ms"] for m in meta], scores[offset:offset + n])
-        counts, delays, annotated = classify_events(record, events)
-        totals.update(counts)
-        per_source.append({"source_path": record["source_path"], "counts": counts, "delays_ms": delays, "events": annotated})
-        offset += n
-    assert offset == len(scores)
-    return dict(totals), per_source
-
-
-def selection_score(per_source):
-    """E 선택 점수: (정검출 − 방향 원본의 미매칭 발행) ÷ 방향 원본 수. 배경 오발행은 넣지 않는다."""
-    direction = [p for p in per_source if p["source_path"].rsplit("/", 1)[-1].startswith("raw_")]
-    correct = sum(p["counts"].get("correct", 0) for p in direction)
-    unmatched = sum(sum(p["counts"].get(k, 0) for k in UNMATCHED_ON_GESTURE) for p in direction)
-    return (correct - unmatched) / len(direction), correct, unmatched, len(direction)
 
 
 # ---------------------------------------------------------------- 주석·records
@@ -609,19 +549,13 @@ def configure_tf():
     return tf
 
 
-def model_params(channels=len(AXES)):
-    """build_model(WINDOW)의 파라미터 수. 입력 채널이 하나 늘 때마다 첫 Conv(커널 5, 필터 16) 가중치가 80개 는다."""
-    return 9493 + 80 * (channels - len(AXES))
-
-
-def fit_snapshots(x_train, y_train, x_val, seed, epochs, model_fn=None, save_dir=None):
+def fit_snapshots(x_train, y_train, x_val, seed, epochs, model_fn, save_dir=None):
     """max(epochs)까지 한 번 학습하고 epochs에 든 epoch가 끝날 때마다 검증 점수를 저장한다.
 
-    입력 채널 수는 x_train에서 읽는다(기본 6축). model_fn(channels)을 주면 그 모델을 쓴다(기본 build_model).
+    model_fn(channels)이 모델을 만든다. 입력 채널 수는 x_train에서 읽는다.
     save_dir를 주면 같은 시점마다 모델을 save_dir/e<E>.keras로 저장한다(학습 결과는 저장하지 않을 때와 같다).
     """
     tf = configure_tf()
-    from model import build_model
 
     class Snapshot(tf.keras.callbacks.Callback):
         def __init__(self):
@@ -638,12 +572,7 @@ def fit_snapshots(x_train, y_train, x_val, seed, epochs, model_fn=None, save_dir
     options.threading.private_threadpool_size = 1
     tf.keras.backend.clear_session()
     tf.keras.utils.set_random_seed(seed)
-    channels = x_train.shape[2]
-    if model_fn is None:
-        model = build_model(WINDOW, channels=channels)
-        assert model.count_params() == model_params(channels)
-    else:
-        model = model_fn(channels)
+    model = model_fn(x_train.shape[2])
     model.compile(optimizer=tf.keras.optimizers.Adam(.001), loss="sparse_categorical_crossentropy")
     ds = (tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(len(y_train), seed=seed)
           .batch(BATCH_SIZE).with_options(options))
@@ -654,99 +583,8 @@ def fit_snapshots(x_train, y_train, x_val, seed, epochs, model_fn=None, save_dir
     return snap.scores, hist.history["loss"]
 
 
-# ---------------------------------------------------------------- protocol·smoke
-
-PROTOCOL_CONDITIONS = {
-    "input": "100 Hz 6축, 160행×6, 5행(50 ms)마다 판정, t=창의 마지막 실제 샘플 시각, 첫 판정 1590 ms",
-    "label": "자연 복귀 완료 e에 대해 e <= t < e+150 ms만 방향, 나머지 NONE(복귀 중 포함). idle/other 클립 전체 NONE",
-    "model": "ml/model.py build_model(160) 기본값: Conv16k5-Pool2-Drop.2-Conv32k5-Pool2-Flatten-Drop.3-Dense5, 9,493 파라미터",
-    "training": {"optimizer": "Adam lr=0.001", "loss": "sparse_categorical_crossentropy", "batch_size": 16,
-                 "augmentation": None, "class_weight": None, "early_stopping": None,
-                 "threads": "intra=1 inter=1, enable_op_determinism, oneDNN off"},
-    "none_selection": "학습에만. 양성 창 수만큼 NONE을 종류(in_progress, post_completion, idle, other)별 라운드로빈으로 고정 추출. 추출 seed는 20261021 고정(학습 seed와 별개)",
-    "postprocess": {"score_threshold": .8, "margin": .2, "consecutive_direction": 2, "consecutive_none_rearm": 2},
-}
-PROTOCOL_ORDER = [
-    "1. 원본 클립을 먼저 나눈다(평가용/학습용, 학습용 안의 fold). 같은 원본의 창은 한쪽에만 둔다",
-    "2. 원본마다 160행 창을 50 ms 간격으로 만든다. 파일 경계를 넘어 붙이지 않는다",
-    "3. 정규화 평균·표준편차는 학습 부분 원본의 행으로만 계산한다. 교차검증은 fold마다 다시 계산한다",
-    "4. NONE 추출은 학습 부분에만 한다. 검증·평가는 모든 판정 시각을 그대로 replay한다",
-    "5. 검증·평가 데이터에서 계산한 값은 학습 설정에 쓰지 않는다",
-]
-PROTOCOL_EVENTS = {
-    "decision_times": "160행이 찬 1590 ms부터 50 ms마다. 그 전 구간은 판정하지 않음",
-    "emit_time": "발행 조건을 처음 만족한 판정 시각(두 번째 연속 창의 마지막 샘플 시각)",
-    "initial_state": "원본마다 잠금 해제·후보 없음으로 시작. 원본 사이에 상태를 넘기지 않음",
-    "completion_ms_use": "정답 라벨과 사후 채점에만 사용. 발행·재무장에는 사용하지 않음",
-    "classification_order": ["배경 원본 → background_false", "t < e → early", "t > e+500 → late_unmatched",
-                              "다른 방향 → wrong_direction", "이미 correct 있음 → duplicate", "그 밖 → correct", "correct 없음 → missed 1"],
-    "match_horizon_clipped": f"e+500 > {LAST_T} (e > {LAST_T - MATCH_MS})인 원본은 그대로 채점하되 목록을 따로 표시",
-}
-PROTOCOL_SELECTION = {
-    "candidates": EPOCH_CANDIDATES, "seeds": SEEDS,
-    "training": "(seed, fold)마다 max(E)=60 epoch까지 한 번 학습하고 후보 epoch가 끝난 시점마다 검증 fold를 replay",
-    "score": "seed마다 모든 fold 예측을 합쳐 (정검출 수 − 방향 원본의 미매칭 발행 수) ÷ 검증 방향 원본 수. 미매칭=wrong_direction+duplicate+early+late_unmatched. 배경 오발행은 점수에 넣지 않고 따로 보고",
-    "rule": "5 seed 점수 평균이 가장 큰 E, 같으면 작은 E. 방식(그리고 S 회전)마다 같은 원칙으로 따로 선택",
-}
-PROTOCOL_REPORT = ["정검출 수/평가 방향 원본 수", "미매칭 발행: 종류별 원시 개수와 방향 원본 1개당 수", "누락: 원시 개수와 비율",
-                   "배경 오발행: 원시 개수, 실제 판정 구간(클립마다 첫 판정 전 1.59초 제외), 관측 1분당 수",
-                   "지연: 정검출의 완료→발행 median/p95와 표본 수", "모두 5 seed의 seed별 값과 평균·범위",
-                   "C−S는 같은 seed끼리 차이를 seed별로, 평균·범위와 함께. 통계적 판정 규칙을 두지 않음",
-                   "허용 구간이 잘린 원본(e>3490)과 양성 3창 미만 원본(e>3890)을 따로 표시"]
-
-
-def protocol():
-    out_path = DOC / "results/protocol.json"
-    if out_path.exists():
-        raise FileExistsError("protocol.json이 이미 있다. 학습 전 1회만 저장한다")
-    verify()
-    git = lambda *a: subprocess.run(["git", *a], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
-    out = {"experiment": "BLE-v2", "created_before_training_kst": now(),
-           "records_sha256": digest(RECORDS),
-           "split_sha256": {n: digest(SPLITS / f"v2-{n}.json") for n in SPLIT_NAMES},
-           "official_S": f"S-{OFFICIAL_S}", "rotation_S": [f"S-{s}" for s in SESSION_KEYS if s != OFFICIAL_S],
-           "fixed_conditions": PROTOCOL_CONDITIONS, "data_processing_order": PROTOCOL_ORDER,
-           "events": PROTOCOL_EVENTS, "epoch_selection": PROTOCOL_SELECTION, "report": PROTOCOL_REPORT,
-           "evaluation": "평가용은 각 방식의 최종 모델(5 seed)에 한 번만 적용한다. 결과를 보고 설정·주석·분할을 바꾸지 않는다",
-           "code_check_note": "protocol 저장 전에 코드 점검용 짧은 학습을 했다: smoke(S-P5 학습용 안의 fold 하나, 5 epoch)와 test_v2_cal.py "
-                              "(같은 fold 몇 epoch). 평가용은 열지 않았고 결과를 저장·선택에 쓰지 않았다",
-           "hash_note": "SHA-256은 CRLF를 LF로 바꾼 바이트로 계산한다(저장소가 core.autocrlf=true라 체크아웃 환경마다 바이트가 다르다). "
-                        "처음 만든 주석·분할·protocol(커밋 805f74a)은 이 정의 전이라 학습 전에 지우고 같은 내용으로 다시 만들었다",
-           "code_sha256": {p: digest(ROOT / "ml" / p) for p in ("v2.py", "v2_cal.py", "model.py")},
-           "git_head": git("rev-parse", "HEAD"), "git_status_short": git("status", "--short").splitlines()}
-    dump(out_path, out)
-    print("protocol saved", out_path)
-
-
-def smoke():
-    data, by_path = load_records()
-    sp = load_split(f"S-{OFFICIAL_S}")
-    t0 = time.time()
-    d = fold_sets(by_path, sp, 0)
-    print("fold 0 held-out session:", sp["cv"]["folds"][0]["held_out_session"],
-          "train sources", d["train_sources"], "val sources", d["val_sources"])
-    print("train windows (all):", d["train_all_counts"], "selected:", d["train_counts"], d["train_none_groups"])
-    x_val = np.concatenate([c[1] for c in d["val"]])
-    print("val windows:", len(x_val), "positives:", int(sum((c[2] != 0).sum() for c in d["val"])), "data prep s: %.1f" % (time.time() - t0))
-    runs = []
-    for attempt in range(2):
-        t1 = time.time()
-        scores, loss = fit_snapshots(d["x_train"], d["y_train"], x_val, SEED, (1, 5))
-        print(f"run {attempt}: loss per epoch {[round(v, 4) for v in loss]}  {time.time() - t1:.1f}s")
-        runs.append(scores)
-    for e in (1, 5):
-        diff = float(np.abs(runs[0][e] - runs[1][e]).max())
-        print(f"E={e} 같은 seed 두 번 학습 점수 최대 차이: {diff}")
-        assert diff == 0.0, "같은 seed 재현이 안 된다"
-        assert np.isfinite(runs[0][e]).all() and np.allclose(runs[0][e].sum(axis=1), 1, atol=1e-4)
-        totals, per_source = score_events(d["val"], runs[0][e])
-        score, c, u, n = selection_score(per_source)
-        print(f"E={e} 채점: {totals} 선택점수 {score:.3f} (정검출 {c}, 미매칭 {u}, 방향 원본 {n})")
-    print("smoke OK (결과는 저장하지 않음)")
-
-
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("command", choices=("annotate", "split", "verify", "protocol", "smoke"))
+    p.add_argument("command", choices=("annotate", "split", "verify"))
     cmd = p.parse_args().command
-    {"annotate": annotate, "split": make_splits, "verify": verify, "protocol": protocol, "smoke": smoke}[cmd]()
+    {"annotate": annotate, "split": make_splits, "verify": verify}[cmd]()

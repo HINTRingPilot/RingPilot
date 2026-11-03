@@ -58,11 +58,9 @@ def stream_inputs(raw, ts, prep, gyro_bias, acc_static):
     win = raw[ends[:, None] + np.arange(-(window - 1), 1)[None, :]]                  # (판정 수, window, 6)
     mean, std = np.array(prep["norm_mean_6axis"]), np.array(prep["norm_std_6axis"])
     xn = ((win - mean) / std).astype(np.float32)
-    acc = xn[:, :, 0:3]
-    if prep.get("acc_mode") == "precue_sub":
-        acc = (xn[:, :, 0:3].astype(np.float64) * std[0:3] + mean[0:3] - acc_static[ends][:, None, :]).astype(np.float32)
-        acc = ((acc.astype(np.float64) - prep["acc_mean"]) / prep["acc_std"]).astype(np.float32)
-    parts = [acc, xn[:, :, 3:6]]
+    if prep.get("acc_mode"):
+        raise ValueError(f"가속도 처리 {prep['acc_mode']}는 지원하지 않는다(지난 조건, 커밋 1162a44 이전 이력)")
+    parts = [xn[:, :, 0:3], xn[:, :, 3:6]]
     if "angX" in prep["input_channels"]:
         gyro = xn[:, :, 3:6].astype(np.float64) * std[3:6] + mean[3:6] - gyro_bias[ends][:, None, :]
         angle = np.cumsum(gyro * (prep["sample_ms"] / 1000), axis=1)
