@@ -1,30 +1,50 @@
-# RingPilot Android 수집 앱
+# RingPilot Android 앱
 
-링(`firmware/imu_ble_stream`)이 BLE로 보내는 IMU 6축 원시값을 받아, 제스처 학습용 데이터를 세션 단위로 기록하는 앱이다.
+반지가 보드에서 판정해 보낸 제스처를 받아 화면 스와이프로 바꾸는 리모컨 앱이다. 개발용 빌드에는 학습 데이터 수집과 실사용 시험 기록 기능이 더 있다.
 
 ## 준비
 
-1. 링에 `firmware/imu_ble_stream/imu_ble_stream.ino`를 업로드한다.
+1. 반지에 `firmware/gesture_infer`를 올린다. 데이터 수집만 할 때는 `firmware/imu_ble_stream`(추론 없음)도 같은 앱으로 붙는다.
 2. 휴대폰 Bluetooth 설정에서 `RingPilot-IMU`를 페어링한다. 설정 화면에서 "연결 안 됨"으로 보이는 것은 정상이다. 앱이 직접 연결한다.
-3. 앱을 열면 자동으로 연결한다. 맨 위 상태 줄이 초록 점과 `수신 중`, 오른쪽 위가 `100 Hz`이면 준비 완료다.
+3. 앱을 열면 자동으로 연결한다. 맨 위 상태 줄이 초록 점과 `수신 중`이면 준비 완료다.
+4. **스와이프 제어 켜기**를 누르고 접근성 설정에서 `RingPilot 스와이프`를 켠다.
 
 ## 화면 구성
 
-아래쪽 탭 세 개로 나뉜다. 화면 색과 모양은 `app/src/main/java/.../ui/Ui.java`에 모여 있다(Android 앱이라 CSS는 없고, 이 파일이 CSS 역할을 한다).
+맨 위에 이름, 연결 상태, **페어링 방법**·**연결 방법** 버튼(누르면 안내 팝업)이 있다. 그 아래는 탭 내용이다.
 
-- **리모컨**: 네 방향 다이얼, 스와이프 제어 켜기·끄기, 현재 모드, 누락 샘플, 최근 제스처. 화살표 옆 글자는 그 방향이 하는 일이다(상하 모드: 위·아래, 좌우 모드: 왼쪽·오른쪽, 좌우 제스처: 전환).
-- **수집**: 방향 안내 수집, 세션 메모와 현황, idle/other, 연속 기록, 세션 종료. 화살표 옆 숫자는 저장한 개수이고, 바깥 눈금은 안내 진행률이다. 안내가 도는 동안에는 준비용 칸을 접고 다이얼을 키운다.
-- **기록**: 최근 이벤트와 사용법.
+- **리모컨**(사용자 빌드는 이것만 보인다): 위·아래·좌우 제스처가 지금 하는 일 세 줄, 모드 띠(상하/좌우, 제어 상태), 스와이프 제어 켜기·끄기, 링 다시 연결. 제스처를 받으면 그 줄이 0.7초 빛난다. 스크롤 없이 한 화면에 든다.
+- **수집**(개발용): 방향 안내 수집, 세션 메모와 현황, idle/other, 연속 기록, 세션 종료. 위쪽 다이얼에 단계와 방향별 저장 개수를 보이고, 안내가 도는 동안에는 준비용 칸을 접고 다이얼을 키운다.
+- **기록**(개발용): 최근 이벤트 8개와 사용법.
 
-맨 위의 **페어링 방법**, **연결 방법** 토글을 누르면 어느 탭에서든 순서 안내가 펼쳐진다. 한 번에 하나만 열리고, 다시 누르면 접힌다.
+개발용 빌드는 오른쪽 위에 수신 Hz, 리모컨 탭에 누락 샘플 수도 보인다. 빌드 방법은 아래 "빌드"에 있다.
 
 글꼴은 `app/src/main/res/font`에 있다. 제목·버튼은 Do Hyeon, 설명 글은 Orbit(한글)과 IBM Plex Mono(영문·숫자), 숫자 표시는 IBM Plex Mono다. 모두 SIL OFL이며 라이선스 전문은 `app/src/main/assets/licenses`에 있어 APK에 함께 들어간다.
 
-디버그 빌드는 링 없이 화면 상태만 볼 수 있다. 세션과 파일은 만들지 않는다. 값은 `remote`, `collect`, `go`, `still`, `log`, `pairing`, `connect`다.
+디버그 빌드는 링 없이 화면 상태만 볼 수 있다. 세션과 파일은 만들지 않는다. 값은 `remote`(기본), `pairing`, `connect`, `collect`, `go`, `still`, `log`다. 수집·기록 화면은 개발용 빌드에서만 보인다.
 
 ```powershell
-adb shell am start -n com.hintringpilot.ringpilot/.MainActivity --es ui_preview go
+adb shell am start -n com.hintringpilot.ringpilot/.MainActivity --es ui_preview remote
 ```
+
+## 코드 구조
+
+모두 `app/src/main/java/com/hintringpilot/ringpilot/`에 있다.
+
+| 파일 | 맡는 일 |
+|---|---|
+| `MainActivity` | 화면 조립(상단 막대, 탭), 링 연결과 권한, 받은 제스처 실행과 기록, 화면 미리보기 |
+| `ImuBleClient` | BLE 연결·자동 재연결, IMU·상태·제스처 알림 해석, `connection_log.csv` 기록 |
+| `GestureRouter` | 제스처 → 동작 판단(모드 전환, 방향 → 스와이프, 제어·접근성 꺼짐). 안드로이드 의존이 없어 JDK로 시험한다 |
+| `SwipeAccessibilityService` | 다른 앱에 스와이프 주입, 모드 배너 |
+| `RemotePanel` | 리모컨 화면 |
+| `GuideDialogs` | 페어링·연결 안내 팝업 |
+| `CollectPanel` | 수집 화면과 안내 수집 흐름(음성·소리 안내, 다시 하기, 일시정지) |
+| `SessionRecorder` | 세션 폴더와 기록 CSV·사이드카 쓰기(BLE 스레드에서 샘플을 받는다) |
+| `CaptureSidecar` | 기록마다 붙는 메타데이터 JSON. JDK로 시험한다 |
+| `LogPanel` | 기록 탭(최근 이벤트) |
+| `ui/Ui` | 색·글꼴·카드·버튼 같은 공통 디자인 요소(CSS 역할) |
+| `ui/DirectionDial` | 수집 안내용 원형 다이얼 |
 
 ## 수집 방법
 
@@ -96,20 +116,18 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 
 Android Studio 없이 빌드할 때는 JDK 17(예: Temurin 17)을 `JAVA_HOME`으로 두고, 명령줄 SDK를 `.tools/android-sdk`에 설치한 뒤 `android/local.properties`에 `sdk.dir=C:/<저장소 경로>/.tools/android-sdk`를 적는다(경로는 `/`로 쓴다. `\`를 쓰면 `\u`가 유니코드 이스케이프로 읽혀 빌드가 실패한다).
 
-## 보존한 기능
+## 제스처 처리와 기록
 
 보드가 `firmware/gesture_infer`면 앱은 발행 알림(`b27a2003`)을 받아 화면에 표시하고, "스와이프 제어 켜기"를 누르면 접근성 서비스로 스와이프를 주입한다(기본은 꺼짐). 좌우 제스처는 구분 없이 상하·좌우 모드를 바꾸고 화면 위쪽에 모드를 1.2초 표시한다. 상하 모드는 위·아래 제스처가 위·아래 스와이프, 좌우 모드는 위 = 왼쪽, 아래 = 오른쪽 스와이프다. 앱을 다시 시작하면 상하 모드로 돌아간다. 수집 펌웨어에는 이 특성이 없어 건너뛴다. 전용 백그라운드 서비스는 없어 앱이 정리되면 끊긴다.
 
 제스처 처리는 연결 기록(`connection_log.csv`)에 남는다. `gesture`는 보드에서 받은 값(seq·dir·score·slot), `app_gesture`는 앱 판단(제어·접근성 서비스 상태, 전환 전후 모드 `V`·`H`, 동작, 스와이프), `swipe_result`는 요청 결과(`completed`·`cancelled`·`not_dispatched`), `swipe_control`은 제어 켜기·끄기다. `completed`는 시스템이 주입을 마쳤다는 뜻이고 앱 화면이 원하는 대로 움직였다는 뜻은 아니다. 제스처를 인식하지 못하면 행이 없으므로 무발행은 이 기록만으로 알 수 없다. 연속 기록과 메모를 함께 본다. seq는 1바이트라 한 바퀴 돌면 겹치니 시각과 함께 맞춘다.
-
-`SwipeAccessibilityService`(화면 스와이프 주입)는 제스처 인식 결과를 화면 조작으로 바꾸는 출력 경로로 코드만 남겨 두었다. 현재 화면에서는 호출하지 않는다.
 
 ## 캡처 시각 sidecar (영상 동기화 준비용)
 
 각 캡처가 완료·실패·취소되면 같은 폴더에 `<CSV 이름>.capture.json`을 별도로 저장한다. CSV 열·행·환산은 그대로다. JSON은 기존 파일을 덮어쓰지 않고 CSV와 같은 단일 저장 대기열에서 기록한다.
 
 - `first_board_slot`, `last_board_slot`: 실제 CSV 행으로 받아들인 첫/마지막 보드 슬롯. `sample_count`는 받아들인 행 수이며, 연속 기록의 공백을 포함한 시간 길이가 아니다. `sample_interval_ms=10`은 슬롯 간격 규칙이고 실제 샘플 시계 정확도를 측정한 값은 아니다.
-- `start_call_elapsed_realtime_ms`: `startCapture` 진입 직후(세션 준비 전)의 휴대폰 부팅 기준 시각. `first_callback_arrival_elapsed_realtime_ms`: 첫 행이 속한 BLE listener 콜백 진입 시각. **물리적인 센서 샘플 시각이 아니며** BLE 배칭·전송 지연이 포함된다. `end_elapsed_realtime_ms`는 캡처를 끝내기로 결정한 시각이며 파일 저장 완료 시각이 아니다.
+- `start_call_elapsed_realtime_ms`: `SessionRecorder.start` 진입 직후(세션 준비 전)의 휴대폰 부팅 기준 시각. `first_callback_arrival_elapsed_realtime_ms`: 첫 행이 속한 BLE listener 콜백 진입 시각. **물리적인 센서 샘플 시각이 아니며** BLE 배칭·전송 지연이 포함된다. `end_elapsed_realtime_ms`는 캡처를 끝내기로 결정한 시각이며 파일 저장 완료 시각이 아니다.
 - `mode`: `finite`(목표 행 수 있음) 또는 `continuous`. `end_status`: `completed`, `stopped`, `sample_gap`, `timeout`, `aborted`, 또는 CSV 쓰기 오류가 있으면 `csv_write_failed`. 실패한 고정 길이 캡처는 CSV를 만들지 않지만 sidecar에는 실패를 남긴다.
 - `intended_csv`는 예정 이름이다. `source_csv`는 최종 저장 시점에 파일이 존재할 때만 이름이 있고, 없으면 null이다. `csv_exists_at_finalization`은 그 시점의 존재 여부이며 무결성 보장이 아니다. `csv_write_failed=true`이면 일부만 기록된 CSV일 수도 있어 분석에 사용하면 안 된다.
 - `session_directory`, `activity_instance_id`는 앱이 확실히 아는 문맥이다. Activity가 새로 만들어지면 ID가 바뀐다. 보드 부팅 ID·재시작 여부·펌웨어/앱 커밋·협상 MTU는 이 경로에서 확인할 수 없으므로 null이다. 같은 세션이나 Activity ID가 같다고 보드 부팅이 같다는 뜻은 아니다.

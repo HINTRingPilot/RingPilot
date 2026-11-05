@@ -1,51 +1,54 @@
 # RingPilot
 
-침대에서 Android 스마트폰을 조작하기 위한 검지 착용형 스마트링 리모컨 프로토타입.
-엄지 스틱으로 포인터와 클릭을 제어하고, 향후 IMU와 TinyML로 손가락 제스처를 인식하는 것을 목표로 합니다.
+침대에 누워 스마트폰을 조작하기 위한 검지 반지형 제스처 리모컨 프로토타입이다. 반지 안 IMU로 손가락의 위·아래·좌·우 까딱임을 보드에서 직접 인식하고(TinyML), 휴대폰 앱이 그 결과를 화면 스와이프로 바꾼다. 연구·포트폴리오 목적이며 실배포 검증은 범위 밖이다.
 
-## 현재 구현
-
-XIAO nRF52840 Sense의 Arduino/Bluefruit 펌웨어로 BLE HID 마우스와 Custom GATT 서비스를 제공합니다(`ble_poc`).
-제스처 데이터 수집용 펌웨어(`imu_ble_stream`)는 IMU 6축 원시값을 100 Hz로 BLE 스트리밍하고, Android 앱이 이를 세션 단위로 기록합니다. 앱의 AccessibilityService(화면 스와이프 주입)는 이후 인식 결과 출력용으로 코드만 남아 있습니다.
-하드웨어는 SKRHACE010 5방향 스위치(D0·D1·D2·D3·D6, 공통 GND)와 55mAh Li-Po를 연결했습니다. 센터(D1)를 길게 누르면 System OFF로 꺼지고 다시 누르면 켜집니다.
+## 동작 구조
 
 ```text
-PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
-                    └→ Custom GATT → RingPilot 앱 → 화면 스와이프
+반지(XIAO nRF52840 Sense)                                   휴대폰(Android 앱)
+IMU 100 Hz → 온라인 영점 → TCN 판정(50 ms마다) → 발행 ──BLE──→ GestureRouter → 접근성 스와이프
+                                                  └ LED
 ```
 
-## 검증 환경 및 결과
+- 위·아래 제스처는 위·아래 스와이프(쇼츠 넘기기 등), 좌우 제스처는 상하·좌우 모드 전환이다. 좌우 모드에서는 위 = 왼쪽, 아래 = 오른쪽 스와이프다.
+- 반지 스위치: 짧게 누르면 일시정지 해제, 0.5초 누르면 일시정지, 2초 누르면 전원 끄기.
+- 모델: 자이로 3 + 회전각 3채널을 받는 TCN(4,421 파라미터, 1.6초 창). 판정 한 번 약 21 ms(보드 측정).
 
-- 보드: Seeed XIAO nRF52840 Sense
-- 코어: Seeed nRF52 Boards(non-mbed) 1.1.13
-- 휴대폰: Galaxy S10 / Android 12
-- 확인 완료: 4방향 이동·클릭, HID와 GATT 알림 동시 동작, USB 전원 재연결 및 휴대폰 Bluetooth OFF/ON 후 기능 복구
-- nRF Connect 강제 종료·재실행: 수동 CONNECT 후 별도 알림 버튼 조작 없이 수신 복구
-- Android 앱: Galaxy S10에서 접근성 앱 자체 스와이프와 BLE 상하좌우 스와이프 명령을 실동작 확인
-- 하드웨어: 스위치 5개 입력 모두 반응, 배터리 단독 구동, 센터 길게 눌러 System OFF·센터와 USB 연결로 깨어남 (2026-10-18~23)
+## 폴더
 
-짧은 기능 시험 결과이며, 장시간 안정성·복구 시간·패킷 누락률·소비전력은 측정하지 않았습니다.
+| 폴더 | 내용 |
+|---|---|
+| [firmware/](firmware/README.md) | 반지 펌웨어. 지금 쓰는 것은 `gesture_infer`, 데이터 수집용은 `imu_ble_stream` |
+| [android/](android/README.md) | 휴대폰 앱(리모컨, 개발용 빌드는 데이터 수집·실사용 기록 포함) |
+| [ml/](ml/) | 학습·평가(Python, TensorFlow), C 변환과 Python·C 일치 확인 |
+| [tools/](tools/) | 폰 기록 가져오기(`pull-phone-sessions.js`), 수집 클립 주석 도구(Node.js) |
+| [data/](data/) | 수집 세션 원본, 동작 시점 주석, 교차검증 분할 |
+| [docs/](docs/) | 진행기록, 실험 결과, 계획서, 시행착오 정리 |
 
 ## 실행
 
-1. [설치 안내](docs/설치안내.md)에 따라 Arduino 환경을 준비합니다.
-2. [ble_poc.ino](firmware/ble_poc/ble_poc.ino)를 Sense 보드에 업로드합니다.
-3. Android에서 `SmartRing-PoC`를 페어링합니다.
-4. USB 시리얼 모니터(115200 baud)에서 WASD로 이동, C로 클릭, U/J/L/R로 위·아래·왼쪽·오른쪽 스와이프 명령, ?로 상태를 조회합니다.
-5. 전체 통신 시험은 [BLE 테스트 안내](docs/BLE테스트.md)를 따릅니다. 당시의 스와이프 시험 화면은 현재 앱에서 제거됐습니다.
+1. [설치 안내](docs/설치안내.md)에 따라 Arduino·Python·Android 빌드 환경을 준비한다(`setup.ps1`).
+2. [펌웨어 안내](firmware/README.md)대로 `firmware/gesture_infer`를 반지에 올린다.
+3. [앱 안내](android/README.md)대로 APK를 빌드·설치하고, `RingPilot-IMU`를 페어링한 뒤 앱에서 스와이프 제어를 켠다.
+4. 모델을 다시 학습하거나 평가할 때는 `ml/v2_return.py`(학습·채점), `ml/v2_export_c.py`(C 헤더 내보내기·일치 확인)를 쓴다. 테스트는 `ml/.venv/Scripts/python.exe -m unittest discover -s ml`.
 
-제스처 데이터를 무선으로 모을 때는 [imu_ble_stream.ino](firmware/imu_ble_stream/imu_ble_stream.ino)를 업로드하고 [Android 수집 앱](android/README.md)을 사용합니다.
+## 확인한 것
 
-모델 학습·평가는 로컬 Python(`ml/`)에서 진행합니다. 계획은 [학습 계획](docs/TrainingPlan.md), 실험 기록은 [BLE v1 실험](docs/experiments/ble-v1/README.md)(코드 확인용 테스트)과 [BLE v2 실험](docs/experiments/ble-v2/README.md)(자세별 5세션)에 있습니다.
+- 오프라인: 세션(자세)을 나눈 교차검증에서 단일 동작 정검출 평균 약 97%(클립 단위, 실제 연속 사용 성능 아님). 자세한 표는 [BLE v2 실험](docs/experiments/ble-v2/README.md).
+- Python과 C: 같은 입력에서 점수 최대 오차 1e-6 수준, 연속 스트림 발행 동일(`ml/v2_export_c.py check`).
+- 실사용(사용자 1명, 약 1~2분 기록 2회): 두 번째 시험에서 동작 후보 49개 중 46개 정상 발행, 체감 "끊김 없이 잘 됨". [field-02](docs/experiments/ble-v2/field-02/README.md). 정식 연속 인식률·시간당 오발행은 측정하지 않았다.
+- 미측정: 배터리 지속 시간, BLE 최대 거리, 소비 전류.
 
 ## 문서
 
 - [개발 진행 요약 및 실험 회고 — 2026-10-25](docs/개발진행요약_2026-10-25.md)
 - [기획서 원안](기획서%20원안.txt)
+- [남은 할 일](docs/TODO.md)
+- [시행착오 정리](docs/시행착오정리.md)
 - [진행 기록 및 검증 근거](docs/진행기록.md)
 - [Windows 개발환경 설치](docs/설치안내.md)
-- [Android 수집 앱](android/README.md)
-- [BLE 테스트 안내](docs/BLE테스트.md)
+- [Android 앱](android/README.md)
+- [BLE 테스트 안내(초기 ble_poc)](docs/BLE테스트.md)
 - [제스처 인식 구조 제안](docs/제스처인식구조안.md)
 - [모델 아키텍처](docs/ModelArchitecture.md)
 - [학습·평가 계획](docs/TrainingPlan.md)

@@ -23,8 +23,9 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * RingPilot-IMU(firmware/imu_ble_stream)에 연결해 IMU 원시값 알림을 받는다.
- * 끊기면 자동으로 다시 연결하고, 연결·일시정지·재개 이벤트와 지연 측정값을 connection_log.csv에 남긴다.
+ * 페어링된 RingPilot-IMU에 연결해 알림 세 가지를 받는다: IMU 원시값, 상태(일시정지·재개 등), 보드가 발행한 제스처.
+ * 패킷 형식은 firmware/gesture_infer/src/ble_link.h에 있다. 수집 펌웨어(imu_ble_stream)에는 제스처 특성이 없어 건너뛴다.
+ * 끊기면 자동으로 다시 연결하고, 연결·일시정지·재개·제스처와 지연 측정값을 connection_log.csv에 남긴다(앱 쪽 판단 기록도 record로 같은 파일에 쓴다).
  * 콜백은 Bluetooth 스레드에서 호출된다.
  */
 final class ImuBleClient {

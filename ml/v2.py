@@ -61,7 +61,6 @@ GESTURE_ROWS = 400      # 4초
 LONG_ROWS = 1000        # idle/other 10초
 WINDOW = 160
 STRIDE = 5
-FIRST_T = (WINDOW - 1) * 10          # 첫 판정 시각 1590 ms
 LAST_T = (GESTURE_ROWS - 1) * 10     # 방향 클립의 마지막 판정 시각 3990 ms
 CUE_MS = 1000
 POSITIVE_MS = 150

@@ -13,6 +13,8 @@ import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.TextView;
 
+import com.hintringpilot.ringpilot.ui.Ui;
+
 import java.lang.ref.WeakReference;
 
 /**
@@ -26,6 +28,7 @@ public final class SwipeAccessibilityService extends AccessibilityService {
     }
 
     private static final long BANNER_MS = 1200;
+    private static final long SWIPE_MS = 400;
     private static WeakReference<SwipeAccessibilityService> current = new WeakReference<>(null);
     private final Handler handler = new Handler(Looper.getMainLooper());
     private TextView banner;
@@ -57,13 +60,13 @@ public final class SwipeAccessibilityService extends AccessibilityService {
         float density = getResources().getDisplayMetrics().density;
         TextView view = new TextView(this);
         view.setText(text);
-        view.setTextColor(0xFFF2EADC);
+        view.setTextColor(Ui.TEXT);
         view.setTextSize(13);
-        view.setTypeface(getResources().getFont(R.font.do_hyeon));
+        view.setTypeface(getResources().getFont(R.font.do_hyeon));  // 서비스는 앱 화면 없이도 돌아 Ui.init에 기대지 않는다
         view.setPadding((int) (14 * density), (int) (6 * density), (int) (14 * density), (int) (6 * density));
         GradientDrawable background = new GradientDrawable();
-        background.setColor(0xF01C1915);
-        background.setStroke((int) density, 0xFFFF5B1F);
+        background.setColor(Ui.PANEL & 0xF0FFFFFF);  // 살짝 비치게
+        background.setStroke((int) density, Ui.ACCENT);
         background.setCornerRadius(16 * density);
         view.setBackground(background);
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
@@ -86,6 +89,7 @@ public final class SwipeAccessibilityService extends AccessibilityService {
         }
     }
 
+    /** 화면 가운데를 지나는 400 ms 스와이프. 위·아래는 높이의 50%, 좌·우는 폭의 60%를 움직인다. 모르는 방향이면 false. */
     boolean swipe(String direction, SwipeListener listener) {
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         float startX = metrics.widthPixels * 0.5f;
@@ -119,7 +123,7 @@ public final class SwipeAccessibilityService extends AccessibilityService {
         path.lineTo(endX, endY);
 
         GestureDescription gesture = new GestureDescription.Builder()
-                .addStroke(new GestureDescription.StrokeDescription(path, 0, 400))
+                .addStroke(new GestureDescription.StrokeDescription(path, 0, SWIPE_MS))
                 .build();
         return dispatchGesture(gesture, new GestureResultCallback() {
             @Override
@@ -136,11 +140,11 @@ public final class SwipeAccessibilityService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        // This prototype only injects gestures; it does not inspect screen content.
+        // 스와이프를 넣기만 하고 화면 내용은 읽지 않는다.
     }
 
     @Override
     public void onInterrupt() {
-        // No continuous accessibility feedback to interrupt.
+        // 끊을 지속 피드백이 없다.
     }
 }
