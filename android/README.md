@@ -6,7 +6,25 @@
 
 1. 링에 `firmware/imu_ble_stream/imu_ble_stream.ino`를 업로드한다.
 2. 휴대폰 Bluetooth 설정에서 `RingPilot-IMU`를 페어링한다. 설정 화면에서 "연결 안 됨"으로 보이는 것은 정상이다. 앱이 직접 연결한다.
-3. 앱을 열면 자동으로 연결한다. 맨 위 줄이 `수신 중 · 100 Hz`이면 준비 완료다.
+3. 앱을 열면 자동으로 연결한다. 맨 위 상태 줄이 초록 점과 `수신 중`, 오른쪽 위가 `100 Hz`이면 준비 완료다.
+
+## 화면 구성
+
+아래쪽 탭 세 개로 나뉜다. 화면 색과 모양은 `app/src/main/java/.../ui/Ui.java`에 모여 있다(Android 앱이라 CSS는 없고, 이 파일이 CSS 역할을 한다).
+
+- **리모컨**: 네 방향 다이얼, 스와이프 제어 켜기·끄기, 현재 모드, 누락 샘플, 최근 제스처. 화살표 옆 글자는 그 방향이 하는 일이다(상하 모드: 위·아래, 좌우 모드: 왼쪽·오른쪽, 좌우 제스처: 전환).
+- **수집**: 방향 안내 수집, 세션 메모와 현황, idle/other, 연속 기록, 세션 종료. 화살표 옆 숫자는 저장한 개수이고, 바깥 눈금은 안내 진행률이다. 안내가 도는 동안에는 준비용 칸을 접고 다이얼을 키운다.
+- **기록**: 최근 이벤트와 사용법.
+
+맨 위의 **페어링 방법**, **연결 방법** 토글을 누르면 어느 탭에서든 순서 안내가 펼쳐진다. 한 번에 하나만 열리고, 다시 누르면 접힌다.
+
+글꼴은 `app/src/main/res/font`에 있다. 제목·버튼은 Do Hyeon, 설명 글은 Orbit(한글)과 IBM Plex Mono(영문·숫자), 숫자 표시는 IBM Plex Mono다. 모두 SIL OFL이며 라이선스 전문은 `app/src/main/assets/licenses`에 있어 APK에 함께 들어간다.
+
+디버그 빌드는 링 없이 화면 상태만 볼 수 있다. 세션과 파일은 만들지 않는다. 값은 `remote`, `collect`, `go`, `still`, `log`, `pairing`, `connect`다.
+
+```powershell
+adb shell am start -n com.hintringpilot.ringpilot/.MainActivity --es ui_preview go
+```
 
 ## 수집 방법
 

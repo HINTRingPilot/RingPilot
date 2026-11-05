@@ -2,7 +2,6 @@ package com.hintringpilot.ringpilot;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
-import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.GradientDrawable;
@@ -58,11 +57,13 @@ public final class SwipeAccessibilityService extends AccessibilityService {
         float density = getResources().getDisplayMetrics().density;
         TextView view = new TextView(this);
         view.setText(text);
-        view.setTextColor(Color.WHITE);
+        view.setTextColor(0xFFF2EADC);
         view.setTextSize(13);
+        view.setTypeface(getResources().getFont(R.font.do_hyeon));
         view.setPadding((int) (14 * density), (int) (6 * density), (int) (14 * density), (int) (6 * density));
         GradientDrawable background = new GradientDrawable();
-        background.setColor(0xCC202124);
+        background.setColor(0xF01C1915);
+        background.setStroke((int) density, 0xFFFF5B1F);
         background.setCornerRadius(16 * density);
         view.setBackground(background);
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(

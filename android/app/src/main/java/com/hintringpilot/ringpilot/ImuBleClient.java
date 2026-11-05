@@ -101,7 +101,7 @@ final class ImuBleClient {
     String start() {
         BluetoothManager manager = context.getSystemService(BluetoothManager.class);
         BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
-        if (adapter == null || !adapter.isEnabled()) return "Bluetooth를 켜세요.";
+        if (adapter == null || !adapter.isEnabled()) return "Bluetooth를 켭니다.";
         device = null;
         for (BluetoothDevice bonded : adapter.getBondedDevices()) {
             if (DEVICE_NAME.equals(bonded.getName())) {
@@ -109,7 +109,7 @@ final class ImuBleClient {
                 break;
             }
         }
-        if (device == null) return "Bluetooth 설정에서 " + DEVICE_NAME + "를 먼저 페어링하세요.";
+        if (device == null) return DEVICE_NAME + "를 먼저 페어링합니다.";
         running = true;
         record("client_start", "");
         connect();

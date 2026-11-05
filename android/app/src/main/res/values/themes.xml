@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="RingPilotTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:colorAccent">@color/ring_accent</item>
+        <item name="android:colorPrimary">@color/ring_bg</item>
+        <item name="android:colorPrimaryDark">@color/ring_bg</item>
+        <item name="android:windowBackground">@color/ring_bg</item>
+        <item name="android:statusBarColor">@color/ring_bg</item>
+        <item name="android:navigationBarColor">@color/ring_bg</item>
+    </style>
+</resources>

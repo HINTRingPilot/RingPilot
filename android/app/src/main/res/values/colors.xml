@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 창 배경·시스템 표시줄용. 화면 안의 색은 ui/Ui.java에 있다. -->
+    <color name="ring_bg">#12100D</color>
+    <color name="ring_accent">#FF5B1F</color>
+</resources>
