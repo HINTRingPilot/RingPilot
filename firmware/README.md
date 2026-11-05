@@ -7,7 +7,8 @@
 | [gesture_infer/](gesture_infer/) | **지금 쓰는 펌웨어.** IMU 스트림 + 보드 안 제스처 판정·발행 |
 | [imu_ble_stream/](imu_ble_stream/) | 학습 데이터 수집용. 추론 없이 IMU만 보낸다(BLE 형식이 같아 같은 앱이 붙는다) |
 | [gesture_host/](gesture_host/) | 보드에 올리지 않는다. 판정 코어를 PC에서 빌드해 Python과 비교·시간 측정(`ml/v2_export_c.py`, `ml/v2_latency.py`가 쓴다) |
-| ble_poc/, battery_test/, power_off_test/, switch_test/ | 초기 하드웨어 확인용 시험 스케치(HID·배터리·전원 끄기·납땜) |
+
+초기 하드웨어 확인용 시험 스케치(`ble_poc`, `battery_test`, `power_off_test`, `switch_test`)는 2026-11-05에 지웠다. 커밋 `05c4cb3` 이전 이력에 있다.
 
 ## gesture_infer 구조
 

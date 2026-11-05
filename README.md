@@ -48,7 +48,7 @@ IMU 100 Hz → 온라인 영점 → TCN 판정(50 ms마다) → 발행 ──BLE
 - [진행 기록 및 검증 근거](docs/진행기록.md)
 - [Windows 개발환경 설치](docs/설치안내.md)
 - [Android 앱](android/README.md)
-- [BLE 테스트 안내(초기 ble_poc)](docs/BLE테스트.md)
+- [BLE 테스트 기록(초기 ble_poc, 스케치는 이력에만 있음)](docs/BLE테스트.md)
 - [제스처 인식 구조 제안](docs/제스처인식구조안.md)
 - [모델 아키텍처](docs/ModelArchitecture.md)
 - [학습·평가 계획](docs/TrainingPlan.md)

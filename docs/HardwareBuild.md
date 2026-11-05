@@ -45,6 +45,7 @@
 6. 앞면 및 뒷면 배선 사진 촬영.
 7. (2026-10-18) 배터리 없이 USB로 `firmware/switch_test` 실행, 5개 입력 확인. 이후 배터리 연결, `firmware/battery_test`로 배터리 단독 구동 확인.
 8. (2026-10-18~23) `firmware/power_off_test`와 `imu_ble_stream`에서 센터 길게 누름 System OFF·재기동 확인.
+   (시험 스케치 `switch_test`·`battery_test`·`power_off_test`는 2026-11-05에 지웠고 커밋 `05c4cb3` 이전 이력에 있다.)
 
 ## 5. 관찰된 문제·주의사항
 
