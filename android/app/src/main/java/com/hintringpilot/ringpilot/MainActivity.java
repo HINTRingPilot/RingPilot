@@ -2,9 +2,11 @@ package com.hintringpilot.ringpilot;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Insets;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -91,7 +93,6 @@ public final class MainActivity extends Activity {
     private TextView hzView;
     private TextView missingView;
     private TextView modeView;
-    private TextView lastGestureView;
     private TextView controlView;                       // 리모컨 화면의 제어 상태(제어 중·꺼짐·접근성 필요)
     private final LinearLayout[] mapRows = new LinearLayout[3];   // 위, 아래, 좌우
     private final TextView[] mapActions = new TextView[3];
@@ -100,11 +101,7 @@ public final class MainActivity extends Activity {
     private ScrollView scrollView;
     private LinearLayout setupGroup;
     private LinearLayout controlsRow;
-    private LinearLayout guidePanel;
     private final LinearLayout[] guideBodies = new LinearLayout[2];
-    private final TextView[] guideChips = new TextView[2];
-    private final String[] guideChipNames = new String[2];
-    private int openGuide = -1;
     private final View[] pages = new View[3];
     private final TextView[] tabs = new TextView[3];
     private int selectedTab = 0;
@@ -205,9 +202,7 @@ public final class MainActivity extends Activity {
         LinearLayout content = Ui.column(this);
         content.setPadding(dp(16), dp(4), dp(16), dp(20));
 
-        guidePanel = createGuidePanel();
-        content.addView(guidePanel, matchWidth(0));
-        renderGuide();
+        createGuides();
 
         promptView = new TextView(this);
         promptView.setText("대기");
@@ -274,22 +269,20 @@ public final class MainActivity extends Activity {
         for (int i = 0; i < names.length; i++) {
             int index = i;
             TextView chip = Ui.readout(this, 14);
+            chip.setText(names[i]);
+            chip.setTextColor(Ui.TEXT);
+            chip.setBackground(Ui.surface(this, Ui.PANEL, Ui.LINE, 14));
             chip.setGravity(Gravity.CENTER);
             chip.setMinHeight(dp(40));
-            chip.setOnClickListener(v -> toggleGuide(index));
-            guideChips[i] = chip;
-            guideChipNames[i] = names[i];
+            chip.setOnClickListener(v -> showGuide(index));
             chips.addView(chip, weight(i == 0 ? 0 : 8));
         }
         bar.addView(chips, matchWidth(10));
         return bar;
     }
 
-    /** 위쪽 두 토글로 여닫는 가이드. 어느 탭에서든 열 수 있고, 한 번에 하나만 펼친다. */
-    private LinearLayout createGuidePanel() {
-        LinearLayout panel = Ui.column(this);
-        panel.setVisibility(View.GONE);
-
+    /** 위쪽 두 버튼으로 여는 가이드. 화면을 밀어내지 않도록 팝업으로 띄운다. */
+    private void createGuides() {
         guideBodies[0] = guideCard("처음 한 번만 하면 됩니다.", new String[]{
                 "링의 가운데 스위치를 눌러 전원을 켭니다.",
                 "아래 버튼을 눌러 Bluetooth 설정을 엽니다.\n목록에서 RingPilot-IMU를 찾아 등록합니다.",
@@ -304,15 +297,9 @@ public final class MainActivity extends Activity {
                 "맨 위에 초록 점과 '수신 중'이 보이면\n연결된 겁니다.",
                 "안 보이면 아래 버튼을 누릅니다.\n페어링을 막 끝냈다면 꼭 누릅니다.",
                 "'링 일시정지됨'이 보일 때는\n가운데 스위치를 짧게 누르면 됩니다.",
-                "화면까지 조작하려면 하나만 더 하면 됩니다.\n리모컨 탭에서 '스와이프 제어 켜기'를 누릅니다.\n접근성 설정에서 'RingPilot 스와이프'를 켭니다."
+                "화면까지 조작하려면 하나만 더 하면 됩니다.\n화면 아래 '스와이프 제어 켜기'를 누릅니다.\n접근성 설정에서 'RingPilot 스와이프'를 켭니다."
         }, Ui.button(this, "링 다시 연결", Ui.Style.QUIET, v -> connectRing()));
 
-        panel.addView(guideBodies[0], matchWidth(0));
-        panel.addView(guideBodies[1], matchWidth(0));
-        LinearLayout.LayoutParams gap = matchWidth(0);
-        gap.height = dp(12);
-        panel.addView(new View(this), gap);
-        return panel;
     }
 
     private LinearLayout guideCard(String intro, String[] steps, Button action) {
@@ -337,21 +324,28 @@ public final class MainActivity extends Activity {
         return card;
     }
 
-    private void toggleGuide(int index) {
-        openGuide = openGuide == index ? -1 : index;
-        renderGuide();
-        if (openGuide >= 0) scrollView.scrollTo(0, 0);
-    }
-
-    private void renderGuide() {
-        guidePanel.setVisibility(openGuide >= 0 ? View.VISIBLE : View.GONE);
-        for (int i = 0; i < guideBodies.length; i++) {
-            boolean open = i == openGuide;
-            guideBodies[i].setVisibility(open ? View.VISIBLE : View.GONE);
-            guideChips[i].setText(guideChipNames[i] + (open ? "  ▴" : "  ▾"));
-            guideChips[i].setTextColor(open ? Ui.ACCENT : Ui.TEXT);
-            guideChips[i].setBackground(Ui.surface(this, open ? Ui.RAISED : Ui.PANEL, open ? Ui.ACCENT : Ui.LINE, 14));
+    private void showGuide(int index) {
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        LinearLayout body = guideBodies[index];
+        if (body.getParent() != null) ((ViewGroup) body.getParent()).removeView(body);
+        body.setBackground(null);   // 카드 배경은 팝업 상자가 맡는다
+        LinearLayout box = Ui.column(this);
+        box.setBackground(Ui.surface(this, Ui.PANEL, Ui.LINE, 22));
+        box.setPadding(0, 0, 0, dp(16));
+        box.addView(body, matchWidth(0));
+        LinearLayout.LayoutParams close = matchWidth(0);
+        close.leftMargin = dp(16);
+        close.rightMargin = dp(16);
+        box.addView(Ui.button(this, "닫기", Ui.Style.QUIET, v -> dialog.dismiss()), close);
+        ScrollView scroll = new ScrollView(this);   // 작은 화면에서만 팝업 안이 스크롤된다
+        scroll.addView(box);
+        dialog.setContentView(scroll);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+            dialog.getWindow().setLayout(getResources().getDisplayMetrics().widthPixels - dp(32), ViewGroup.LayoutParams.WRAP_CONTENT);
         }
+        dialog.show();
     }
 
     private View createTabBar() {
@@ -374,65 +368,49 @@ public final class MainActivity extends Activity {
         return bar;
     }
 
-    /** 평소 쓰는 화면. 지금 모드에서 각 제스처가 하는 일을 크게 보이고, 제스처가 오면 그 줄이 빛난다. */
+    /** 평소 쓰는 화면. 제스처마다 하는 일을 크게 보이고, 제스처가 오면 그 줄이 빛난다. 모드는 아래 띠에 둔다. */
     private View createRemotePage() {
         LinearLayout page = Ui.column(this);
 
-        LinearLayout hero = Ui.card(this);
-        hero.setPadding(dp(20), dp(18), dp(20), dp(18));
-        LinearLayout head = Ui.row(this);
-        head.addView(Ui.label(this, "지금 모드"), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        controlView = new TextView(this);
-        controlView.setTextSize(12);
-        controlView.setTypeface(Ui.BODY);
-        controlView.setPadding(dp(10), dp(4), dp(10), dp(4));
-        head.addView(controlView);
-        hero.addView(head, matchWidth(0));
-
-        modeView = Ui.readout(this, 64);
-        modeView.setText("상하");
-        modeView.setIncludeFontPadding(false);
-        hero.addView(modeView, matchWidth(10));
-        TextView hint = Ui.body(this, 13, Ui.MUTED);
-        hint.setText(Ui.keepWords("좌우 제스처로 상하·좌우 모드를 바꿉니다"));
-        hero.addView(hint, matchWidth(4));
-
-        hero.addView(new View(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         String[] glyphs = {"▲", "▼", "◀ ▶"};
         String[] names = {"위", "아래", "좌우"};
         for (int i = 0; i < 3; i++) {
             LinearLayout row = Ui.row(this);
-            row.setPadding(dp(12), dp(10), dp(12), dp(10));
-            row.setBackground(Ui.surface(this, Ui.RAISED, 0, 14));
+            row.setPadding(dp(20), dp(12), dp(20), dp(12));
+            row.setBackground(Ui.surface(this, Ui.PANEL, Ui.LINE, 22));
             TextView glyph = new TextView(this);
             glyph.setText(glyphs[i]);
             glyph.setTextColor(Ui.ACCENT);
-            glyph.setTextSize(15);
+            glyph.setTextSize(20);
             glyph.setGravity(Gravity.CENTER);
-            row.addView(glyph, new LinearLayout.LayoutParams(dp(48), ViewGroup.LayoutParams.WRAP_CONTENT));
-            TextView name = Ui.body(this, 14, Ui.MUTED);
+            row.addView(glyph, new LinearLayout.LayoutParams(dp(56), ViewGroup.LayoutParams.WRAP_CONTENT));
+            TextView name = Ui.body(this, 15, Ui.MUTED);
             name.setText(names[i]);
-            row.addView(name, new LinearLayout.LayoutParams(dp(48), ViewGroup.LayoutParams.WRAP_CONTENT));
-            mapActions[i] = Ui.readout(this, 20);
+            row.addView(name, new LinearLayout.LayoutParams(dp(56), ViewGroup.LayoutParams.WRAP_CONTENT));
+            mapActions[i] = Ui.readout(this, 26);
             mapActions[i].setGravity(Gravity.END);
             row.addView(mapActions[i], new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
             mapRows[i] = row;
-            hero.addView(row, matchWidth(i == 0 ? 0 : 8));
+            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
+            rowParams.topMargin = dp(i == 0 ? 0 : 10);
+            page.addView(row, rowParams);   // 세 줄이 남은 높이를 나눠 갖는다
         }
 
-        View divider = new View(this);
-        divider.setBackgroundColor(Ui.LINE);
-        LinearLayout.LayoutParams line = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
-        line.topMargin = dp(16);
-        hero.addView(divider, line);
-        LinearLayout recent = Ui.row(this);
-        recent.addView(Ui.label(this, "최근"), new LinearLayout.LayoutParams(dp(48), ViewGroup.LayoutParams.WRAP_CONTENT));
-        lastGestureView = Ui.body(this, 14, Ui.TEXT);
-        lastGestureView.setTypeface(Ui.MONO);
-        lastGestureView.setText(Ui.keepWords("아직 받은 제스처가 없습니다"));
-        recent.addView(lastGestureView, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        hero.addView(recent, matchWidth(12));
-        page.addView(hero, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        LinearLayout modeBar = Ui.row(this);
+        modeBar.setPadding(dp(20), dp(12), dp(16), dp(12));
+        modeBar.setBackground(Ui.surface(this, Ui.PANEL, Ui.LINE, 22));
+        modeBar.addView(Ui.label(this, "모드"));
+        modeView = Ui.readout(this, 22);
+        modeView.setText("상하");
+        LinearLayout.LayoutParams modeParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        modeParams.leftMargin = dp(12);
+        modeBar.addView(modeView, modeParams);
+        controlView = new TextView(this);
+        controlView.setTextSize(12);
+        controlView.setTypeface(Ui.BODY);
+        controlView.setPadding(dp(10), dp(4), dp(10), dp(4));
+        modeBar.addView(controlView);
+        page.addView(modeBar, matchWidth(10));
         updateRemoteMap();
 
         missingView = Ui.readout(this, 22);
@@ -459,10 +437,10 @@ public final class MainActivity extends Activity {
         int index = "UP".equals(direction) ? 0 : "DOWN".equals(direction) ? 1 : 2;
         LinearLayout row = mapRows[index];
         if (row.getTag() instanceof Runnable) row.removeCallbacks((Runnable) row.getTag());
-        row.setBackground(Ui.surface(this, Ui.RAISED, Ui.ACCENT, 14));
+        row.setBackground(Ui.surface(this, Ui.RAISED, Ui.ACCENT, 22));
         mapActions[index].setTextColor(Ui.ACCENT);
         Runnable restore = () -> {
-            row.setBackground(Ui.surface(this, Ui.RAISED, 0, 14));
+            row.setBackground(Ui.surface(this, Ui.PANEL, Ui.LINE, 22));
             mapActions[index].setTextColor(Ui.TEXT);
         };
         row.setTag(restore);
@@ -673,11 +651,11 @@ public final class MainActivity extends Activity {
         switch (preview) {
             case "pairing":
                 savedCounts.clear();
-                toggleGuide(0);
+                showGuide(0);
                 break;
             case "connect":
                 savedCounts.clear();
-                toggleGuide(1);
+                showGuide(1);
                 break;
             case "collect":
                 selectTab(1);
@@ -709,7 +687,6 @@ public final class MainActivity extends Activity {
                 Ui.applyStyle(swipeButton, Ui.Style.PRIMARY);
                 swipeButton.setText("스와이프 제어 끄기");
                 prompt("제어 중");
-                lastGestureView.setText("UP · 0.92 → 스와이프 UP");
                 flashRemoteRow("UP");
                 break;
         }
@@ -812,7 +789,6 @@ public final class MainActivity extends Activity {
         event(String.format(Locale.US, "제스처 %s (%.2f) → %s", direction, score, result));
         horizontalMode = action.horizontalAfter;
         modeView.setText(horizontalMode ? "좌우" : "상하");
-        lastGestureView.setText(String.format(Locale.US, "%s · %.2f → %s", direction, score, result));
         updateRemoteMap();
         flashRemoteRow(direction);
         updateDialLabels();
