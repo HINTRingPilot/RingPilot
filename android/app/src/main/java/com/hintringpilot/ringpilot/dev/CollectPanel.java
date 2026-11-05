@@ -1,4 +1,4 @@
-package com.hintringpilot.ringpilot;
+package com.hintringpilot.ringpilot.dev;
 
 import android.content.Context;
 import android.media.AudioManager;
@@ -16,7 +16,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.hintringpilot.ringpilot.ui.DirectionDial;
 import com.hintringpilot.ringpilot.ui.Ui;
 
 import java.util.ArrayList;
@@ -32,8 +31,8 @@ import java.util.function.Consumer;
  * 수동 기록: idle/other 10초, 길이 제한 없는 연속 기록(실사용 시험용).
  * 화면 위쪽 다이얼(DirectionDial)에 단계와 방향별 저장 개수를 보인다. 파일은 SessionRecorder가 쓴다.
  */
-final class CollectPanel {
-    static final String[] DIRECTION_LABELS = {"raw_up", "raw_down", "raw_left", "raw_right"};
+public final class CollectPanel {
+    public static final String[] DIRECTION_LABELS = {"raw_up", "raw_down", "raw_left", "raw_right"};
 
     private static final int GESTURE_SAMPLES = 400;     // 4초. 1초 대기 뒤 동작·자연 복귀·안정 구간까지 담는다
     private static final int FIXED_LONG_SAMPLES = 1000; // idle/other 10초
@@ -48,7 +47,7 @@ final class CollectPanel {
     private final TextView promptView;
     private final BooleanSupplier ringReady;
     private final Consumer<String> event;
-    final SessionRecorder recorder;
+    public final SessionRecorder recorder;
 
     private TextToSpeech tts;  // 초기화 콜백이 이 필드를 읽으므로 final로 두지 않는다
     private boolean ttsReady = false;
@@ -72,8 +71,8 @@ final class CollectPanel {
     private boolean guidePaused = false;
     private int guideGeneration = 0;  // 늘리면 예약된 안내 단계가 모두 무효가 된다
 
-    CollectPanel(Context context, Handler mainHandler, DirectionDial dial, TextView promptView,
-                 BooleanSupplier ringReady, Consumer<String> event, Runnable reconnect) {
+    public CollectPanel(Context context, Handler mainHandler, DirectionDial dial, TextView promptView,
+                        BooleanSupplier ringReady, Consumer<String> event, Runnable reconnect, String deviceName) {
         this.context = context;
         this.mainHandler = mainHandler;
         this.dial = dial;
@@ -98,17 +97,17 @@ final class CollectPanel {
             public void onChanged() {
                 updateProgress();
             }
-        }, () -> memoInput.getText().toString(), "gesture_samples=" + GESTURE_SAMPLES + " pre_roll_cue_ms=" + PRE_ROLL_MS);
+        }, () -> memoInput.getText().toString(), "gesture_samples=" + GESTURE_SAMPLES + " pre_roll_cue_ms=" + PRE_ROLL_MS, deviceName);
         page = createPage(reconnect);
         updateProgress();
     }
 
-    View page() {
+    public View page() {
         return page;
     }
 
     /** 탭이 바뀔 때. 이 탭에서만 다이얼을 보인다. */
-    void setShown(boolean value) {
+    public void setShown(boolean value) {
         shown = value;
         dial.setVisibility(value ? View.VISIBLE : View.GONE);
         updateDial();
@@ -201,7 +200,7 @@ final class CollectPanel {
         repeatInput.setText(String.valueOf(Math.max(1, Math.min(100, value + delta))));
     }
 
-    void updateProgress() {
+    public void updateProgress() {
         StringBuilder sb = new StringBuilder();
         sb.append(recorder.sessionDir() == null ? "세션 없음" : "세션 " + recorder.sessionDir().getName());
         if (guideRunning) sb.append(" · 안내 ").append(Math.min(guideIndex, guideQueue.size())).append('/').append(guideQueue.size());
@@ -477,7 +476,7 @@ final class CollectPanel {
 
     // ---------------------------------------------------------------- 화면 미리보기(디버그 빌드)
 
-    void previewGuide(DirectionDial.Phase phase) {
+    public void previewGuide(DirectionDial.Phase phase) {
         for (int i = 0; i < 40; i++) guideQueue.add(DIRECTION_LABELS[i % 4]);
         guideIndex = 12;
         guideRunning = true;
@@ -485,7 +484,7 @@ final class CollectPanel {
         updateProgress();
     }
 
-    void shutdown() {
+    public void shutdown() {
         endSession();
         recorder.shutdown();
         tts.shutdown();

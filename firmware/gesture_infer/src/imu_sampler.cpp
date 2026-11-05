@@ -5,7 +5,7 @@
 #include <Wire.h>
 
 #include "cycle_timer.h"
-#include "imu_stream.h"
+#include "dev/imu_stream.h"
 
 static const uint32_t kSampleRateHz = 100;
 static const uint16_t kGyroQueueSize = 64;    // 판정 대기열, 약 0.64초 분량

@@ -4,7 +4,7 @@
 #include <bluefruit.h>
 
 #include "imu_sampler.h"
-#include "imu_stream.h"
+#include "dev/imu_stream.h"
 
 static const uint16_t kStatusBytes = 10;
 static const uint16_t kGestureBytes = 8;

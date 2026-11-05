@@ -1,4 +1,4 @@
-package com.hintringpilot.ringpilot.ui;
+package com.hintringpilot.ringpilot.dev;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -13,6 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.TextView;
+
+import com.hintringpilot.ringpilot.ui.Ui;
 
 import java.util.Locale;
 

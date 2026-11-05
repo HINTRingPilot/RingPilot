@@ -4,7 +4,7 @@
 
 ## 준비
 
-1. 반지에 `firmware/gesture_infer`를 올린다. 기본(사용자) 빌드는 IMU 원시값 스트림이 없다. 개발용 앱의 수집·연속 기록을 쓰려면 스트림을 켠 개발 빌드(`firmware/README.md`)나 `firmware/imu_ble_stream`(추론 없음)을 올린다. 앱은 펌웨어에 있는 특성만 골라 구독한다.
+1. 반지에 `firmware/gesture_infer`를 올린다. 기본(사용자) 빌드는 IMU 원시값 스트림이 없다. 개발용 앱의 수집·연속 기록을 쓰려면 스트림을 켠 개발 빌드(`firmware/README.md`)나 `firmware/dev/imu_ble_stream`(추론 없음)을 올린다. 앱은 펌웨어에 있는 특성만 골라 구독한다.
 2. 휴대폰 Bluetooth 설정에서 `RingPilot-IMU`를 페어링한다. 설정 화면에서 "연결 안 됨"으로 보이는 것은 정상이다. 앱이 직접 연결한다.
 3. 앱을 열면 자동으로 연결한다. 맨 위 상태 줄이 초록 점과 `수신 중`이면 준비 완료다.
 4. **스와이프 제어 켜기**를 누르고 접근성 설정에서 `RingPilot 스와이프`를 켠다.
@@ -29,7 +29,7 @@ adb shell am start -n com.hintringpilot.ringpilot/.MainActivity --es ui_preview 
 
 ## 코드 구조
 
-모두 `app/src/main/java/com/hintringpilot/ringpilot/`에 있다.
+모두 `app/src/main/java/com/hintringpilot/ringpilot/`에 있다. 개발용 화면에만 쓰는 클래스는 `dev/` 패키지에 둔다(사용자 빌드에서도 컴파일은 되지만 화면에 나오지 않는다).
 
 | 파일 | 맡는 일 |
 |---|---|
@@ -39,12 +39,12 @@ adb shell am start -n com.hintringpilot.ringpilot/.MainActivity --es ui_preview 
 | `SwipeAccessibilityService` | 다른 앱에 스와이프 주입, 모드 배너 |
 | `RemotePanel` | 리모컨 화면 |
 | `GuideDialogs` | 페어링·연결 안내 팝업 |
-| `CollectPanel` | 수집 화면과 안내 수집 흐름(음성·소리 안내, 다시 하기, 일시정지) |
-| `SessionRecorder` | 세션 폴더와 기록 CSV·사이드카 쓰기(BLE 스레드에서 샘플을 받는다) |
-| `CaptureSidecar` | 기록마다 붙는 메타데이터 JSON. JDK로 시험한다 |
-| `LogPanel` | 기록 탭(최근 이벤트) |
+| `dev/CollectPanel` | 수집 화면과 안내 수집 흐름(음성·소리 안내, 다시 하기, 일시정지) |
+| `dev/SessionRecorder` | 세션 폴더와 기록 CSV·사이드카 쓰기(BLE 스레드에서 샘플을 받는다) |
+| `dev/CaptureSidecar` | 기록마다 붙는 메타데이터 JSON. JDK로 시험한다 |
+| `dev/LogPanel` | 기록 탭(최근 이벤트) |
 | `ui/Ui` | 색·글꼴·카드·버튼 같은 공통 디자인 요소(CSS 역할) |
-| `ui/DirectionDial` | 수집 안내용 원형 다이얼 |
+| `dev/DirectionDial` | 수집 안내용 원형 다이얼 |
 
 ## 수집 방법
 

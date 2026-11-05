@@ -1,4 +1,4 @@
-package com.hintringpilot.ringpilot;
+package com.hintringpilot.ringpilot.dev;
 
 import android.content.Context;
 import android.view.View;
@@ -13,14 +13,14 @@ import java.util.Date;
 import java.util.Locale;
 
 /** 기록 탭(개발용 빌드에서만 보인다). 최근 이벤트 8개와 수집 사용법. 파일 기록은 ImuBleClient의 connection_log.csv가 맡는다. */
-final class LogPanel {
+public final class LogPanel {
     private static final int MAX_EVENTS = 8;
 
     private final View page;
     private final TextView eventView;
     private final ArrayDeque<String> recent = new ArrayDeque<>();
 
-    LogPanel(Context context) {
+    public LogPanel(Context context) {
         LinearLayout page = Ui.column(context);
 
         LinearLayout eventCard = Ui.card(context);
@@ -42,12 +42,12 @@ final class LogPanel {
         this.page = page;
     }
 
-    View page() {
+    public View page() {
         return page;
     }
 
     /** 메인 스레드에서 부른다. */
-    void add(String text) {
+    public void add(String text) {
         recent.addFirst(new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date()) + "  " + text);
         while (recent.size() > MAX_EVENTS) recent.removeLast();
         eventView.setText(String.join("\n", recent));

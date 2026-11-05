@@ -21,7 +21,9 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.hintringpilot.ringpilot.ui.DirectionDial;
+import com.hintringpilot.ringpilot.dev.CollectPanel;
+import com.hintringpilot.ringpilot.dev.DirectionDial;
+import com.hintringpilot.ringpilot.dev.LogPanel;
 import com.hintringpilot.ringpilot.ui.Ui;
 
 import java.io.File;
@@ -29,7 +31,7 @@ import java.util.Locale;
 
 /**
  * 앱 화면 하나. 위에서부터 이름·연결 상태·안내 버튼, 탭 내용, 탭 막대(개발용 빌드만)를 둔다.
- * 탭: 리모컨(RemotePanel), 수집(CollectPanel), 기록(LogPanel). 사용자 빌드(DEV_TOOLS=false)는 리모컨만 보인다.
+ * 탭: 리모컨(RemotePanel), 수집(dev.CollectPanel), 기록(dev.LogPanel). 사용자 빌드(DEV_TOOLS=false)는 리모컨만 보인다.
  * 여기서는 화면 조립, 링 연결(ImuBleClient), 받은 제스처의 실행(판단은 GestureRouter)을 맡는다.
  */
 public final class MainActivity extends Activity {
@@ -99,7 +101,7 @@ public final class MainActivity extends Activity {
         log = new LogPanel(this);
         remote = new RemotePanel(this, this::toggleSwipeControl, this::connectRing);
         collect = new CollectPanel(this, mainHandler, dial, promptView,
-                () -> client.isStreaming() && !client.isDevicePaused(), log::add, this::connectRing);
+                () -> client.isStreaming() && !client.isDevicePaused(), log::add, this::connectRing, ImuBleClient.DEVICE_NAME);
         pages[0] = remote.page();
         pages[1] = collect.page();
         pages[2] = log.page();

@@ -1,5 +1,5 @@
 // BLE 주변기기(이름 RingPilot-IMU). 서비스 b27a2000 아래 특성을 둔다.
-//  - b27a2001 IMU 스트림(notify): 개발 빌드(RINGPILOT_IMU_STREAM=1)에만 있다. 형식은 imu_stream.h.
+//  - b27a2001 IMU 스트림(notify): 개발 빌드(RINGPILOT_IMU_STREAM=1)에만 있다. 형식은 dev/imu_stream.h.
 //  - b27a2002 상태(read, notify): [상태 uint8(0 스트리밍, 1 일시정지)][이벤트 uint8][부팅 후 ms uint32 LE][트리거 후 ms uint32 LE].
 //    트리거는 부팅이나 재개 클릭을 뗀 시각이다. "첫 데이터" 이벤트는 스트림이 있을 때만 보낸다(앱의 재개·재연결 지연 측정용).
 //  - b27a2003 제스처(notify): [순번 uint8][클래스 uint8(1 UP, 2 DOWN, 3 LEFT, 4 RIGHT)][점수×1000 uint16 LE][슬롯 uint32 LE].

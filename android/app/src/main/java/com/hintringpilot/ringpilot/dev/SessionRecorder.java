@@ -1,4 +1,4 @@
-package com.hintringpilot.ringpilot;
+package com.hintringpilot.ringpilot.dev;
 
 import android.os.Handler;
 import android.os.SystemClock;
@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  * 스레드: 샘플은 Bluetooth 스레드에서 들어오고(acceptSamples), 나머지는 메인 스레드에서 부른다.
  * 진행 중인 기록은 lock으로 지키고, 파일 쓰기는 단일 스레드(fileWriter)에서 순서대로 한다.
  */
-final class SessionRecorder {
+public final class SessionRecorder {
     // 원시값 환산(펌웨어 ±4 g, ±2000 dps 설정, LSM6DS3 라이브러리 calcAccel/calcGyro와 동일)
     private static final double ACC_MS2_PER_LSB = 0.061 * 2 / 1000.0 * 9.80665;
     private static final double GYRO_DPS_PER_LSB = 4.375 * 16 / 1000.0;
@@ -87,6 +87,7 @@ final class SessionRecorder {
     private final Map<String, Integer> savedCounts = new LinkedHashMap<>();
     private final Map<String, Integer> nextIndex = new LinkedHashMap<>();
     private final String sessionNote;
+    private final String deviceName;
 
     private File sessionDir;
     private Capture capture;  // lock으로 지킨다
@@ -94,12 +95,13 @@ final class SessionRecorder {
     private String lastSavedLabel;
 
     /** sessionNote는 session_info.txt에 그대로 덧붙는 수집 조건(예: 기록 길이)이다. */
-    SessionRecorder(File baseDir, Handler mainHandler, Listener listener, Supplier<String> memo, String sessionNote) {
+    SessionRecorder(File baseDir, Handler mainHandler, Listener listener, Supplier<String> memo, String sessionNote, String deviceName) {
         this.baseDir = baseDir;
         this.mainHandler = mainHandler;
         this.listener = listener;
         this.memo = memo;
         this.sessionNote = sessionNote;
+        this.deviceName = deviceName;
     }
 
     // ---------------------------------------------------------------- 세션
@@ -109,7 +111,7 @@ final class SessionRecorder {
     }
 
     /** 라벨별 저장 개수. 화면 미리보기에서 값을 넣을 수 있게 그대로 내준다. */
-    Map<String, Integer> savedCounts() {
+    public Map<String, Integer> savedCounts() {
         return savedCounts;
     }
 
@@ -132,7 +134,7 @@ final class SessionRecorder {
         String info = "session=" + name + "\n"
                 + "started=" + timestamp() + "\n"
                 + "memo=" + memo.get().replace('\n', ' ') + "\n"
-                + "device=" + ImuBleClient.DEVICE_NAME + "\n"
+                + "device=" + deviceName + "\n"
                 + "csv=timestamp ms, accX/Y/Z m/s^2 (raw x 0.122 mg), gyrX/Y/Z deg/s (raw x " + GYRO_DPS_PER_LSB + ")\n"
                 + "gyro_range_dps=" + GYRO_RANGE_DPS + "\n"
                 + sessionNote + "\n";
@@ -230,7 +232,7 @@ final class SessionRecorder {
     }
 
     /** Bluetooth 스레드에서 호출된다. */
-    void acceptSamples(long firstSlot, short[] raw, int count, long arrival) {
+    public void acceptSamples(long firstSlot, short[] raw, int count, long arrival) {
         Capture done = null;
         boolean ok = false;
         String reason = null;

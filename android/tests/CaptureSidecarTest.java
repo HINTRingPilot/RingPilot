@@ -1,4 +1,4 @@
-package com.hintringpilot.ringpilot;
+package com.hintringpilot.ringpilot.dev;
 import java.nio.file.*;
 public final class CaptureSidecarTest {
   static void check(boolean yes) { if (!yes) throw new AssertionError(); }

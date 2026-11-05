@@ -1,4 +1,4 @@
-// IMU 원시값 스트림(개발용, RINGPILOT_IMU_STREAM=1일 때만 빌드된다. build_config.h).
+// IMU 원시값 스트림(개발용, RINGPILOT_IMU_STREAM=1일 때만 빌드된다. ../build_config.h).
 // 읽기 태스크가 샘플마다 전송 대기열에 넣고, loop가 연속 슬롯을 묶어 BLE 특성 b27a2001로 보낸다.
 // 패킷: [첫 샘플 슬롯 uint32 LE][샘플 수 uint8] + 샘플마다 accX,accY,accZ,gyrX,gyrY,gyrZ 원시값 int16 LE.
 // 묶음 대기는 최대 약 100 ms(10샘플). 보내기에 실패하면 대기열에 남겨 다음 loop에서 다시 보내고,
@@ -6,7 +6,7 @@
 // 원시값 환산: 가속도 1 LSB = 0.122 mg, 자이로 1 LSB = 0.070 dps. 범위를 바꾸면 앱의 환산 계수도 바꿔야 한다.
 #pragma once
 
-#include "build_config.h"
+#include "../build_config.h"
 
 #if RINGPILOT_IMU_STREAM
 

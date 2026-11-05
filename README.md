@@ -18,8 +18,8 @@ IMU 100 Hz → 온라인 영점 → TCN 판정(50 ms마다) → 발행 ──BLE
 
 | 폴더 | 내용 |
 |---|---|
-| [firmware/](firmware/README.md) | 반지 펌웨어. 지금 쓰는 것은 `gesture_infer`, 데이터 수집용은 `imu_ble_stream` |
-| [android/](android/README.md) | 휴대폰 앱(리모컨, 개발용 빌드는 데이터 수집·실사용 기록 포함) |
+| [firmware/](firmware/README.md) | 반지 펌웨어 `gesture_infer`. 개발용(수집 펌웨어, PC 검증 도구)은 `firmware/dev/` |
+| [android/](android/README.md) | 휴대폰 앱(리모컨). 개발용 화면(데이터 수집·실사용 기록)은 `dev` 패키지 |
 | [ml/](ml/) | 학습·평가(Python, TensorFlow), C 변환과 Python·C 일치 확인 |
 | [tools/](tools/) | 폰 기록 가져오기(`pull-phone-sessions.js`), 수집 클립 주석 도구(Node.js) |
 | [data/](data/) | 수집 세션 원본, 동작 시점 주석, 교차검증 분할 |

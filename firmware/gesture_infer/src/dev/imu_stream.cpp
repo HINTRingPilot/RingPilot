@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <bluefruit.h>
 
-#include "ble_link.h"
+#include "../ble_link.h"
 
 static const uint16_t kHeaderBytes = 5;
 static const uint16_t kSampleBytes = 12;
