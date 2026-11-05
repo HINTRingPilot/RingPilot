@@ -115,7 +115,7 @@ static void pollLed(uint32_t nowMs) {
     digitalWrite(LED_GREEN, LOW);
     digitalWrite(LED_BLUE, LOW);
   } else {
-    digitalWrite(ble_data_subscribed() ? LED_GREEN : LED_BLUE, LOW);
+    digitalWrite(ble_ready() ? LED_GREEN : LED_BLUE, LOW);
   }
   blinkLit = true;
 }

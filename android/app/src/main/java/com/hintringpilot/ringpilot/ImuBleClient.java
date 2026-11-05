@@ -23,8 +23,10 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * 페어링된 RingPilot-IMU에 연결해 알림 세 가지를 받는다: IMU 원시값, 상태(일시정지·재개 등), 보드가 발행한 제스처.
- * 패킷 형식은 firmware/gesture_infer/src/ble_link.h에 있다. 수집 펌웨어(imu_ble_stream)에는 제스처 특성이 없어 건너뛴다.
+ * 페어링된 RingPilot-IMU에 연결해 알림을 받는다: 상태(일시정지·재개 등), 보드가 발행한 제스처, IMU 원시값.
+ * 패킷 형식은 firmware/gesture_infer/src/ble_link.h·imu_stream.h에 있다. 펌웨어마다 있는 특성이 다르다:
+ * 사용자 빌드(gesture_infer 기본)는 상태·제스처, 개발 빌드(RINGPILOT_IMU_STREAM=1)는 셋 다, 수집 펌웨어(imu_ble_stream)는 상태·IMU.
+ * 있는 특성만 차례로 구독하고, 마지막 구독이 끝나면 "수신 중"이 된다.
  * 끊기면 자동으로 다시 연결하고, 연결·일시정지·재개·제스처와 지연 측정값을 connection_log.csv에 남긴다(앱 쪽 판단 기록도 record로 같은 파일에 쓴다).
  * 콜백은 Bluetooth 스레드에서 호출된다.
  */
@@ -62,7 +64,7 @@ final class ImuBleClient {
     private BluetoothGatt gatt;
     private boolean running = false;
 
-    private volatile boolean streaming = false;
+    private volatile boolean streaming = false;  // IMU 원시값을 받는 중(수집·연속 기록에 필요)
     private volatile boolean devicePaused = false;
     private volatile long missingSamples = 0;
     private volatile double recentRate = 0;
@@ -180,7 +182,9 @@ final class ImuBleClient {
                 listener.onConnectionText("IMU 서비스를 찾지 못함 (status=" + statusCode + ")");
                 return;
             }
-            // 알림 설정은 한 번에 하나씩: 상태 먼저, 쓰기 완료 후 데이터.
+            // 알림 설정은 한 번에 하나씩: 상태 → IMU(있으면) → 제스처(있으면). 쓰기가 끝나야 다음을 설정한다.
+            record("characteristics", "imu=" + (service.getCharacteristic(DATA_UUID) != null)
+                    + " gesture=" + (service.getCharacteristic(GESTURE_UUID) != null));
             enableNotify(g, service.getCharacteristic(STATUS_UUID));
         }
 
@@ -191,19 +195,20 @@ final class ImuBleClient {
                 return;
             }
             UUID chr = descriptor.getCharacteristic().getUuid();
+            BluetoothGattService service = g.getService(SERVICE_UUID);
+            BluetoothGattCharacteristic data = service.getCharacteristic(DATA_UUID);
+            BluetoothGattCharacteristic gesture = service.getCharacteristic(GESTURE_UUID);
             if (STATUS_UUID.equals(chr)) {
-                enableNotify(g, g.getService(SERVICE_UUID).getCharacteristic(DATA_UUID));
+                if (data != null) enableNotify(g, data);
+                else if (gesture != null) enableNotify(g, gesture);
+                else subscribed();
             } else if (DATA_UUID.equals(chr)) {
                 streaming = true;
-                long now = SystemClock.elapsedRealtime();
-                record("subscribed", disconnectedAt >= 0 ? "since_disconnect_ms=" + (now - disconnectedAt) : "");
-                listener.onConnectionText("수신 중");
-                // 수집 펌웨어(imu_ble_stream)에는 이 특성이 없다. 없으면 건너뛴다
-                BluetoothGattCharacteristic gesture = g.getService(SERVICE_UUID).getCharacteristic(GESTURE_UUID);
-                record("gesture_characteristic", gesture != null ? "found" : "missing");
                 if (gesture != null) enableNotify(g, gesture);
+                else subscribed();
             } else if (GESTURE_UUID.equals(chr)) {
                 record("gesture_subscribed", "");
+                subscribed();
             }
         }
 
@@ -217,6 +222,13 @@ final class ImuBleClient {
             handleNotification(characteristic.getUuid(), value);
         }
     };
+
+    /** 있는 알림을 모두 구독했다. 재연결 시간 측정의 기준점이다. */
+    private void subscribed() {
+        long now = SystemClock.elapsedRealtime();
+        record("subscribed", disconnectedAt >= 0 ? "since_disconnect_ms=" + (now - disconnectedAt) : "");
+        listener.onConnectionText("수신 중");
+    }
 
     /** 본딩된 기기의 GATT 목록은 휴대폰에 캐시된다. 펌웨어에 특성이 추가돼도 보이도록 비운다(숨은 API, 실패하면 캐시를 그대로 쓴다). */
     private void refreshGattCache(BluetoothGatt g) {

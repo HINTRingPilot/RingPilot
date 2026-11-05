@@ -5,19 +5,15 @@
 #include <Wire.h>
 
 #include "cycle_timer.h"
+#include "imu_stream.h"
 
 static const uint32_t kSampleRateHz = 100;
-static const uint16_t kRingSize = 256;        // 전송 대기열, 약 2.56초 분량
 static const uint16_t kGyroQueueSize = 64;    // 판정 대기열, 약 0.64초 분량
 static const float kGyroDpsPerLsb = 0.07f;    // ±2000 dps 설정의 환산값(학습 데이터와 같음)
 
 static LSM6DS3 imu(I2C_MODE, 0x6A);
 static SemaphoreHandle_t imuMutex = nullptr;
 static volatile bool running = true;
-
-static ImuSample ring[kRingSize];
-static volatile uint32_t ringHead = 0;  // 다음에 쓸 위치(누적 개수). 태스크만 바꾼다
-static volatile uint32_t ringTail = 0;  // 다음에 보낼 위치(누적 개수). loop만 바꾼다
 
 static GyroItem gyroQueue[kGyroQueueSize];
 static volatile uint32_t gyroHead = 0;  // 태스크만 바꾼다
@@ -61,7 +57,7 @@ static void recordReadTiming(const int16_t v[6], uint32_t t0, uint32_t t1) {
   haveRead = true;
 }
 
-// 읽기 태스크에서 부른다. 단위 환산 없이 원시값을 보낸다(반올림 손실이 없고 크기는 같다).
+// 읽기 태스크에서 부른다. 스트림에는 단위 환산 없이 원시값을 보낸다(반올림 손실이 없고 크기는 같다).
 static void takeSample(uint32_t slot) {
   const uint32_t t0 = cycle_now();
   int16_t v[6];
@@ -74,14 +70,9 @@ static void takeSample(uint32_t slot) {
   const uint32_t t1 = cycle_now();
   recordReadTiming(v, t0, t1);
 
-  if (ringHead - ringTail >= kRingSize) {
-    stats.ringDropped++;  // loop가 못 따라오면 새 샘플을 버린다
-  } else {
-    ImuSample& sample = ring[ringHead % kRingSize];
-    sample.slot = slot;
-    memcpy(sample.v, v, sizeof(v));
-    ringHead = ringHead + 1;
-  }
+#if RINGPILOT_IMU_STREAM
+  imu_stream_push(slot, v);
+#endif
 
   if (gyroHead - gyroTail >= kGyroQueueSize) {
     stats.gyroDropped++;
@@ -124,7 +115,9 @@ void sampler_pause() {
   xSemaphoreTake(imuMutex, portMAX_DELAY);
   running = false;
   powerDownImu();
-  ringTail = ringHead;
+#if RINGPILOT_IMU_STREAM
+  imu_stream_discard();
+#endif
   gyroTail = gyroHead;
   haveRead = false;
   xSemaphoreGive(imuMutex);
@@ -145,22 +138,6 @@ bool sampler_running() {
   return running;
 }
 
-uint32_t sampler_ring_available() {
-  return ringHead - ringTail;
-}
-
-const ImuSample& sampler_ring_peek(uint32_t i) {
-  return ring[(ringTail + i) % kRingSize];
-}
-
-void sampler_ring_consume(uint32_t count) {
-  ringTail = ringTail + count;
-}
-
-void sampler_ring_discard() {
-  ringTail = ringHead;
-}
-
 bool sampler_pop_gyro(GyroItem* out) {
   if (gyroTail == gyroHead) return false;
   *out = gyroQueue[gyroTail % kGyroQueueSize];
@@ -173,7 +150,5 @@ const ReadStats& sampler_stats() {
 }
 
 void sampler_reset_stats() {
-  const uint32_t ringDropped = stats.ringDropped;
   stats = {};
-  stats.ringDropped = ringDropped;
 }

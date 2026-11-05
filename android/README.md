@@ -4,7 +4,7 @@
 
 ## 준비
 
-1. 반지에 `firmware/gesture_infer`를 올린다. 데이터 수집만 할 때는 `firmware/imu_ble_stream`(추론 없음)도 같은 앱으로 붙는다.
+1. 반지에 `firmware/gesture_infer`를 올린다. 기본(사용자) 빌드는 IMU 원시값 스트림이 없다. 개발용 앱의 수집·연속 기록을 쓰려면 스트림을 켠 개발 빌드(`firmware/README.md`)나 `firmware/imu_ble_stream`(추론 없음)을 올린다. 앱은 펌웨어에 있는 특성만 골라 구독한다.
 2. 휴대폰 Bluetooth 설정에서 `RingPilot-IMU`를 페어링한다. 설정 화면에서 "연결 안 됨"으로 보이는 것은 정상이다. 앱이 직접 연결한다.
 3. 앱을 열면 자동으로 연결한다. 맨 위 상태 줄이 초록 점과 `수신 중`이면 준비 완료다.
 4. **스와이프 제어 켜기**를 누르고 접근성 설정에서 `RingPilot 스와이프`를 켠다.

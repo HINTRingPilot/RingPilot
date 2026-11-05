@@ -4,33 +4,28 @@
 #include <bluefruit.h>
 
 #include "imu_sampler.h"
+#include "imu_stream.h"
 
-static const uint16_t kHeaderBytes = 5;
-static const uint16_t kSampleBytes = 12;
-static const uint16_t kMaxSamplesPerPacket = 10;  // 묶음 대기 지연을 최대 약 100 ms로 제한
 static const uint16_t kStatusBytes = 10;
 static const uint16_t kGestureBytes = 8;
 
-// 연결 파라미터 단위: 간격 1.25 ms, 감시 시간 10 ms.
-static const uint16_t kStreamInterval = 9;   // 11.25 ms
-static const uint16_t kStreamLatency = 0;
-static const uint16_t kStreamTimeout = 200;  // 2초
+// 연결 파라미터 단위: 간격 1.25 ms, 감시 시간 10 ms. 요청일 뿐이고 최종 값은 휴대폰이 정한다.
+static const uint16_t kActiveInterval = 9;   // 11.25 ms. 발행이 폰에 닿기까지 기다리는 시간을 줄인다
+static const uint16_t kActiveLatency = 0;
+static const uint16_t kActiveTimeout = 200;  // 2초
 static const uint16_t kPausedInterval = 80;  // 100 ms
 static const uint16_t kPausedLatency = 4;    // 최대 4번 연결 이벤트를 건너뛸 수 있음
 static const uint16_t kPausedTimeout = 400;  // 4초. (1 + latency) * interval * 2보다 커야 한다
 
 static BLEService imuService("b27a2000-8c5e-4b62-9a21-33dd714e9001");
-static BLECharacteristic imuStream("b27a2001-8c5e-4b62-9a21-33dd714e9001");
 static BLECharacteristic imuStatus("b27a2002-8c5e-4b62-9a21-33dd714e9001");
 static BLECharacteristic gestureEvent("b27a2003-8c5e-4b62-9a21-33dd714e9001");
 
 static uint16_t connHandle = BLE_CONN_HANDLE_INVALID;
-static uint32_t triggerMs = 0;          // 부팅(0) 또는 재개 클릭을 뗀 시각
-static bool awaitingFirstData = true;   // 트리거 이후 첫 데이터 패킷을 아직 못 보냈는지
-static uint32_t sentPackets = 0;
+static uint32_t triggerMs = 0;  // 부팅(0) 또는 재개 클릭을 뗀 시각
 static uint8_t gestureSeq = 0;
 
-// 상태 알림은 데이터 알림 직후라 송신 버퍼가 차서 실패할 수 있다. 실패하면 대기열에 두고 loop에서 순서대로 다시 보낸다.
+// 상태 알림은 다른 알림 직후라 송신 버퍼가 차서 실패할 수 있다. 실패하면 대기열에 두고 loop에서 순서대로 다시 보낸다.
 // 재개 직후 "재개"와 "첫 데이터"가 연달아 생기므로 하나만 보관하면 앞의 알림을 덮어쓴다.
 static const uint8_t kStatusQueueSize = 4;
 static uint8_t statusQueue[kStatusQueueSize][kStatusBytes];
@@ -41,11 +36,15 @@ bool ble_connected() {
   return connHandle != BLE_CONN_HANDLE_INVALID;
 }
 
-bool ble_data_subscribed() {
-  return ble_connected() && imuStream.notifyEnabled(connHandle);
+uint16_t ble_conn_handle() {
+  return connHandle;
 }
 
-// 제스처 알림도 송신 버퍼가 차면 실패할 수 있다. 발행은 다시 나오지 않으므로 잃지 않게 대기열에 두고, IMU 스트림보다 먼저 보낸다.
+bool ble_ready() {
+  return ble_connected() && gestureEvent.notifyEnabled(connHandle);
+}
+
+// 제스처 알림도 송신 버퍼가 차면 실패할 수 있다. 발행은 다시 나오지 않으므로 잃지 않게 대기열에 두고 다음 loop에서 먼저 보낸다.
 static const uint8_t kGestureQueueSize = 4;
 static uint8_t gestureQueue[kGestureQueueSize][kGestureBytes];
 static uint8_t gestureQueueHead = 0;
@@ -79,7 +78,7 @@ static void flushStatus() {
   }
 }
 
-static void sendStatus(StatusEvent event) {
+void ble_send_status(StatusEvent event) {
   const uint32_t now = millis();
   const uint32_t sinceTrigger = now - triggerMs;
   uint8_t packet[kStatusBytes];
@@ -120,48 +119,7 @@ static void onDisconnect(uint16_t handle, uint8_t reason) {
 static void onStatusCccd(uint16_t handle, BLECharacteristic* chr, uint16_t value) {
   (void) handle;
   (void) chr;
-  if (value & BLE_GATT_HVX_NOTIFICATION) sendStatus(EVENT_SUBSCRIBED);
-}
-
-static uint16_t samplesPerPacket() {
-  if (!ble_connected()) return 1;
-  const uint16_t payload = Bluefruit.Connection(connHandle)->getMtu() - 3;
-  uint16_t count = (payload - kHeaderBytes) / kSampleBytes;
-  if (count < 1) count = 1;
-  if (count > kMaxSamplesPerPacket) count = kMaxSamplesPerPacket;
-  return count;
-}
-
-// 알림 1개를 보낼 수 있으면 보낸다. 한 패킷 안의 샘플은 슬롯이 연속이어야 한다.
-static void sendStreamPacket() {
-  const uint32_t available = sampler_ring_available();
-  if (available == 0) return;
-
-  const uint16_t limit = samplesPerPacket();
-  uint16_t run = 1;
-  while (run < limit && run < available) {
-    if (sampler_ring_peek(run).slot != sampler_ring_peek(run - 1).slot + 1) break;
-    run++;
-  }
-  const bool gapFollows = run < available;
-  if (run < limit && !gapFollows) return;  // 더 모일 때까지 기다린다
-
-  uint8_t packet[kHeaderBytes + kMaxSamplesPerPacket * kSampleBytes];
-  const uint32_t firstSlot = sampler_ring_peek(0).slot;
-  memcpy(packet, &firstSlot, 4);
-  packet[4] = static_cast<uint8_t>(run);
-  for (uint16_t i = 0; i < run; i++) {
-    memcpy(packet + kHeaderBytes + i * kSampleBytes, sampler_ring_peek(i).v, kSampleBytes);
-  }
-
-  if (imuStream.notify(connHandle, packet, kHeaderBytes + run * kSampleBytes)) {
-    sampler_ring_consume(run);
-    sentPackets++;
-    if (awaitingFirstData) {
-      awaitingFirstData = false;
-      sendStatus(EVENT_FIRST_DATA);  // 트리거부터 첫 데이터 송신까지 걸린 시간을 기기 시계로 보고
-    }
-  }
+  if (value & BLE_GATT_HVX_NOTIFICATION) ble_send_status(EVENT_SUBSCRIBED);
 }
 
 static void beginCharacteristic(BLECharacteristic& chr, uint8_t properties) {
@@ -180,9 +138,9 @@ void ble_begin() {
   Bluefruit.Periph.setDisconnectCallback(onDisconnect);
 
   imuService.begin();
-  beginCharacteristic(imuStream, CHR_PROPS_NOTIFY);
-  imuStream.setMaxLen(kHeaderBytes + kMaxSamplesPerPacket * kSampleBytes);
-  imuStream.begin();
+#if RINGPILOT_IMU_STREAM
+  imu_stream_begin();  // 기존 특성 순서(스트림, 상태, 제스처)를 유지한다
+#endif
   beginCharacteristic(imuStatus, CHR_PROPS_READ | CHR_PROPS_NOTIFY);
   imuStatus.setFixedLen(kStatusBytes);
   imuStatus.setCccdWriteCallback(onStatusCccd);
@@ -201,19 +159,15 @@ void ble_begin() {
   Bluefruit.Advertising.start(0);
 
   triggerMs = 0;  // 부팅 시점. 부트로더 시간은 포함되지 않는다
-  awaitingFirstData = true;
 }
 
 void ble_poll() {
   flushGestures();
   flushStatus();
-  if (!sampler_running()) {
-    sampler_ring_discard();  // 일시정지 중 쌓인 과거 데이터는 보내지 않는다
-  } else if (ble_data_subscribed()) {
-    sendStreamPacket();
-  } else {
-    sampler_ring_discard();  // 구독 전에 쌓인 과거 데이터는 보내지 않는다
-  }
+#if RINGPILOT_IMU_STREAM
+  if (sampler_running()) imu_stream_poll();
+  else imu_stream_discard();  // 일시정지 중 쌓인 과거 데이터는 보내지 않는다
+#endif
 }
 
 void ble_send_gesture(int8_t cls, float score, uint32_t slot) {
@@ -237,14 +191,16 @@ void ble_send_gesture(int8_t cls, float score, uint32_t slot) {
 
 void ble_on_pause() {
   requestConnParams(kPausedInterval, kPausedLatency, kPausedTimeout);
-  sendStatus(EVENT_PAUSED);
+  ble_send_status(EVENT_PAUSED);
 }
 
 void ble_on_resume(uint32_t releaseMs) {
   triggerMs = releaseMs;
-  awaitingFirstData = true;
-  requestConnParams(kStreamInterval, kStreamLatency, kStreamTimeout);
-  sendStatus(EVENT_RESUMED);
+#if RINGPILOT_IMU_STREAM
+  imu_stream_mark_trigger();
+#endif
+  requestConnParams(kActiveInterval, kActiveLatency, kActiveTimeout);
+  ble_send_status(EVENT_RESUMED);
 }
 
 void ble_shutdown() {
@@ -265,15 +221,18 @@ void ble_print_status(Print& out) {
     out.print("MTU: "); out.println(conn->getMtu());
     out.print("Interval (x1.25 ms): "); out.println(conn->getConnectionInterval());
     out.print("Slave latency: "); out.println(conn->getSlaveLatency());
-    out.print("Data subscribed: "); out.println(imuStream.notifyEnabled(connHandle));
+    out.print("Gesture subscribed: "); out.println(ble_ready());
   }
-  out.print("Samples per packet: "); out.println(samplesPerPacket());
-  out.print("Sent packets: "); out.println(sentPackets);
+#if RINGPILOT_IMU_STREAM
+  imu_stream_print(out);
+#else
+  out.println("IMU stream: off (build_config.h)");
+#endif
 }
 
 void ble_print_link(Print& out) {
   out.print("Gesture notify retried/dropped: "); out.print(gestureRetries); out.print(" / "); out.println(gestureDropped);
-  out.print("Connected/data subscribed: "); out.print(ble_connected()); out.print(" / "); out.println(ble_data_subscribed());
+  out.print("Connected/gesture subscribed: "); out.print(ble_connected()); out.print(" / "); out.println(ble_ready());
   if (ble_connected()) {
     out.print("Interval (x1.25 ms): "); out.println(Bluefruit.Connection(connHandle)->getConnectionInterval());
   }
