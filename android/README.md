@@ -92,6 +92,8 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 .\gradlew.bat :app:assembleDebug
 ```
 
+기본 빌드는 사용자용이라 리모컨 화면만 보인다. 수집·기록 탭과 Hz·누락 샘플 표시(데이터 수집, 연속 기록, 실사용 시험용)는 코드에 남아 있고 `.\gradlew.bat :app:assembleDebug -PdevTools=true`로 빌드하면 보인다(`BuildConfig.DEV_TOOLS`).
+
 Android Studio 없이 빌드할 때는 JDK 17(예: Temurin 17)을 `JAVA_HOME`으로 두고, 명령줄 SDK를 `.tools/android-sdk`에 설치한 뒤 `android/local.properties`에 `sdk.dir=C:/<저장소 경로>/.tools/android-sdk`를 적는다(경로는 `/`로 쓴다. `\`를 쓰면 `\u`가 유니코드 이스케이프로 읽혀 빌드가 실패한다).
 
 ## 보존한 기능

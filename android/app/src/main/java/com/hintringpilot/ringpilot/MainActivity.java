@@ -221,7 +221,9 @@ public final class MainActivity extends Activity {
         scrollView.addView(content);
         root.addView(scrollView, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        root.addView(createTabBar(), matchWidth(0));
+        View tabBar = createTabBar();
+        if (!BuildConfig.DEV_TOOLS) tabBar.setVisibility(View.GONE);  // 사용자 빌드는 리모컨 화면만 둔다
+        root.addView(tabBar, matchWidth(0));
 
         selectTab(0);
         updateProgress();
@@ -244,6 +246,7 @@ public final class MainActivity extends Activity {
         hzView.setTextColor(Ui.TEXT);
         hzView.setTextSize(13);
         hzView.setTypeface(Ui.MONO);
+        if (!BuildConfig.DEV_TOOLS) hzView.setVisibility(View.GONE);
         titleRow.addView(hzView);
         bar.addView(titleRow, matchWidth(0));
 
@@ -378,7 +381,9 @@ public final class MainActivity extends Activity {
         tiles.addView(Ui.tile(this, "모드", modeView), weight(0));
         missingView = Ui.readout(this, 22);
         missingView.setText("0");
-        tiles.addView(Ui.tile(this, "누락 샘플", missingView), weight(10));
+        LinearLayout missingTile = Ui.tile(this, "누락 샘플", missingView);
+        if (!BuildConfig.DEV_TOOLS) missingTile.setVisibility(View.GONE);
+        tiles.addView(missingTile, weight(10));
         page.addView(tiles, matchWidth(10));
 
         lastGestureView = Ui.readout(this, 17);
