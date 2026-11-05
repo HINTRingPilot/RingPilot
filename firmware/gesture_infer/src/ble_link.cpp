@@ -45,6 +45,27 @@ bool ble_data_subscribed() {
   return ble_connected() && imuStream.notifyEnabled(connHandle);
 }
 
+// 제스처 알림도 송신 버퍼가 차면 실패할 수 있다. 발행은 다시 나오지 않으므로 잃지 않게 대기열에 두고, IMU 스트림보다 먼저 보낸다.
+static const uint8_t kGestureQueueSize = 4;
+static uint8_t gestureQueue[kGestureQueueSize][kGestureBytes];
+static uint8_t gestureQueueHead = 0;
+static uint8_t gestureQueueCount = 0;
+static uint32_t gestureRetries = 0;  // 첫 시도에 못 보낸 횟수
+static uint32_t gestureDropped = 0;  // 대기열이 가득 차 버린 횟수
+
+static void flushGestures() {
+  if (gestureQueueCount == 0) return;
+  if (!ble_connected() || !gestureEvent.notifyEnabled(connHandle)) {
+    gestureQueueCount = 0;  // 받을 쪽이 없으면 버린다
+    return;
+  }
+  while (gestureQueueCount > 0) {
+    if (!gestureEvent.notify(connHandle, gestureQueue[gestureQueueHead], kGestureBytes)) return;  // 다음 loop에서 재시도
+    gestureQueueHead = (gestureQueueHead + 1) % kGestureQueueSize;
+    gestureQueueCount--;
+  }
+}
+
 static void flushStatus() {
   if (statusQueueCount == 0) return;
   if (!ble_connected() || !imuStatus.notifyEnabled(connHandle)) {
@@ -184,6 +205,7 @@ void ble_begin() {
 }
 
 void ble_poll() {
+  flushGestures();
   flushStatus();
   if (!sampler_running()) {
     sampler_ring_discard();  // 일시정지 중 쌓인 과거 데이터는 보내지 않는다
@@ -196,13 +218,21 @@ void ble_poll() {
 
 void ble_send_gesture(int8_t cls, float score, uint32_t slot) {
   if (!ble_connected() || !gestureEvent.notifyEnabled(connHandle)) return;
-  uint8_t packet[kGestureBytes];
+  if (gestureQueueCount == kGestureQueueSize) {  // 가득 차면 가장 오래된 발행을 버린다
+    gestureQueueHead = (gestureQueueHead + 1) % kGestureQueueSize;
+    gestureQueueCount--;
+    gestureDropped++;
+  }
+  uint8_t* packet = gestureQueue[(gestureQueueHead + gestureQueueCount) % kGestureQueueSize];
   const uint16_t milli = static_cast<uint16_t>(score * 1000.0f);
   packet[0] = gestureSeq++;
   packet[1] = static_cast<uint8_t>(cls);
   memcpy(packet + 2, &milli, 2);
   memcpy(packet + 4, &slot, 4);
-  gestureEvent.notify(connHandle, packet, sizeof(packet));
+  gestureQueueCount++;
+  const uint8_t before = gestureQueueCount;
+  flushGestures();
+  if (gestureQueueCount == before) gestureRetries++;
 }
 
 void ble_on_pause() {
@@ -242,6 +272,7 @@ void ble_print_status(Print& out) {
 }
 
 void ble_print_link(Print& out) {
+  out.print("Gesture notify retried/dropped: "); out.print(gestureRetries); out.print(" / "); out.println(gestureDropped);
   out.print("Connected/data subscribed: "); out.print(ble_connected()); out.print(" / "); out.println(ble_data_subscribed());
   if (ble_connected()) {
     out.print("Interval (x1.25 ms): "); out.println(Bluefruit.Connection(connHandle)->getConnectionInterval());
