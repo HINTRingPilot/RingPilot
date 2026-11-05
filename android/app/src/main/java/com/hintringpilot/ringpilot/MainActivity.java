@@ -92,6 +92,9 @@ public final class MainActivity extends Activity {
     private TextView missingView;
     private TextView modeView;
     private TextView lastGestureView;
+    private TextView controlView;                       // 리모컨 화면의 제어 상태(제어 중·꺼짐·접근성 필요)
+    private final LinearLayout[] mapRows = new LinearLayout[3];   // 위, 아래, 좌우
+    private final TextView[] mapActions = new TextView[3];
     private View statusDot;
     private int statusDotColor = 0;
     private ScrollView scrollView;
@@ -214,7 +217,11 @@ public final class MainActivity extends Activity {
         pages[0] = createRemotePage();
         pages[1] = createCollectPage();
         pages[2] = createLogPage();
-        for (View page : pages) content.addView(page, matchWidth(16));
+        LinearLayout.LayoutParams fill = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
+        fill.topMargin = dp(12);
+        content.addView(pages[0], fill);  // 리모컨 화면은 남은 높이를 채워 스크롤 없이 한 화면에 든다
+        content.addView(pages[1], matchWidth(16));
+        content.addView(pages[2], matchWidth(16));
 
         scrollView = new ScrollView(this);
         scrollView.setFillViewport(true);
@@ -367,31 +374,119 @@ public final class MainActivity extends Activity {
         return bar;
     }
 
-    /** 평소 쓰는 화면. 스와이프 제어와 지금 상태만 둔다. */
+    /** 평소 쓰는 화면. 지금 모드에서 각 제스처가 하는 일을 크게 보이고, 제스처가 오면 그 줄이 빛난다. */
     private View createRemotePage() {
         LinearLayout page = Ui.column(this);
 
-        swipeButton = Ui.button(this, "스와이프 제어 켜기", Ui.Style.ACCENT_LINE, v -> toggleSwipeControl());
-        page.addView(swipeButton, matchWidth(0));
+        LinearLayout hero = Ui.card(this);
+        hero.setPadding(dp(20), dp(18), dp(20), dp(18));
+        LinearLayout head = Ui.row(this);
+        head.addView(Ui.label(this, "지금 모드"), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        controlView = new TextView(this);
+        controlView.setTextSize(12);
+        controlView.setTypeface(Ui.BODY);
+        controlView.setPadding(dp(10), dp(4), dp(10), dp(4));
+        head.addView(controlView);
+        hero.addView(head, matchWidth(0));
 
-        LinearLayout tiles = Ui.row(this);
-        tiles.setBaselineAligned(false);
-        modeView = Ui.readout(this, 22);
+        modeView = Ui.readout(this, 64);
         modeView.setText("상하");
-        tiles.addView(Ui.tile(this, "모드", modeView), weight(0));
+        modeView.setIncludeFontPadding(false);
+        hero.addView(modeView, matchWidth(10));
+        TextView hint = Ui.body(this, 13, Ui.MUTED);
+        hint.setText(Ui.keepWords("좌우 제스처로 상하·좌우 모드를 바꿉니다"));
+        hero.addView(hint, matchWidth(4));
+
+        hero.addView(new View(this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        String[] glyphs = {"▲", "▼", "◀ ▶"};
+        String[] names = {"위", "아래", "좌우"};
+        for (int i = 0; i < 3; i++) {
+            LinearLayout row = Ui.row(this);
+            row.setPadding(dp(12), dp(10), dp(12), dp(10));
+            row.setBackground(Ui.surface(this, Ui.RAISED, 0, 14));
+            TextView glyph = new TextView(this);
+            glyph.setText(glyphs[i]);
+            glyph.setTextColor(Ui.ACCENT);
+            glyph.setTextSize(15);
+            glyph.setGravity(Gravity.CENTER);
+            row.addView(glyph, new LinearLayout.LayoutParams(dp(48), ViewGroup.LayoutParams.WRAP_CONTENT));
+            TextView name = Ui.body(this, 14, Ui.MUTED);
+            name.setText(names[i]);
+            row.addView(name, new LinearLayout.LayoutParams(dp(48), ViewGroup.LayoutParams.WRAP_CONTENT));
+            mapActions[i] = Ui.readout(this, 20);
+            mapActions[i].setGravity(Gravity.END);
+            row.addView(mapActions[i], new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            mapRows[i] = row;
+            hero.addView(row, matchWidth(i == 0 ? 0 : 8));
+        }
+
+        View divider = new View(this);
+        divider.setBackgroundColor(Ui.LINE);
+        LinearLayout.LayoutParams line = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
+        line.topMargin = dp(16);
+        hero.addView(divider, line);
+        LinearLayout recent = Ui.row(this);
+        recent.addView(Ui.label(this, "최근"), new LinearLayout.LayoutParams(dp(48), ViewGroup.LayoutParams.WRAP_CONTENT));
+        lastGestureView = Ui.body(this, 14, Ui.TEXT);
+        lastGestureView.setTypeface(Ui.MONO);
+        lastGestureView.setText(Ui.keepWords("아직 받은 제스처가 없습니다"));
+        recent.addView(lastGestureView, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        hero.addView(recent, matchWidth(12));
+        page.addView(hero, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        updateRemoteMap();
+
         missingView = Ui.readout(this, 22);
         missingView.setText("0");
         LinearLayout missingTile = Ui.tile(this, "누락 샘플", missingView);
         if (!BuildConfig.DEV_TOOLS) missingTile.setVisibility(View.GONE);
-        tiles.addView(missingTile, weight(10));
-        page.addView(tiles, matchWidth(10));
+        page.addView(missingTile, matchWidth(10));
 
-        lastGestureView = Ui.readout(this, 17);
-        lastGestureView.setText(Ui.keepWords("아직 받은 제스처가 없습니다"));
-        page.addView(Ui.tile(this, "최근 제스처", lastGestureView), matchWidth(10));
-
-        page.addView(Ui.button(this, "링 다시 연결", Ui.Style.GHOST, v -> connectRing()), matchWidth(10));
+        swipeButton = Ui.button(this, "스와이프 제어 켜기", Ui.Style.ACCENT_LINE, v -> toggleSwipeControl());
+        page.addView(swipeButton, matchWidth(12));
+        page.addView(Ui.button(this, "링 다시 연결", Ui.Style.GHOST, v -> connectRing()), matchWidth(8));
         return page;
+    }
+
+    /** 모드에 따라 위·아래가 하는 일을 바꿔 적는다. */
+    private void updateRemoteMap() {
+        mapActions[0].setText(horizontalMode ? "왼쪽으로 넘기기" : "위로 넘기기");
+        mapActions[1].setText(horizontalMode ? "오른쪽으로 넘기기" : "아래로 넘기기");
+        mapActions[2].setText("모드 전환");
+    }
+
+    /** 받은 제스처의 줄을 잠깐 강조한다. */
+    private void flashRemoteRow(String direction) {
+        int index = "UP".equals(direction) ? 0 : "DOWN".equals(direction) ? 1 : 2;
+        LinearLayout row = mapRows[index];
+        if (row.getTag() instanceof Runnable) row.removeCallbacks((Runnable) row.getTag());
+        row.setBackground(Ui.surface(this, Ui.RAISED, Ui.ACCENT, 14));
+        mapActions[index].setTextColor(Ui.ACCENT);
+        Runnable restore = () -> {
+            row.setBackground(Ui.surface(this, Ui.RAISED, 0, 14));
+            mapActions[index].setTextColor(Ui.TEXT);
+        };
+        row.setTag(restore);
+        row.postDelayed(restore, 700);
+    }
+
+    /** 제어 상태 표시. 접근성이 꺼져 있으면 눈에 띄게 알린다. */
+    private void updateControlView() {
+        String text;
+        int color;
+        if (!swipeControl) {
+            text = "제어 꺼짐";
+            color = Ui.MUTED;
+        } else if (SwipeAccessibilityService.getCurrent() != null) {
+            text = "제어 중";
+            color = Ui.OK;
+        } else {
+            text = "접근성 켜기 필요";
+            color = Ui.WARN;
+        }
+        if (text.contentEquals(controlView.getText())) return;
+        controlView.setText(text);
+        controlView.setTextColor(color);
+        controlView.setBackground(Ui.surface(this, Ui.BG, color, 99));
     }
 
     /** 데이터 수집 화면. 안내 수집이 도는 동안에는 준비용 칸을 접어 다이얼에 집중한다. */
@@ -499,7 +594,7 @@ public final class MainActivity extends Activity {
             tabs[i].setTextColor(selected ? Ui.ACCENT : Ui.MUTED);
             tabs[i].setBackground(selected ? Ui.surface(this, Ui.RAISED, Ui.LINE, 16) : null);
         }
-        dial.setVisibility(index == 2 ? View.GONE : View.VISIBLE);
+        dial.setVisibility(index == 1 ? View.VISIBLE : View.GONE);  // 다이얼은 수집 안내에만 쓴다
         updateDialLabels();
         updateDialSize();
         scrollView.scrollTo(0, 0);
@@ -614,8 +709,8 @@ public final class MainActivity extends Activity {
                 Ui.applyStyle(swipeButton, Ui.Style.PRIMARY);
                 swipeButton.setText("스와이프 제어 끄기");
                 prompt("제어 중");
-                lastGestureView.setText("위 · 0.92 → 스와이프 UP");
-                dial.flash("UP");
+                lastGestureView.setText("UP · 0.92 → 스와이프 UP");
+                flashRemoteRow("UP");
                 break;
         }
         updateProgress();
@@ -718,6 +813,8 @@ public final class MainActivity extends Activity {
         horizontalMode = action.horizontalAfter;
         modeView.setText(horizontalMode ? "좌우" : "상하");
         lastGestureView.setText(String.format(Locale.US, "%s · %.2f → %s", direction, score, result));
+        updateRemoteMap();
+        flashRemoteRow(direction);
         updateDialLabels();
         dial.flash(direction);
     }
@@ -727,6 +824,7 @@ public final class MainActivity extends Activity {
         public void run() {
             String status = connectionText;
             setTextIfChanged(connectionView, Ui.keepWords(status));
+            updateControlView();
             setTextIfChanged(hzView, String.format(Locale.US, "%.0f Hz", client.recentRate()));
             setTextIfChanged(missingView, String.valueOf(client.missingSamples()));
             int color = statusColor(status);
