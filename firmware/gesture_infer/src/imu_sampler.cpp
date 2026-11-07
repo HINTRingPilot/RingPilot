@@ -4,12 +4,17 @@
 #include <LSM6DS3.h>
 #include <Wire.h>
 
+#include "build_config.h"
 #include "cycle_timer.h"
 #include "dev/imu_stream.h"
 
 static const uint32_t kSampleRateHz = 100;
 static const uint16_t kGyroQueueSize = 64;    // 판정 대기열, 약 0.64초 분량
 static const float kGyroDpsPerLsb = 0.07f;    // ±2000 dps 설정의 환산값(학습 데이터와 같음)
+static const uint32_t kI2cHz = 400000;        // 센서가 지원하는 Fast mode. 라이브러리 기본은 100 kHz
+// 출력 레지스터는 자이로 X·Y·Z(0x22~0x27), 가속도 X·Y·Z(0x28~0x2D) 순으로 붙어 있고, 주소 자동 증가(CTRL3_C IF_INC, 기본 켜짐)로
+// 한 번의 I2C 읽기에 이어서 읽힌다. 사용자 빌드는 가속도를 끄고 자이로 6바이트만, 개발 빌드(스트림)는 12바이트를 읽는다.
+static const uint8_t kReadBytes = RINGPILOT_IMU_STREAM ? 12 : 6;
 
 static LSM6DS3 imu(I2C_MODE, 0x6A);
 static SemaphoreHandle_t imuMutex = nullptr;
@@ -26,7 +31,7 @@ static uint32_t lastReadCycles = 0;
 static int16_t lastRaw[6] = {0, 0, 0, 0, 0, 0};
 
 static bool configureImu() {
-  imu.settings.accelEnabled = 1;
+  imu.settings.accelEnabled = RINGPILOT_IMU_STREAM ? 1 : 0;  // 판정은 자이로만 쓴다. 가속도는 스트림(학습 데이터)용
   imu.settings.accelRange = 4;
   imu.settings.accelSampleRate = 104;
   imu.settings.accelBandWidth = 50;
@@ -34,7 +39,9 @@ static bool configureImu() {
   imu.settings.gyroRange = 2000;
   imu.settings.gyroSampleRate = 104;
   imu.settings.gyroBandWidth = 50;
-  return imu.begin() == 0;
+  const bool ok = imu.begin() == 0;  // begin이 Wire.begin()을 다시 부르므로 그 뒤에 속도를 바꾼다
+  Wire.setClock(kI2cHz);
+  return ok;
 }
 
 static void powerDownImu() {
@@ -58,17 +65,18 @@ static void recordReadTiming(const int16_t v[6], uint32_t t0, uint32_t t1) {
   haveRead = true;
 }
 
-// 읽기 태스크에서 부른다. 스트림에는 단위 환산 없이 원시값을 보낸다(반올림 손실이 없고 크기는 같다).
+// 읽기 태스크에서 부른다. 한 번의 I2C 읽기로 같은 순간의 축을 모두 가져온다(축마다 따로 읽으면 약 3.6 ms, 몰아 읽으면 약 0.3~0.5 ms 예상).
+// v는 accX, accY, accZ, gyrX, gyrY, gyrZ 원시값(int16 LE)이다. 사용자 빌드는 가속도가 0이다. 스트림에는 단위 환산 없이 보낸다.
 static void takeSample(uint32_t slot) {
   const uint32_t t0 = cycle_now();
-  int16_t v[6];
-  v[0] = imu.readRawAccelX();
-  v[1] = imu.readRawAccelY();
-  v[2] = imu.readRawAccelZ();
-  v[3] = imu.readRawGyroX();
-  v[4] = imu.readRawGyroY();
-  v[5] = imu.readRawGyroZ();
+  uint8_t raw[12] = {0};
+  if (imu.readRegisterRegion(raw, LSM6DS3_ACC_GYRO_OUTX_L_G, kReadBytes) != IMU_SUCCESS) stats.readErrors++;
   const uint32_t t1 = cycle_now();
+  int16_t v[6];
+  for (int a = 0; a < 3; a++) {
+    v[a + 3] = static_cast<int16_t>(raw[2 * a] | (raw[2 * a + 1] << 8));      // 자이로
+    v[a] = static_cast<int16_t>(raw[6 + 2 * a] | (raw[6 + 2 * a + 1] << 8));  // 가속도(사용자 빌드는 0)
+  }
   recordReadTiming(v, t0, t1);
 
 #if RINGPILOT_IMU_STREAM

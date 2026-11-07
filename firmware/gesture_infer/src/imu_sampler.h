@@ -3,7 +3,8 @@
 // 샘플을 넣을 때마다 loop 태스크에 알림을 보내 sampler_wait에서 바로 깨운다(초당 100번, 지연은 µs 수준).
 // 개발 빌드(RINGPILOT_IMU_STREAM=1)는 같은 샘플의 6축 원시값을 imu_stream에도 넘긴다.
 // I2C는 뮤텍스로 지켜 일시정지·재개 중 센서 설정과 읽기가 겹치지 않게 한다.
-// 센서 설정: 104 Hz, ±4 g, ±2000 dps(빠른 동작에서 ±1000 dps 포화를 피하려고 넓혔다). 판정은 자이로만 쓴다.
+// 센서 설정: 104 Hz, ±4 g, ±2000 dps(빠른 동작에서 ±1000 dps 포화를 피하려고 넓혔다). I2C 400 kHz, 한 번에 몰아 읽기.
+// 판정은 자이로만 쓴다. 사용자 빌드는 가속도 센서를 끈다(개발 빌드는 스트림용으로 켠다).
 #pragma once
 
 #include <stdint.h>
@@ -22,6 +23,7 @@ struct ReadStats {
   uint32_t early;        // 직전 읽기에서 8 ms 안에 온 읽기
   uint32_t maxReadUs;    // I2C 읽기 한 번(6축)에 걸린 최대 시간
   uint32_t gyroDropped;  // 판정 대기열이 가득 차 버린 수
+  uint32_t readErrors;   // I2C 읽기 실패(그 샘플은 0으로 들어간다)
 };
 
 bool imu_begin();       // 센서를 켜고 설정한다. 센서가 없으면 false
