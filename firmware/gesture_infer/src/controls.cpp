@@ -90,9 +90,9 @@ static void pollCenterSwitch(uint32_t nowMs) {
   if (held < kDebounceMs) return;
 
   if (held < kPauseHoldMs) {
-    if (!sampler_running()) resumeStreaming(nowMs);
+    if (device_paused()) resumeStreaming(nowMs);
     else clickCount++;
-  } else if (sampler_running()) {
+  } else if (!device_paused()) {
     enterPause();
   }
 }
@@ -111,7 +111,7 @@ static void pollLed(uint32_t nowMs) {
   }
   if (nowMs - lastBlink < kBlinkPeriodMs) return;
   lastBlink = nowMs;
-  if (!sampler_running()) {
+  if (device_paused()) {
     digitalWrite(LED_GREEN, LOW);
     digitalWrite(LED_BLUE, LOW);
   } else {
@@ -159,6 +159,6 @@ void led_show_gesture(int8_t cls) {
 }
 
 void controls_print_status(Print& out) {
-  out.print("State: "); out.println(sampler_running() ? "STREAMING" : "PAUSED");
+  out.print("State: "); out.println(device_paused() ? "PAUSED" : "STREAMING");
   out.print("Short clicks: "); out.println(clickCount);
 }

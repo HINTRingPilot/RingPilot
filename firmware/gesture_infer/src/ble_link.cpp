@@ -82,7 +82,7 @@ void ble_send_status(StatusEvent event) {
   const uint32_t now = millis();
   const uint32_t sinceTrigger = now - triggerMs;
   uint8_t packet[kStatusBytes];
-  packet[0] = sampler_running() ? 0 : 1;
+  packet[0] = device_paused() ? 1 : 0;
   packet[1] = event;
   memcpy(packet + 2, &now, 4);
   memcpy(packet + 6, &sinceTrigger, 4);
@@ -165,7 +165,7 @@ void ble_poll() {
   flushGestures();
   flushStatus();
 #if RINGPILOT_IMU_STREAM
-  if (sampler_running()) imu_stream_poll();
+  if (!device_paused()) imu_stream_poll();
   else imu_stream_discard();  // 일시정지 중 쌓인 과거 데이터는 보내지 않는다
 #endif
 }

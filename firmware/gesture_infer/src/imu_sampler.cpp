@@ -13,7 +13,7 @@ static const float kGyroDpsPerLsb = 0.07f;    // ±2000 dps 설정의 환산값(
 
 static LSM6DS3 imu(I2C_MODE, 0x6A);
 static SemaphoreHandle_t imuMutex = nullptr;
-static volatile bool running = true;
+static volatile bool paused = false;
 
 static GyroItem gyroQueue[kGyroQueueSize];
 static volatile uint32_t gyroHead = 0;  // 태스크만 바꾼다
@@ -97,7 +97,7 @@ static void samplerTask(void* arg) {
     if (wait > 0) vTaskDelay(wait);
     slot = static_cast<uint32_t>(static_cast<uint64_t>(xTaskGetTickCount() - base) * kSampleRateHz / configTICK_RATE_HZ);
     xSemaphoreTake(imuMutex, portMAX_DELAY);
-    if (running) takeSample(slot);
+    if (!paused) takeSample(slot);
     xSemaphoreGive(imuMutex);
   }
 }
@@ -113,7 +113,7 @@ void sampler_start() {
 
 void sampler_pause() {
   xSemaphoreTake(imuMutex, portMAX_DELAY);
-  running = false;
+  paused = true;
   powerDownImu();
 #if RINGPILOT_IMU_STREAM
   imu_stream_discard();
@@ -126,7 +126,7 @@ void sampler_pause() {
 void sampler_resume() {
   xSemaphoreTake(imuMutex, portMAX_DELAY);
   configureImu();
-  running = true;
+  paused = false;
   xSemaphoreGive(imuMutex);
 }
 
@@ -134,8 +134,8 @@ void sampler_halt() {
   xSemaphoreTake(imuMutex, portMAX_DELAY);  // System OFF로 가므로 돌려주지 않는다
 }
 
-bool sampler_running() {
-  return running;
+bool device_paused() {
+  return paused;
 }
 
 bool sampler_pop_gyro(GyroItem* out) {

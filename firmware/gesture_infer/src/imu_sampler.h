@@ -28,7 +28,7 @@ void sampler_start();   // 읽기 태스크를 시작한다
 void sampler_pause();   // 읽기를 멈추고 센서를 끈 뒤 대기열을 비운다
 void sampler_resume();  // 센서를 다시 켜고 읽기를 재개한다
 void sampler_halt();    // 전원을 끄기 전에 읽기 태스크를 영구히 멈춘다
-bool sampler_running();
+bool device_paused();  // 일시정지 중인지(센서·판정이 멈춘 상태). 스위치로 바뀐다
 
 bool sampler_pop_gyro(GyroItem* out);  // loop에서만 부른다
 

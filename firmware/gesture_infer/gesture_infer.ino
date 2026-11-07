@@ -62,7 +62,7 @@ void setup() {
 void loop() {
   controls_poll(millis());
   pollSerial();
-  if (sampler_running()) {
+  if (!device_paused()) {
     gesture_poll();  // 추론은 구독과 상관없이 돈다
     ble_poll();
     delay(1);        // 할 일이 없을 때 CPU를 쉬게 한다. 읽기는 태스크가 하므로 밀리지 않는다
