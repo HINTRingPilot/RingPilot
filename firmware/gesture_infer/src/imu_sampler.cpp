@@ -13,6 +13,7 @@ static const float kGyroDpsPerLsb = 0.07f;    // ±2000 dps 설정의 환산값(
 
 static LSM6DS3 imu(I2C_MODE, 0x6A);
 static SemaphoreHandle_t imuMutex = nullptr;
+static TaskHandle_t loopTask = nullptr;  // 샘플이 들어오면 깨울 태스크(Arduino loop)
 static volatile bool paused = false;
 
 static GyroItem gyroQueue[kGyroQueueSize];
@@ -83,6 +84,7 @@ static void takeSample(uint32_t slot) {
     for (int a = 0; a < 3; a++) item.gyro[a] = v[a + 3] * kGyroDpsPerLsb;
     gyroHead = gyroHead + 1;
   }
+  xTaskNotifyGive(loopTask);  // loop가 sampler_wait에서 기다리고 있으면 바로 깨어난다
 }
 
 static void samplerTask(void* arg) {
@@ -107,6 +109,7 @@ bool imu_begin() {
 }
 
 void sampler_start() {
+  loopTask = xTaskGetCurrentTaskHandle();  // setup은 loop와 같은 태스크에서 돈다
   imuMutex = xSemaphoreCreateMutex();
   xTaskCreate(samplerTask, "imu", 512, nullptr, TASK_PRIO_HIGH, nullptr);
 }
@@ -132,6 +135,10 @@ void sampler_resume() {
 
 void sampler_halt() {
   xSemaphoreTake(imuMutex, portMAX_DELAY);  // System OFF로 가므로 돌려주지 않는다
+}
+
+void sampler_wait(uint32_t timeoutMs) {
+  ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(timeoutMs));
 }
 
 bool device_paused() {

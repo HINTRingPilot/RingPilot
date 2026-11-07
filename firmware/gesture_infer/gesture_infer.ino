@@ -18,7 +18,7 @@
 #include "src/gesture_loop.h"
 #include "src/imu_sampler.h"
 
-static const uint16_t kPausedLoopDelayMs = 20;  // 일시정지 중 코어가 저전력 대기에 들어갈 수 있게 쉬는 간격
+static const uint32_t kLoopWaitMs = 20;  // 샘플이 없어도 이 간격으로 깨어 스위치·LED·시리얼을 본다(일시정지 중에는 이것만)
 
 static void printStatus() {
   Serial.println("RingPilot-IMU: ? 상태 | 센터 <0.5s 클릭(일시정지 중이면 재개), 0.5~2s 일시정지, 2s+ System OFF");
@@ -62,12 +62,7 @@ void setup() {
 void loop() {
   controls_poll(millis());
   pollSerial();
-  if (!device_paused()) {
-    gesture_poll();  // 추론은 구독과 상관없이 돈다
-    ble_poll();
-    delay(1);        // 할 일이 없을 때 CPU를 쉬게 한다. 읽기는 태스크가 하므로 밀리지 않는다
-  } else {
-    ble_poll();
-    delay(kPausedLoopDelayMs);
-  }
+  if (!device_paused()) gesture_poll();  // 추론은 구독과 상관없이 돈다
+  ble_poll();
+  sampler_wait(kLoopWaitMs);  // 새 샘플이 오면 바로, 없으면 20 ms 뒤 깨어난다. 그동안 CPU는 저전력 대기
 }
