@@ -20,7 +20,7 @@ IMU 100 Hz → 온라인 영점 → TCN 판정(50 ms마다) → 발행 ──BLE
 |---|---|
 | [firmware/](firmware/README.md) | 반지 펌웨어 `gesture_infer`. 개발용(수집 펌웨어, PC 검증 도구)은 `firmware/dev/` |
 | [android/](android/README.md) | 휴대폰 앱(리모컨). 개발용 화면(데이터 수집·실사용 기록)은 `dev` 패키지 |
-| [ml/](ml/) | 학습·평가(Python, TensorFlow), C 변환과 Python·C 일치 확인 |
+| [ml/](ml/) | 학습·평가(Python, TensorFlow), C 변환과 Python·C 일치 확인. 단위 테스트는 `ml/tests/` |
 | [tools/](tools/) | 폰 기록 가져오기(`pull-phone-sessions.js`), 수집 클립 주석 도구(Node.js) |
 | [data/](data/) | 수집 세션 원본, 동작 시점 주석, 교차검증 분할 |
 | [docs/](docs/) | 진행기록, 실험 결과, 계획서, 시행착오 정리 |
@@ -30,7 +30,7 @@ IMU 100 Hz → 온라인 영점 → TCN 판정(50 ms마다) → 발행 ──BLE
 1. [설치 안내](docs/설치안내.md)에 따라 Arduino·Python·Android 빌드 환경을 준비한다(`setup.ps1`).
 2. [펌웨어 안내](firmware/README.md)대로 `firmware/gesture_infer`를 반지에 올린다.
 3. [앱 안내](android/README.md)대로 APK를 빌드·설치하고, `RingPilot-IMU`를 페어링한 뒤 앱에서 스와이프 제어를 켠다.
-4. 모델을 다시 학습하거나 평가할 때는 `ml/v2_return.py`(학습·채점), `ml/v2_export_c.py`(C 헤더 내보내기·일치 확인)를 쓴다. 테스트는 `ml/.venv/Scripts/python.exe -m unittest discover -s ml`.
+4. 모델을 다시 학습하거나 평가할 때는 `ml/v2_return.py`(학습·채점), `ml/v2_export_c.py`(C 헤더 내보내기·일치 확인)를 쓴다. 테스트는 `ml/tests/`에 있고 `ml/.venv/Scripts/python.exe -m unittest discover -s ml/tests -t ml`로 돌린다(C 비교 시험은 `RINGPILOT_CC`에 C 컴파일러를 지정해야 돈다).
 
 ## 확인한 것
 
