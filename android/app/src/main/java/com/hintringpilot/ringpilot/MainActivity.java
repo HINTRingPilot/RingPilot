@@ -42,6 +42,7 @@ public final class MainActivity extends Activity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final GestureRouter gestureRouter = new GestureRouter();
     private ImuBleClient client;
+    private PointerController pointer;
     private boolean swipeControl = false;  // 수집 중 스와이프가 나가지 않도록 기본은 끈다
     private volatile String connectionText = "연결 준비 중";
 
@@ -63,6 +64,7 @@ public final class MainActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);  // 쓰는 동안·수집 중 화면 꺼짐 방지
         Ui.init(this);
         client = new ImuBleClient(this, new File(getExternalFilesDir(null), "connection_log.csv"), bleListener);
+        pointer = new PointerController(mainHandler, () -> swipeControl, client::record);
         setContentView(createContentView());
         connectRing();
         mainHandler.post(statusTicker);
@@ -72,6 +74,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         collect.shutdown();  // 앱을 닫아도 세션을 끝내 PC로 옮길 수 있게 한다
+        pointer.stop();
         mainHandler.removeCallbacksAndMessages(null);
         client.stop();
         super.onDestroy();
@@ -269,11 +272,17 @@ public final class MainActivity extends Activity {
         public void onGesture(String direction, int sequence, double score) {
             mainHandler.post(() -> applyGesture(direction, sequence, score));
         }
+
+        @Override
+        public void onPointer(int state, int clicks, boolean baseline) {
+            mainHandler.post(() -> pointer.onPacket(state, clicks, baseline));
+        }
     };
 
     private void toggleSwipeControl() {
         swipeControl = !swipeControl;
         remote.setSwipeControl(swipeControl);
+        if (!swipeControl) pointer.stop();
         client.record("swipe_control", swipeControl ? "on" : "off");
         if (swipeControl && SwipeAccessibilityService.getCurrent() == null) {
             log.add("접근성 설정에서 'RingPilot 스와이프'를 켭니다.");

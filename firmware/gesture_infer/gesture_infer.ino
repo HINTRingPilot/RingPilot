@@ -3,7 +3,7 @@
 // 흐름: imu_sampler(읽기 태스크, 10 ms) → 판정 대기열 → loop
 //         └ gesture_loop: gesture_runtime(영점·입력 처리·TCN·발행 규칙·입력 지우기) → 발행을 ble_link(제스처 알림)·LED로
 //       ble_link: 연결, 상태·제스처 알림
-//       controls: 센터 스위치(클릭·일시정지·전원 끄기)와 LED, pointer: 방향 스위치 → BLE HID 마우스 커서
+//       controls: 센터 스위치(클릭·일시정지·전원 끄기)와 LED, pointer: 방향 스위치·클릭 → 포인터 알림(커서는 앱이 그린다)
 //       dev/imu_stream: 개발 빌드에서만 IMU 원시값 스트림(src/build_config.h의 RINGPILOT_IMU_STREAM)
 // 각 모듈의 규칙과 패킷 형식은 src/의 헤더 주석에 있다. 판정 코어(gesture_runtime.c, gesture_tcn.c)는 PC에서 ml/v2_export_c.py로 Keras와 같은지 확인한다.
 // 데이터 수집용(추론 없음)은 firmware/dev/imu_ble_stream이다. 스트림 형식이 같아 같은 앱이 붙는다.

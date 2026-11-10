@@ -149,14 +149,11 @@ void ble_begin() {
   beginCharacteristic(gestureEvent, CHR_PROPS_NOTIFY);
   gestureEvent.setFixedLen(kGestureBytes);
   gestureEvent.begin();
-  pointer_begin();  // HID 마우스 서비스. 기존 서비스 뒤에 두어 그 핸들을 유지한다
+  pointer_begin();  // 포인터 특성(b27a2004)은 기존 특성 뒤에 두어 그 핸들을 유지한다
 
-  // 광고 패킷은 31바이트라 HID(16비트 UUID)와 앱 서비스(128비트 UUID)를 함께 넣을 수 없다.
-  // 앱은 광고를 찾지 않고 본딩된 기기에 이름으로 바로 연결하므로, 폰이 마우스로 알아보도록 HID만 광고한다.
   Bluefruit.Advertising.addFlags(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
   Bluefruit.Advertising.addTxPower();
-  Bluefruit.Advertising.addAppearance(BLE_APPEARANCE_HID_MOUSE);
-  Bluefruit.Advertising.addService(pointer_service());
+  Bluefruit.Advertising.addService(imuService);
   Bluefruit.ScanResponse.addName();
   Bluefruit.Advertising.restartOnDisconnect(true);
   Bluefruit.Advertising.setInterval(32, 244);  // 처음 30초는 20 ms 간격으로 빠르게 광고

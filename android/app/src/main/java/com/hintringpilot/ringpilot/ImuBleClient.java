@@ -23,10 +23,10 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * 페어링된 RingPilot-IMU에 연결해 알림을 받는다: 상태(일시정지·재개 등), 보드가 발행한 제스처, IMU 원시값.
- * 패킷 형식은 firmware/gesture_infer/src/ble_link.h·imu_stream.h에 있다. 펌웨어마다 있는 특성이 다르다:
- * 사용자 빌드(gesture_infer 기본)는 상태·제스처, 개발 빌드(RINGPILOT_IMU_STREAM=1)는 셋 다, 수집 펌웨어(imu_ble_stream)는 상태·IMU.
- * 있는 특성만 차례로 구독하고, 마지막 구독이 끝나면 "수신 중"이 된다.
+ * 페어링된 RingPilot-IMU에 연결해 알림을 받는다: 상태(일시정지·재개 등), IMU 원시값, 보드가 발행한 제스처, 5방향 스위치 포인터.
+ * 패킷 형식은 firmware/gesture_infer/src/ble_link.h·pointer.h·dev/imu_stream.h에 있다. 펌웨어마다 있는 특성이 다르다:
+ * 사용자 빌드(gesture_infer 기본)는 상태·제스처·포인터, 개발 빌드(RINGPILOT_IMU_STREAM=1)는 IMU까지, 수집 펌웨어(imu_ble_stream)는 상태·IMU.
+ * 있는 특성만 SUBSCRIBE_ORDER 순서로 하나씩 구독하고, 마지막 구독이 끝나면 "수신 중"이 된다.
  * 끊기면 자동으로 다시 연결하고, 연결·일시정지·재개·제스처와 지연 측정값을 connection_log.csv에 남긴다(앱 쪽 판단 기록도 record로 같은 파일에 쓴다).
  * 콜백은 Bluetooth 스레드에서 호출된다.
  */
@@ -39,6 +39,12 @@ final class ImuBleClient {
 
         /** 보드(firmware/gesture_infer)가 발행한 제스처. direction은 UP, DOWN, LEFT, RIGHT다. */
         void onGesture(String direction, int sequence, double score);
+
+        /**
+         * 5방향 스위치 상태(비트 1 위, 2 아래, 4 왼쪽, 8 오른쪽)와 누적 클릭 수(0~255에서 돈다).
+         * baseline이면 구독 직후 첫 패킷이라 클릭 수를 기준으로만 쓴다(보드가 재부팅했을 수도 있다).
+         */
+        void onPointer(int state, int clicks, boolean baseline);
     }
 
     static final String DEVICE_NAME = "RingPilot-IMU";
@@ -46,6 +52,9 @@ final class ImuBleClient {
     private static final UUID DATA_UUID = UUID.fromString("b27a2001-8c5e-4b62-9a21-33dd714e9001");
     private static final UUID STATUS_UUID = UUID.fromString("b27a2002-8c5e-4b62-9a21-33dd714e9001");
     private static final UUID GESTURE_UUID = UUID.fromString("b27a2003-8c5e-4b62-9a21-33dd714e9001");
+    private static final UUID POINTER_UUID = UUID.fromString("b27a2004-8c5e-4b62-9a21-33dd714e9001");
+    /** 알림은 한 번에 하나씩 설정한다(쓰기가 끝나야 다음). 상태가 먼저고, 나머지는 있으면 이 순서로. */
+    private static final UUID[] SUBSCRIBE_ORDER = {STATUS_UUID, DATA_UUID, GESTURE_UUID, POINTER_UUID};
     private static final String[] GESTURE_NAMES = {"NONE", "UP", "DOWN", "LEFT", "RIGHT"};
     private static final UUID CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     private static final long RETRY_DELAY_MS = 300;
@@ -64,6 +73,7 @@ final class ImuBleClient {
     private BluetoothGatt gatt;
     private boolean running = false;
 
+    private boolean pointerBaseline = false;  // 다음 포인터 패킷이 구독 직후 첫 패킷이다(Bluetooth 스레드)
     private volatile boolean streaming = false;  // IMU 원시값을 받는 중(수집·연속 기록에 필요)
     private volatile boolean devicePaused = false;
     private volatile long missingSamples = 0;
@@ -182,9 +192,9 @@ final class ImuBleClient {
                 listener.onConnectionText("IMU 서비스를 찾지 못함 (status=" + statusCode + ")");
                 return;
             }
-            // 알림 설정은 한 번에 하나씩: 상태 → IMU(있으면) → 제스처(있으면). 쓰기가 끝나야 다음을 설정한다.
             record("characteristics", "imu=" + (service.getCharacteristic(DATA_UUID) != null)
-                    + " gesture=" + (service.getCharacteristic(GESTURE_UUID) != null));
+                    + " gesture=" + (service.getCharacteristic(GESTURE_UUID) != null)
+                    + " pointer=" + (service.getCharacteristic(POINTER_UUID) != null));
             enableNotify(g, service.getCharacteristic(STATUS_UUID));
         }
 
@@ -195,21 +205,12 @@ final class ImuBleClient {
                 return;
             }
             UUID chr = descriptor.getCharacteristic().getUuid();
-            BluetoothGattService service = g.getService(SERVICE_UUID);
-            BluetoothGattCharacteristic data = service.getCharacteristic(DATA_UUID);
-            BluetoothGattCharacteristic gesture = service.getCharacteristic(GESTURE_UUID);
-            if (STATUS_UUID.equals(chr)) {
-                if (data != null) enableNotify(g, data);
-                else if (gesture != null) enableNotify(g, gesture);
-                else subscribed();
-            } else if (DATA_UUID.equals(chr)) {
-                streaming = true;
-                if (gesture != null) enableNotify(g, gesture);
-                else subscribed();
-            } else if (GESTURE_UUID.equals(chr)) {
-                record("gesture_subscribed", "");
-                subscribed();
-            }
+            if (DATA_UUID.equals(chr)) streaming = true;
+            if (GESTURE_UUID.equals(chr)) record("gesture_subscribed", "");
+            if (POINTER_UUID.equals(chr)) pointerBaseline = true;
+            BluetoothGattCharacteristic next = nextToSubscribe(g.getService(SERVICE_UUID), chr);
+            if (next != null) enableNotify(g, next);
+            else subscribed();
         }
 
         @Override
@@ -222,6 +223,19 @@ final class ImuBleClient {
             handleNotification(characteristic.getUuid(), value);
         }
     };
+
+    /** SUBSCRIBE_ORDER에서 done 다음에 오는 특성 중 이 펌웨어에 있는 첫 번째. 없으면 null. */
+    private static BluetoothGattCharacteristic nextToSubscribe(BluetoothGattService service, UUID done) {
+        boolean after = false;
+        for (UUID uuid : SUBSCRIBE_ORDER) {
+            if (after) {
+                BluetoothGattCharacteristic chr = service.getCharacteristic(uuid);
+                if (chr != null) return chr;
+            }
+            if (uuid.equals(done)) after = true;
+        }
+        return null;
+    }
 
     /** 있는 알림을 모두 구독했다. 재연결 시간 측정의 기준점이다. */
     private void subscribed() {
@@ -255,6 +269,7 @@ final class ImuBleClient {
         if (STATUS_UUID.equals(uuid)) handleStatus(value);
         else if (DATA_UUID.equals(uuid)) handleData(value);
         else if (GESTURE_UUID.equals(uuid)) handleGesture(value);
+        else if (POINTER_UUID.equals(uuid)) handlePointer(value);
     }
 
     private void handleStatus(byte[] v) {
@@ -307,6 +322,13 @@ final class ImuBleClient {
         double score = ((v[2] & 0xFF) | ((v[3] & 0xFF) << 8)) / 1000.0;
         record("gesture", "seq=" + sequence + " dir=" + GESTURE_NAMES[index] + " score=" + score + " slot=" + readU32(v, 4));
         listener.onGesture(GESTURE_NAMES[index], sequence, score);
+    }
+
+    private void handlePointer(byte[] v) {
+        if (v.length < 3) return;
+        boolean baseline = pointerBaseline;
+        pointerBaseline = false;
+        listener.onPointer(v[1] & 0x0F, v[2] & 0xFF, baseline);
     }
 
     private void handleData(byte[] v) {

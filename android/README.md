@@ -36,7 +36,8 @@ adb shell am start -n com.hintringpilot.ringpilot/.MainActivity --es ui_preview 
 | `MainActivity` | 화면 조립(상단 막대, 탭), 링 연결과 권한, 받은 제스처 실행과 기록, 화면 미리보기 |
 | `ImuBleClient` | BLE 연결·자동 재연결, IMU·상태·제스처 알림 해석, `connection_log.csv` 기록 |
 | `GestureRouter` | 제스처 → 동작 판단(모드 전환, 방향 → 스와이프, 제어·접근성 꺼짐). 안드로이드 의존이 없어 JDK로 시험한다 |
-| `SwipeAccessibilityService` | 다른 앱에 스와이프 주입, 모드 배너 |
+| `SwipeAccessibilityService` | 다른 앱에 스와이프·탭 주입, 모드 배너와 포인터 커서 그리기 |
+| `PointerController` | 반지 5방향 스위치 → 커서 이동(누르는 동안 일정 속도), 클릭 → 커서 위치 탭, 마지막 입력 1.5초 뒤 커서 숨김 |
 | `RemotePanel` | 리모컨 화면 |
 | `GuideDialogs` | 페어링·연결 안내 팝업 |
 | `dev/CollectPanel` | 수집 화면과 안내 수집 흐름(음성·소리 안내, 다시 하기, 일시정지) |
@@ -117,6 +118,8 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 Android Studio 없이 빌드할 때는 JDK 17(예: Temurin 17)을 `JAVA_HOME`으로 두고, 명령줄 SDK를 `.tools/android-sdk`에 설치한 뒤 `android/local.properties`에 `sdk.dir=C:/<저장소 경로>/.tools/android-sdk`를 적는다(경로는 `/`로 쓴다. `\`를 쓰면 `\u`가 유니코드 이스케이프로 읽혀 빌드가 실패한다).
 
 ## 제스처 처리와 기록
+
+5방향 스위치 포인터: 반지의 방향 스위치를 누르는 동안 커서가 일정 속도(1초에 화면 짧은 변의 절반)로 움직이고, 센터를 짧게 누르면 커서 위치를 탭한다. 커서는 평소 숨겨져 있다가 입력이 있을 때 보이고, 마지막 입력 1.5초 뒤 사라진다. 스와이프 제어가 켜져 있을 때만 동작한다. 탭은 `pointer_tap`, 결과는 `pointer_tap_result`로 연결 기록에 남는다.
 
 보드가 `firmware/gesture_infer`면 앱은 발행 알림(`b27a2003`)을 받아 화면에 표시하고, "스와이프 제어 켜기"를 누르면 접근성 서비스로 스와이프를 주입한다(기본은 꺼짐). 좌우 제스처는 구분 없이 상하·좌우 모드를 바꾸고 화면 위쪽에 모드를 1.2초 표시한다. 상하 모드는 위·아래 제스처가 위·아래 스와이프, 좌우 모드는 위 = 왼쪽, 아래 = 오른쪽 스와이프다. 앱을 다시 시작하면 상하 모드로 돌아간다. 수집 펌웨어에는 이 특성이 없어 건너뛴다. 전용 백그라운드 서비스는 없어 앱이 정리되면 끊긴다.
 

@@ -17,7 +17,7 @@
 ```text
 imu_sampler(읽기 태스크, 10 ms) → 판정 대기열 → gesture_loop → gesture_runtime → 발행 → ble_link(제스처 알림), controls(LED)
                                 └(개발 빌드만) dev/imu_stream: 전송 대기열 → IMU 스트림
-controls: 센터 스위치(클릭·일시정지·전원 끄기)와 LED → pointer: 방향 스위치를 BLE HID 마우스 커서로
+controls: 센터 스위치(클릭·일시정지·전원 끄기)와 LED → pointer: 방향 스위치 상태·클릭 알림(커서는 앱이 그린다)
 ```
 
 | 파일 | 맡는 일 |
@@ -29,7 +29,7 @@ controls: 센터 스위치(클릭·일시정지·전원 끄기)와 LED → point
 | `src/dev/imu_stream` | (개발 빌드만) 전송 대기열과 IMU 원시값 스트림 패킷 |
 | `src/build_config.h` | 빌드 설정. `RINGPILOT_IMU_STREAM`(기본 0 = 사용자 빌드) |
 | `src/controls` | 센터 스위치·LED, 일시정지·재개·System OFF |
-| `src/pointer` | 5방향 스위치 포인터(BLE HID 마우스). 방향을 누르는 동안 일정 속도 이동, 센터 짧게 = 왼쪽 클릭. 방향 핀 매핑은 미확인 |
+| `src/pointer` | 5방향 스위치 포인터. 방향 상태와 클릭 수를 알림(b27a2004)으로 보내고, 커서 그리기·탭은 앱이 한다. 방향 핀 매핑은 미확인 |
 | `src/gesture_runtime.c` | **판정 코어.** 온라인 영점, 50 ms마다 판정, 발행 규칙(0.8·차이 0.2·2회 연속, 잠금·재무장), 입력 지우기 |
 | `src/gesture_tcn.c` | 입력 처리(자이로 + 회전각)와 TCN 추론. 마지막 시점에 필요한 칸만 계산 |
 | `src/gesture_weights.h` | 모델 가중치. `ml/v2_export_c.py export`가 만든다(직접 고치지 않는다) |
