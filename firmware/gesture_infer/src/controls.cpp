@@ -5,6 +5,7 @@
 #include "ble_link.h"
 #include "gesture_loop.h"
 #include "imu_sampler.h"
+#include "pointer.h"
 
 static const uint8_t kCenterPin = 1;            // D1, 사용자 확인
 static const uint8_t kChargeCurrentPin = 22;    // P0.13(HICHG). 입력(open)이면 50mA로 알려짐
@@ -17,7 +18,7 @@ static const uint32_t kBlinkOnMs = 30;
 
 static uint32_t pressStart = 0;   // 0이면 누르고 있지 않다
 static bool pauseCueShown = false;
-static uint32_t clickCount = 0;   // 짧은 클릭 수. 마우스 클릭 연결 전까지는 세기만 한다
+static uint32_t clickCount = 0;   // 짧은 클릭 수(마우스 왼쪽 클릭으로 보낸 수)
 static uint32_t gestureLedUntil = 0;
 static bool gestureLedOn = false;
 static uint32_t lastBlink = 0;
@@ -90,8 +91,12 @@ static void pollCenterSwitch(uint32_t nowMs) {
   if (held < kDebounceMs) return;
 
   if (held < kPauseHoldMs) {
-    if (device_paused()) resumeStreaming(nowMs);
-    else clickCount++;
+    if (device_paused()) {
+      resumeStreaming(nowMs);
+    } else {
+      clickCount++;
+      pointer_click();
+    }
   } else if (!device_paused()) {
     enterPause();
   }
@@ -136,6 +141,7 @@ void controls_begin() {
 
 void controls_poll(uint32_t nowMs) {
   pollCenterSwitch(nowMs);
+  pointer_poll(nowMs);  // 일시정지 중에도 동작한다
   pollLed(nowMs);
 }
 
