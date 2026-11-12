@@ -6,7 +6,8 @@
   export <모델.keras> <prep.json> [출력.h]                 가중치·전처리 값·계산 칸 표 헤더 작성(기본은 스케치의 src)
   check --split S-P5 --seed N --fold K --epoch E --tag T  실제 검증 클립으로 C(PC 빌드)와 Keras 비교(클립·연속 스트림)
   verify <모델.keras> <prep.json>                          전체 클립을 이어 붙인 연속 스트림으로 C(PC 빌드)와 Keras 비교
-C 컴파일러: 환경 변수 RINGPILOT_CC(공백으로 나눈 명령) 또는 PATH의 gcc·clang.
+C 컴파일러: RINGPILOT_CC(실행 경로 또는 추가 인수가 있는 명령) 또는 PATH의 gcc·clang.
+공백 경로는 큰따옴표로 감싼다. Windows는 CommandLineToArgvW, 다른 OS는 POSIX 인용 규칙을 쓴다(shell은 실행하지 않음).
 """
 import argparse
 import json
@@ -144,10 +145,64 @@ def table_predict(model, x, window=160):
     return np.array(scores, dtype=np.float32)
 
 
+def compiler_command(command):
+    """실행 파일의 공백·Windows backslash를 보존해 shell 없는 argv를 만든다."""
+    command = command.strip()
+    if not command:
+        raise ValueError("RINGPILOT_CC가 비어 있다")
+    candidate = command
+    if len(candidate) >= 2 and candidate[0] == candidate[-1] and candidate[0] in "\"'":
+        candidate = candidate[1:-1]
+    if not candidate.strip():
+        raise ValueError("RINGPILOT_CC 실행 파일이 비어 있다")
+    try:
+        if Path(candidate).is_file():
+            return [candidate]
+    except OSError:
+        # 전체 명령을 경로로 탐색하다 길이 제한에 걸려도 argv 파싱은 가능하다.
+        pass
+    if os.name != "nt":
+        parts = shlex.split(command, posix=True)
+        if not parts or not parts[0].strip():
+            raise ValueError("RINGPILOT_CC 실행 파일이 비어 있다")
+        return parts
+
+    # Windows의 parser는 닫히지 않은 따옴표도 허용하므로 잘못된 설정은 먼저 거절한다.
+    quoted, slashes = False, 0
+    for char in command:
+        if char == "\\":
+            slashes += 1
+            continue
+        if char == '"' and slashes % 2 == 0:
+            quoted = not quoted
+        slashes = 0
+    if quoted:
+        raise ValueError("RINGPILOT_CC의 큰따옴표가 닫히지 않았다")
+    import ctypes
+    from ctypes import wintypes
+    parse = ctypes.WinDLL("shell32", use_last_error=True).CommandLineToArgvW
+    parse.argtypes = (wintypes.LPCWSTR, ctypes.POINTER(ctypes.c_int))
+    parse.restype = ctypes.POINTER(wintypes.LPWSTR)
+    free = ctypes.WinDLL("kernel32", use_last_error=True).LocalFree
+    free.argtypes = (ctypes.c_void_p,)
+    free.restype = ctypes.c_void_p
+    count = ctypes.c_int()
+    argv = parse(command, ctypes.byref(count))
+    if not argv:
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        parts = [argv[index] for index in range(count.value)]
+        if not parts or not parts[0].strip():
+            raise ValueError("RINGPILOT_CC 실행 파일이 비어 있다")
+        return parts
+    finally:
+        free(ctypes.cast(argv, ctypes.c_void_p))
+
+
 def find_cc():
     env = os.environ.get("RINGPILOT_CC")
-    if env:
-        return shlex.split(env, posix=False)
+    if env is not None:
+        return compiler_command(env)
     for name in ("gcc", "clang"):
         found = shutil.which(name)
         if found:

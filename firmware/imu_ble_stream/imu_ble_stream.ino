@@ -12,6 +12,8 @@
 #include <bluefruit.h>
 #include <LSM6DS3.h>
 #include <Wire.h>
+#include <RingPilotTransport.h>
+#include <RingPilotBleMailbox.h>
 
 static const uint32_t kSampleIntervalUs = 10000;  // 100 Hz
 static const uint8_t kCenterPin = 1;               // D1, 사용자 확인
@@ -73,81 +75,91 @@ static void ledsOff() {
   digitalWrite(LED_BLUE, HIGH);
 }
 
+static ringpilot::Transport transport;
+static ringpilot::BleMailbox linkMailbox;
+static ringpilot::BleMailbox::Snapshot loopLink = {BLE_CONN_HANDLE_INVALID, 0, 0, false, false, false};
+static_assert(ringpilot::Transport::NotifyBudgetMs >= BLE_GENERIC_TIMEOUT + 20,
+              "Transport wait budget must cover the installed Bluefruit timeout");
+
 static bool connected() {
-  return connHandle != BLE_CONN_HANDLE_INVALID;
+  return connHandle != BLE_CONN_HANDLE_INVALID && linkMailbox.current(loopLink);
 }
 
 static bool dataSubscribed() {
   return connected() && imuStream.notifyEnabled(connHandle);
 }
 
-// 상태 알림은 데이터 알림 직후라 송신 버퍼가 차서 실패할 수 있다. 실패하면 대기열에 두고 loop에서 순서대로 다시 보낸다.
-// 재개 직후 "재개"와 "첫 데이터"가 연달아 생기므로 하나만 보관하면 앞의 알림을 덮어쓴다.
-static const uint8_t kStatusQueueSize = 4;
-static uint8_t statusQueue[kStatusQueueSize][10];
-static uint8_t statusQueueHead = 0;  // 다음에 보낼 위치
-static uint8_t statusQueueCount = 0;
-
-static void flushStatus() {
-  if (statusQueueCount == 0) return;
-  if (!connected() || !imuStatus.notifyEnabled(connHandle)) {
-    statusQueueCount = 0;  // 구독자가 없으면 버린다. 마지막 값은 read로도 읽을 수 있다
-    return;
-  }
-  while (statusQueueCount > 0) {
-    if (!imuStatus.notify(connHandle, statusQueue[statusQueueHead], 10)) return;  // 다음 loop에서 재시도
-    statusQueueHead = (statusQueueHead + 1) % kStatusQueueSize;
-    statusQueueCount--;
-  }
-}
-
+// Only loop calls these queue operations. Callbacks publish bounded snapshots.
 static void sendStatus(StatusEvent event) {
-  uint32_t now = millis();
-  uint32_t sinceTrigger = now - triggerMs;
+  const uint32_t now = millis();
+  const uint32_t sinceTrigger = now - triggerMs;
   uint8_t packet[10];
   packet[0] = state;
   packet[1] = event;
   memcpy(packet + 2, &now, 4);
   memcpy(packet + 6, &sinceTrigger, 4);
   imuStatus.write(packet, sizeof(packet));
+  transport.enqueueStatus(packet, event == EVENT_RESUMED);
+}
 
-  if (statusQueueCount == kStatusQueueSize) {  // 가득 차면 가장 오래된 알림을 버린다
-    statusQueueHead = (statusQueueHead + 1) % kStatusQueueSize;
-    statusQueueCount--;
-  }
-  memcpy(statusQueue[(statusQueueHead + statusQueueCount) % kStatusQueueSize], packet, sizeof(packet));
-  statusQueueCount++;
-  flushStatus();
+static void applyLinkMailbox() {
+  loopLink = linkMailbox.snapshot(true);
+  connHandle = loopLink.handle;
+  transport.synchronize(loopLink.linkEpoch, loopLink.gestureEpoch,
+                        connHandle != BLE_CONN_HANDLE_INVALID,
+                        loopLink.statusEnabled, loopLink.gestureEnabled);
+  if (loopLink.statusSubscribed) sendStatus(EVENT_SUBSCRIBED);
+}
+
+static bool sendStatusPacket(void* context, const uint8_t* packet, uint8_t length) {
+  (void) context;
+  bool boundary;
+  const bool accepted = linkMailbox.notifyCurrent(loopLink, ringpilot::BleMailbox::Status,
+                                                 imuStatus, packet, length, boundary);
+  if (boundary) transport.noteInFlightBoundary();
+  return accepted;
+}
+
+static bool sendImuPacket(const uint8_t* packet, uint8_t length) {
+  if (!transport.imuReady()) return false;
+  bool boundary;
+  const bool accepted = linkMailbox.notifyCurrent(loopLink, ringpilot::BleMailbox::Data,
+                                                 imuStream, packet, length, boundary);
+  if (boundary) transport.noteInFlightBoundary();
+  return accepted;
 }
 
 static void requestConnParams(uint16_t interval, uint16_t latency, uint16_t timeout) {
   if (!connected()) return;
-  Bluefruit.Connection(connHandle)->requestConnectionParameter(interval, latency, timeout);
+  BLEConnection* conn = Bluefruit.Connection(connHandle);
+  if (conn) conn->requestConnectionParameter(interval, latency, timeout);
 }
 
 static void onConnect(uint16_t handle) {
-  connHandle = handle;
+  linkMailbox.onConnect(handle);
   BLEConnection* conn = Bluefruit.Connection(handle);
-  conn->requestPHY();
-  conn->requestDataLengthUpdate();
-  conn->requestMtuExchange(247);
+  if (conn) {
+    conn->requestPHY();
+    conn->requestDataLengthUpdate();
+    conn->requestMtuExchange(247);
+  }
 }
 
 static void onDisconnect(uint16_t handle, uint8_t reason) {
-  (void) handle;
   (void) reason;
-  connHandle = BLE_CONN_HANDLE_INVALID;
+  linkMailbox.onDisconnect(handle);
 }
 
 static void onStatusCccd(uint16_t handle, BLECharacteristic* chr, uint16_t value) {
-  (void) handle;
   (void) chr;
-  if (value & BLE_GATT_HVX_NOTIFICATION) sendStatus(EVENT_SUBSCRIBED);
+  linkMailbox.onStatusCccd(handle, value);
 }
 
 static uint16_t samplesPerPacket() {
   if (!connected()) return 1;
-  uint16_t payload = Bluefruit.Connection(connHandle)->getMtu() - 3;
+  BLEConnection* conn = Bluefruit.Connection(connHandle);
+  if (!conn) return 1;
+  uint16_t payload = conn->getMtu() - 3;
   uint16_t count = (payload - kHeaderBytes) / kSampleBytes;
   if (count < 1) count = 1;
   if (count > kMaxSamplesPerPacket) count = kMaxSamplesPerPacket;
@@ -227,7 +239,7 @@ static void pollSending() {
     memcpy(packet + kHeaderBytes + i * kSampleBytes, ring[(ringTail + i) % kRingSize].v, kSampleBytes);
   }
 
-  if (imuStream.notify(connHandle, packet, kHeaderBytes + run * kSampleBytes)) {
+  if (sendImuPacket(packet, kHeaderBytes + run * kSampleBytes)) {
     ringTail += run;
     sentPackets++;
     if (awaitingFirstData) {
@@ -238,6 +250,7 @@ static void pollSending() {
 }
 
 static void enterPause() {
+  transport.pause();
   state = STATE_PAUSED;
   imuPowerDown();
   ringTail = ringHead;
@@ -413,10 +426,20 @@ void setup() {
   lastMicros = micros();
 }
 
+static uint32_t transportClock(void* context) {
+  (void) context;
+  return millis();
+}
+
+static void dispatchImu(void* context) {
+  (void) context;
+  if (dataSubscribed()) pollSending();
+}
+
 void loop() {
+  applyLinkMailbox();
   uint32_t nowMs = millis();
   updateClock();
-  flushStatus();
   pollCenterSwitch(nowMs);
   pollLed(nowMs);
 
@@ -425,10 +448,10 @@ void loop() {
   }
 
   bool streaming = state == STATE_STREAMING && dataSubscribed();
-  if (streaming) {
-    pollSampling();
-    pollSending();
-  } else {
+  if (streaming) pollSampling();
+  applyLinkMailbox();
+  transport.runCycle(transportClock, sendStatusPacket, nullptr, streaming ? dispatchImu : nullptr, nullptr);
+  if (!streaming) {
     ringTail = ringHead;          // 구독 전·일시정지 중 쌓인 과거 데이터는 보내지 않는다
     haveSample = false;
     delay(kIdleLoopDelayMs);      // 코어가 저전력 대기에 들어갈 수 있게 쉰다

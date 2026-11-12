@@ -21,6 +21,8 @@
 #include <bluefruit.h>
 #include <LSM6DS3.h>
 #include <Wire.h>
+#include <RingPilotTransport.h>
+#include <RingPilotBleMailbox.h>
 
 #include "src/gesture_runtime.h"
 
@@ -123,81 +125,105 @@ static void ledsOff() {
   digitalWrite(LED_BLUE, HIGH);
 }
 
+static ringpilot::Transport transport;
+static ringpilot::BleMailbox linkMailbox;
+static ringpilot::BleMailbox::Snapshot loopLink = {BLE_CONN_HANDLE_INVALID, 0, 0, false, false, false};
+static_assert(ringpilot::Transport::NotifyBudgetMs >= BLE_GENERIC_TIMEOUT + 20,
+              "Transport wait budget must cover the installed Bluefruit timeout");
+
 static bool connected() {
-  return connHandle != BLE_CONN_HANDLE_INVALID;
+  return connHandle != BLE_CONN_HANDLE_INVALID && linkMailbox.current(loopLink);
 }
 
 static bool dataSubscribed() {
   return connected() && imuStream.notifyEnabled(connHandle);
 }
 
-// 상태 알림은 데이터 알림 직후라 송신 버퍼가 차서 실패할 수 있다. 실패하면 대기열에 두고 loop에서 순서대로 다시 보낸다.
-// 재개 직후 "재개"와 "첫 데이터"가 연달아 생기므로 하나만 보관하면 앞의 알림을 덮어쓴다.
-static const uint8_t kStatusQueueSize = 4;
-static uint8_t statusQueue[kStatusQueueSize][10];
-static uint8_t statusQueueHead = 0;  // 다음에 보낼 위치
-static uint8_t statusQueueCount = 0;
-
-static void flushStatus() {
-  if (statusQueueCount == 0) return;
-  if (!connected() || !imuStatus.notifyEnabled(connHandle)) {
-    statusQueueCount = 0;  // 구독자가 없으면 버린다. 마지막 값은 read로도 읽을 수 있다
-    return;
-  }
-  while (statusQueueCount > 0) {
-    if (!imuStatus.notify(connHandle, statusQueue[statusQueueHead], 10)) return;  // 다음 loop에서 재시도
-    statusQueueHead = (statusQueueHead + 1) % kStatusQueueSize;
-    statusQueueCount--;
-  }
-}
-
+// Only loop calls these queue operations. Callbacks publish bounded snapshots.
 static void sendStatus(StatusEvent event) {
-  uint32_t now = millis();
-  uint32_t sinceTrigger = now - triggerMs;
+  const uint32_t now = millis();
+  const uint32_t sinceTrigger = now - triggerMs;
   uint8_t packet[10];
   packet[0] = state;
   packet[1] = event;
   memcpy(packet + 2, &now, 4);
   memcpy(packet + 6, &sinceTrigger, 4);
   imuStatus.write(packet, sizeof(packet));
+  transport.enqueueStatus(packet, event == EVENT_RESUMED);
+}
 
-  if (statusQueueCount == kStatusQueueSize) {  // 가득 차면 가장 오래된 알림을 버린다
-    statusQueueHead = (statusQueueHead + 1) % kStatusQueueSize;
-    statusQueueCount--;
-  }
-  memcpy(statusQueue[(statusQueueHead + statusQueueCount) % kStatusQueueSize], packet, sizeof(packet));
-  statusQueueCount++;
-  flushStatus();
+static void applyLinkMailbox() {
+  loopLink = linkMailbox.snapshot(true);
+  connHandle = loopLink.handle;
+  transport.synchronize(loopLink.linkEpoch, loopLink.gestureEpoch,
+                        connHandle != BLE_CONN_HANDLE_INVALID,
+                        loopLink.statusEnabled, loopLink.gestureEnabled);
+  if (loopLink.statusSubscribed) sendStatus(EVENT_SUBSCRIBED);
+}
+
+static bool sendStatusPacket(void* context, const uint8_t* packet, uint8_t length) {
+  (void) context;
+  bool boundary;
+  const bool accepted = linkMailbox.notifyCurrent(loopLink, ringpilot::BleMailbox::Status,
+                                                 imuStatus, packet, length, boundary);
+  if (boundary) transport.noteInFlightBoundary();
+  return accepted;
+}
+
+static bool sendImuPacket(const uint8_t* packet, uint8_t length) {
+  if (!transport.imuReady()) return false;
+  bool boundary;
+  const bool accepted = linkMailbox.notifyCurrent(loopLink, ringpilot::BleMailbox::Data,
+                                                 imuStream, packet, length, boundary);
+  if (boundary) transport.noteInFlightBoundary();
+  return accepted;
 }
 
 static void requestConnParams(uint16_t interval, uint16_t latency, uint16_t timeout) {
   if (!connected()) return;
-  Bluefruit.Connection(connHandle)->requestConnectionParameter(interval, latency, timeout);
+  BLEConnection* conn = Bluefruit.Connection(connHandle);
+  if (conn) conn->requestConnectionParameter(interval, latency, timeout);
 }
 
 static void onConnect(uint16_t handle) {
-  connHandle = handle;
+  linkMailbox.onConnect(handle);
   BLEConnection* conn = Bluefruit.Connection(handle);
-  conn->requestPHY();
-  conn->requestDataLengthUpdate();
-  conn->requestMtuExchange(247);
+  if (conn) {
+    conn->requestPHY();
+    conn->requestDataLengthUpdate();
+    conn->requestMtuExchange(247);
+  }
 }
 
 static void onDisconnect(uint16_t handle, uint8_t reason) {
-  (void) handle;
   (void) reason;
-  connHandle = BLE_CONN_HANDLE_INVALID;
+  linkMailbox.onDisconnect(handle);
 }
 
 static void onStatusCccd(uint16_t handle, BLECharacteristic* chr, uint16_t value) {
-  (void) handle;
   (void) chr;
-  if (value & BLE_GATT_HVX_NOTIFICATION) sendStatus(EVENT_SUBSCRIBED);
+  linkMailbox.onStatusCccd(handle, value);
+}
+
+static void onGestureCccd(uint16_t handle, BLECharacteristic* chr, uint16_t value) {
+  (void) chr;
+  linkMailbox.onGestureCccd(handle, value);
+}
+
+static bool sendGesturePacket(void* context, const uint8_t* packet, uint8_t length) {
+  (void) context;
+  bool boundary;
+  const bool accepted = linkMailbox.notifyCurrent(loopLink, ringpilot::BleMailbox::Gesture,
+                                                 gestureEvent, packet, length, boundary);
+  if (boundary) transport.noteInFlightBoundary();
+  return accepted;
 }
 
 static uint16_t samplesPerPacket() {
   if (!connected()) return 1;
-  uint16_t payload = Bluefruit.Connection(connHandle)->getMtu() - 3;
+  BLEConnection* conn = Bluefruit.Connection(connHandle);
+  if (!conn) return 1;
+  uint16_t payload = conn->getMtu() - 3;
   uint16_t count = (payload - kHeaderBytes) / kSampleBytes;
   if (count < 1) count = 1;
   if (count > kMaxSamplesPerPacket) count = kMaxSamplesPerPacket;
@@ -250,14 +276,15 @@ static void showGestureLed(int8_t cls) {
 static void sendGesture(const GrDecision& d, uint32_t slot) {
   issuedCount++;
   showGestureLed(d.issued);
-  if (!connected() || !gestureEvent.notifyEnabled(connHandle)) return;
+  applyLinkMailbox();
+  if (!transport.gestureReady()) return;
   uint8_t packet[8];
   const uint16_t score = static_cast<uint16_t>(d.scores[d.issued] * 1000.0f);
   packet[0] = gestureSeq++;
   packet[1] = static_cast<uint8_t>(d.issued);
   memcpy(packet + 2, &score, 2);
   memcpy(packet + 4, &slot, 4);
-  gestureEvent.notify(connHandle, packet, sizeof(packet));
+  transport.enqueueGesture(packet, millis());
 }
 
 static void startCycleCounter() {
@@ -317,6 +344,13 @@ static void printLatency() {
   Serial.print("Filled slots: "); Serial.println(filledSlots);
   Serial.print("Reset gaps: "); Serial.println(resetGaps);
   Serial.print("Issued: "); Serial.println(issuedCount);
+  const ringpilot::Transport::Statistics& tx = transport.stats();
+  Serial.print("TX accepted/retry/fail/expired/overflow: ");
+  Serial.print(tx.accepted); Serial.print(" / "); Serial.print(tx.retries); Serial.print(" / ");
+  Serial.print(tx.failures); Serial.print(" / "); Serial.print(tx.expired); Serial.print(" / "); Serial.println(tx.overflow);
+  Serial.print("TX discarded link/subscription/pause, in-flight boundary: ");
+  Serial.print(tx.linkDiscard); Serial.print(" / "); Serial.print(tx.subscriptionDiscard); Serial.print(" / ");
+  Serial.print(tx.pausedDiscard); Serial.print(" / "); Serial.println(tx.inFlightBoundary);
   Serial.print("Dropped samples (ring overflow): "); Serial.println(droppedSamples);
   Serial.print("Connected/data subscribed: "); Serial.print(connected()); Serial.print(" / "); Serial.println(dataSubscribed());
   if (connected()) {
@@ -325,6 +359,7 @@ static void printLatency() {
 }
 
 static void resetLatency() {
+  transport.resetStatistics();
   decisionCount = 0;
   sampleOnlyMaxUs = 0;
   filledSlots = 0;
@@ -453,7 +488,7 @@ static void pollSending() {
     memcpy(packet + kHeaderBytes + i * kSampleBytes, ring[(ringTail + i) % kRingSize].v, kSampleBytes);
   }
 
-  if (imuStream.notify(connHandle, packet, kHeaderBytes + run * kSampleBytes)) {
+  if (sendImuPacket(packet, kHeaderBytes + run * kSampleBytes)) {
     ringTail += run;
     sentPackets++;
     if (awaitingFirstData) {
@@ -464,6 +499,7 @@ static void pollSending() {
 }
 
 static void enterPause() {
+  transport.pause();
   xSemaphoreTake(imuMutex, portMAX_DELAY);
   state = STATE_PAUSED;
   imuPowerDown();
@@ -639,6 +675,7 @@ void setup() {
   gestureEvent.setProperties(CHR_PROPS_NOTIFY);
   gestureEvent.setPermission(SECMODE_OPEN, SECMODE_NO_ACCESS);
   gestureEvent.setFixedLen(8);
+  gestureEvent.setCccdWriteCallback(onGestureCccd);
   gestureEvent.begin();
   gr_reset();
   startCycleCounter();
@@ -658,9 +695,19 @@ void setup() {
   xTaskCreate(samplerTask, "imu", 512, nullptr, TASK_PRIO_HIGH, nullptr);
 }
 
+static uint32_t transportClock(void* context) {
+  (void) context;
+  return millis();
+}
+
+static void dispatchImu(void* context) {
+  (void) context;
+  if (dataSubscribed()) pollSending();
+}
+
 void loop() {
+  applyLinkMailbox();
   uint32_t nowMs = millis();
-  flushStatus();
   pollCenterSwitch(nowMs);
   pollLed(nowMs);
 
@@ -673,10 +720,13 @@ void loop() {
 
   if (state == STATE_STREAMING) {
     drainGesture();               // 추론은 구독과 상관없이 돈다
-    if (dataSubscribed()) pollSending();
-    else ringTail = ringHead;     // 구독 전에 쌓인 과거 데이터는 보내지 않는다
+    applyLinkMailbox();
+    transport.runCycle(transportClock, sendStatusPacket, sendGesturePacket, dispatchImu, nullptr);
+    if (!dataSubscribed()) ringTail = ringHead; // 구독 전에 쌓인 과거 데이터는 보내지 않는다
     delay(1);                     // 할 일이 없을 때 CPU를 쉬게 한다. 읽기는 태스크가 하므로 밀리지 않는다
   } else {
+    applyLinkMailbox();
+    transport.sendStatus(sendStatusPacket, nullptr);
     ringTail = ringHead;          // 일시정지 중 쌓인 과거 데이터는 보내지 않는다
     delay(kIdleLoopDelayMs);      // 코어가 저전력 대기에 들어갈 수 있게 쉰다
   }

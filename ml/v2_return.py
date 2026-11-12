@@ -430,6 +430,8 @@ def keep_awake():
 def cmd_run_all(parallel, tag=None, splits=SPLITS, save_models=False):
     """결과가 없는 (split, seed)를 돌린다. 로그는 저장소에 있으므로 덮어쓰지 않는다:
     하나라도 이미 있으면 아무것도 시작하지 않는다. 재실행은 새 tag로 한다."""
+    if parallel < 1:
+        raise ValueError("parallel은 1 이상이어야 한다")
     keep_awake()
     jobs = [(sp, s) for sp in splits for s in v2.SEEDS if not result_path(LABEL, sp, s, tag).exists()]
     logs = log_dir(tag)
@@ -550,11 +552,69 @@ def epoch_stats(seed_results, epoch, scoring, skip=frozenset(), only=None):
     return out
 
 
+def validate_source_score(source):
+    """요약 계산에서 사용하는 값의 모양·수치를 결과 파일 경계에서 검사한다."""
+    if (not isinstance(source, dict) or not isinstance(source.get("source_path"), str)
+            or not source["source_path"] or not isinstance(source.get("counts"), dict)
+            or not isinstance(source.get("events"), list) or not isinstance(source.get("delays_ms"), list)):
+        raise ValueError("원본별 채점 구조가 다르다")
+    if any(type(count) is not int or count < 0 for count in source["counts"].values()):
+        raise ValueError("채점 count는 음수가 아닌 정수여야 한다")
+
+    def finite_number(value):
+        return type(value) in (int, float) and np.isfinite(value)
+
+    if any(not finite_number(delay) for delay in source["delays_ms"]):
+        raise ValueError("채점 지연은 유한한 수여야 한다")
+    for event in source["events"]:
+        if (not isinstance(event, list) or len(event) != 3 or not finite_number(event[0])
+                or type(event[1]) is not int or not 0 <= event[1] < len(CLASSES)
+                or not isinstance(event[2], str)):
+            raise ValueError("발행 기록은 [유한한 시각, 클래스 번호, 종류]여야 한다")
+
+
+def summary_results(splits, tag):
+    """요청 결과를 모두 읽고 검증한다. 누락·잘못된 결과로 요약 파일을 만들지 않는다."""
+    if not splits:
+        raise ValueError("요약할 split을 하나 이상 지정해야 한다")
+    paths = {(sp, seed): result_path(LABEL, sp, seed, tag) for sp in splits for seed in v2.SEEDS}
+    missing = [path for path in paths.values() if not path.is_file()]
+    if missing:
+        raise FileNotFoundError(f"요약 결과 누락 (tag={tag!r}):\n" + "\n".join(str(p) for p in missing))
+    results = {}
+    for (split, seed), path in paths.items():
+        try:
+            result = json.loads(path.read_text(encoding="utf-8"))
+            if any(result[key] != value for key, value in (("label", LABEL), ("split", split), ("seed", seed))):
+                raise ValueError("label/split/seed가 요청과 다르다")
+            if not isinstance(result["folds"], list) or not result["folds"]:
+                raise ValueError("fold 결과가 비어 있다")
+            for fold in result["folds"]:
+                for epoch in v2.EPOCH_CANDIDATES:
+                    scores = fold["per_epoch"][str(epoch)]
+                    if not isinstance(scores, dict):
+                        raise ValueError(f"E{epoch} 채점 구조가 다르다")
+                    # extreme_window가 없는 과거 결과는 rescored에서 new_window로 보충한다.
+                    for scoring in SCORINGS:
+                        panel = scores.get(scoring, scores["new_window"])
+                        if (not isinstance(panel, dict) or not isinstance(panel.get("per_source"), list)
+                                or not panel["per_source"]):
+                            raise ValueError(f"E{epoch} {scoring} 원본별 채점이 비어 있다")
+                        for source in panel["per_source"]:
+                            validate_source_score(source)
+        except (ValueError, KeyError, TypeError) as error:
+            raise ValueError(f"요약 결과를 읽을 수 없다: {path}: {error}") from error
+        results[(split, seed)] = result
+    return results
+
+
 def cmd_summarize(name="summary.json", tag=None, exclude_weak=False, splits=SPLITS):
     target = OUT / name
     if target.exists():
         raise FileExistsError(f"{target}가 이미 있다")
-    labels = [LABEL] if all(result_path(LABEL, sp, s, tag).exists() for sp in splits for s in v2.SEEDS) else []
+    splits = tuple(splits)
+    results = summary_results(splits, tag)
+    labels = [LABEL]
     weak = load_weak()
     skip = weak if exclude_weak else frozenset()
     _, by_path, nb = load()
@@ -565,7 +625,7 @@ def cmd_summarize(name="summary.json", tag=None, exclude_weak=False, splits=SPLI
                "panels": {}}
     for lab in labels:
         for sp in splits:
-            res = [rescored(json.loads(result_path(lab, sp, s, tag).read_text(encoding="utf-8")), "extreme_window", by_path, nb)
+            res = [rescored(results[(sp, s)], "extreme_window", by_path, nb)
                    for s in v2.SEEDS]
             panel = {}
             for sc in SCORINGS:
@@ -592,6 +652,13 @@ def print_table(summary):
                       f"none {s['no_issue_rate']*100:4.1f}% bg {s['background_false_per_clip']:.2f}")
 
 
+def positive_parallel(value):
+    count = int(value)
+    if count < 1:
+        raise argparse.ArgumentTypeError("parallel은 1 이상이어야 한다")
+    return count
+
+
 def main():
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -602,7 +669,7 @@ def main():
     r.add_argument("--tag")
     r.add_argument("--save-models", action="store_true", help="fold마다 후보 E 시점 모델과 전처리 값을 저장한다")
     a = sub.add_parser("run-all")
-    a.add_argument("--parallel", type=int, default=8)
+    a.add_argument("--parallel", type=positive_parallel, default=8)
     a.add_argument("--labels", nargs="+", choices=LABELS, default=list(LABELS))
     a.add_argument("--splits", nargs="+", choices=v2.SPLIT_NAMES, default=list(SPLITS))
     a.add_argument("--tag")

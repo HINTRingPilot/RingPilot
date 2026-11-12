@@ -35,23 +35,33 @@ adb shell am start -n com.hintringpilot.ringpilot/.MainActivity --es ui_preview 
 1. 방향을 음성으로 알려준다("위" 등).
 2. **삑**: 기록이 시작된다. 가만히 있는다.
 3. **삐빅**(1초 뒤): 이때 동작한다. 이동 후 자연스럽게 원위치로 돌아온다.
-4. 4초가 지나면 자동으로 저장하고 다음 회차로 넘어간다.
+4. 400개 샘플을 받은 뒤 CSV와 시각 메타데이터 저장을 마치면 저장 개수가 늘어난다. 저장 성공 뒤 1초 쉬고 다음 방향을 안내한다. 방향 안내부터 기록 시작까지는 1.2초다.
 
 - 동작을 잘못했으면 **방금 것 다시**를 누른다. 방금 파일을 지우고 같은 방향을 다시 한다.
 - 샘플이 하나라도 빠진 회차는 저장하지 않고 자동으로 다시 한다.
 - 링이 일시정지 상태이거나 연결이 끊기면 안내가 멈춰서 기다린다.
+- 방향 안내 중 연결을 다시 잡아도 같은 회차를 한 번만 다시 예약한다. 이전 연결의 예약·알림은 새 기록을 시작하거나 덮어쓰지 않는다.
+- **일시정지** 중에는 idle/other/연속 기록을 할 수 있다. 수동 기록의 준비·수신·저장이 모두 끝나야 **계속**을 누를 수 있다.
+- 저장 오류가 나면 성공 개수와 안내 순서를 올리지 않고 안내를 일시정지한다. 화면 기록에서 오류를 확인한다.
 
 ### 그 밖의 기록
 
 - **idle 10초**: 가만히 있는 상태
 - **other 10초**: 손가락 굽힘, 자세 조정처럼 명령이 아닌 움직임
 - **연속 기록**: 길이 제한 없이 다시 누를 때까지 기록한다. 실제 사용처럼 이것저것 섞인 긴 기록(오작동률 평가용)에 쓴다. 중간에 샘플이 빠지면 timestamp 간격으로 남는다.
+- 준비 중에 버튼을 다시 눌러도 첫 예약을 유지한다. `준비 → 기록 → 저장` 전체가 한 캡처의 점유 구간이다.
+- 연결 끊김·수동 재연결은 현재 기록의 경계다. 연속 기록은 그때까지 받은 행을 저장하고 종료하므로 새 연결에서 사용자가 다시 시작한다. 새 파일의 첫 timestamp는 0이다. 불완전한 고정 길이 기록은 성공 CSV를 만들지 않는다.
+- 정확히 직전 패킷과 같은 슬롯 범위는 중복으로 무시한다. 슬롯이 뒤로 가거나 일부 겹치면 해당 기록을 종료하고 `end_reason=slot_discontinuity`로 남긴다. 슬롯만으로 보드가 재부팅됐다고 판정하지 않는다.
 
 ### 세션
 
 - 첫 기록을 시작하면 세션이 자동으로 생긴다. 착용 손가락, 자세, 장소 등은 **세션 메모**에 적어 두면 함께 저장된다.
 - 조건(착용 위치, 자세, 날짜)이 바뀌면 **세션 종료** 후 새로 시작한다. 세션 단위로 학습/평가를 나눌 수 있다.
 - 앱을 닫으면 진행 중인 세션은 자동으로 종료된다.
+- 다른 앱으로 이동해도 BLE·제스처와 진행 중인 기록은 유지한다. Activity가 실제로 종료될 때(`onDestroy`) 수집·세션을 닫는다. 강제 종료나 프로세스 종료까지 저장을 보장하지는 않는다.
+- 같은 초에 다시 시작한 세션은 `yyyyMMdd-HHmmss-001`, `-002`처럼 새 폴더를 원자적으로 생성한다. 기존 폴더·CSV·종료 마커를 재사용하지 않는다. `tools/pull-phone-sessions.js`는 접미사가 있는 폴더도 그대로 옮긴다.
+- 세션 준비 정보와 연속 CSV 헤더 저장이 성공하고 UI에서 실제 시작 삑 신호를 낸 뒤에만 샘플을 받는다. UI가 밀리면 ARMING에 머물며 실제 시작부터 1초 뒤에 지금 신호를 예약한다. 세션 종료 중에는 새 캡처를 받지 않는다. 이미 완료를 접수한 CSV → sidecar → 성공 개수 → 세션 요약 순서로 저장한 뒤 `SESSION_DONE`을 만든다. 이 마커가 만들어진 뒤 그 세션에 쓸 작업은 없다. 준비·요약·마커 오류를 성공한 종료로 표시하지 않는다.
+- 세션 준비 파일이 부분 생성된 뒤 실패해도 기존 파일을 덮어쓰지 않는다. 오류에는 확보한 폴더의 절대경로와 **세션 종료 후 새로 시작** 안내가 표시된다. 해당 세션에서는 새 시작·계속을 막고 종료만 허용하며, 다음 요청은 새 폴더를 만든다. UI 기록 시작 전에 취소된 연속 예약의 빈 헤더는 해당 예약이 직접 생성한 경우에만 저장 대기열에서 정리한다.
 
 ## PC로 옮기기
 
@@ -68,7 +78,7 @@ node tools/pull-phone-sessions.js
 
 ## 저장 형식
 
-세션 폴더 `files/sessions/<yyyyMMdd-HHmmss>/`에 다음 파일이 생긴다.
+세션 폴더 `files/sessions/<yyyyMMdd-HHmmss[-NNN]>/`에 다음 파일이 생긴다.
 
 - `raw_up.N.csv`, `raw_down.N.csv`, `raw_left.N.csv`, `raw_right.N.csv`: 4초, 400행
 - `idle.N.csv`, `other.N.csv`: 10초, 1000행
@@ -100,15 +110,15 @@ Android Studio 없이 빌드할 때는 JDK 17(예: Temurin 17)을 `JAVA_HOME`으
 
 제스처 처리는 연결 기록(`connection_log.csv`)에 남는다. `gesture`는 보드에서 받은 값(seq·dir·score·slot), `app_gesture`는 앱 판단(제어·접근성 서비스 상태, 전환 전후 모드 `V`·`H`, 동작, 스와이프), `swipe_result`는 요청 결과(`completed`·`cancelled`·`not_dispatched`), `swipe_control`은 제어 켜기·끄기다. `completed`는 시스템이 주입을 마쳤다는 뜻이고 앱 화면이 원하는 대로 움직였다는 뜻은 아니다. 제스처를 인식하지 못하면 행이 없으므로 무발행은 이 기록만으로 알 수 없다. 연속 기록과 메모를 함께 본다. seq는 1바이트라 한 바퀴 돌면 겹치니 시각과 함께 맞춘다.
 
-`SwipeAccessibilityService`(화면 스와이프 주입)는 제스처 인식 결과를 화면 조작으로 바꾸는 출력 경로로 코드만 남겨 두었다. 현재 화면에서는 호출하지 않는다.
+`SwipeAccessibilityService`(화면 스와이프 주입)는 스와이프 제어가 켜져 있고 접근성 서비스가 활성화된 경우 현재 화면의 `GestureRouter` 결과에 따라 호출된다.
 
 ## 캡처 시각 sidecar (영상 동기화 준비용)
 
 각 캡처가 완료·실패·취소되면 같은 폴더에 `<CSV 이름>.capture.json`을 별도로 저장한다. CSV 열·행·환산은 그대로다. JSON은 기존 파일을 덮어쓰지 않고 CSV와 같은 단일 저장 대기열에서 기록한다.
 
 - `first_board_slot`, `last_board_slot`: 실제 CSV 행으로 받아들인 첫/마지막 보드 슬롯. `sample_count`는 받아들인 행 수이며, 연속 기록의 공백을 포함한 시간 길이가 아니다. `sample_interval_ms=10`은 슬롯 간격 규칙이고 실제 샘플 시계 정확도를 측정한 값은 아니다.
-- `start_call_elapsed_realtime_ms`: `startCapture` 진입 직후(세션 준비 전)의 휴대폰 부팅 기준 시각. `first_callback_arrival_elapsed_realtime_ms`: 첫 행이 속한 BLE listener 콜백 진입 시각. **물리적인 센서 샘플 시각이 아니며** BLE 배칭·전송 지연이 포함된다. `end_elapsed_realtime_ms`는 캡처를 끝내기로 결정한 시각이며 파일 저장 완료 시각이 아니다.
-- `mode`: `finite`(목표 행 수 있음) 또는 `continuous`. `end_status`: `completed`, `stopped`, `sample_gap`, `timeout`, `aborted`, 또는 CSV 쓰기 오류가 있으면 `csv_write_failed`. 실패한 고정 길이 캡처는 CSV를 만들지 않지만 sidecar에는 실패를 남긴다.
+- `start_call_elapsed_realtime_ms`: 세션 정보·헤더 준비와 안내 대기를 마치고 실제 기록을 시작한 휴대폰 부팅 기준 시각. `first_callback_arrival_elapsed_realtime_ms`: 첫 행이 속한 BLE listener 콜백 진입 시각. **물리적인 센서 샘플 시각이 아니며** BLE 배칭·전송 지연이 포함된다. `end_elapsed_realtime_ms`는 캡처를 끝내기로 결정한 시각이며 파일 저장 완료 시각이 아니다. JSON의 기존 키·schema_version=1은 유지한다.
+- `mode`: `finite`(목표 행 수 있음) 또는 `continuous`. `end_status`: `completed`, `stopped`, `sample_gap`, `timeout`, `aborted`, 또는 CSV 쓰기 오류가 있으면 `csv_write_failed`. 연결 경계·슬롯 역행에서는 연속 기록은 `stopped`, 불완전한 고정 길이는 `aborted`이며, `end_reason`에 `connection_lost`, `stopped`, `paused`, `slot_discontinuity` 원인을 남긴다. 실패한 고정 길이 캡처는 CSV를 만들지 않지만 sidecar에는 실패를 남긴다. 샘플 기록 전에 취소된 준비 예약은 sidecar 대상 캡처가 아직 없다.
 - `intended_csv`는 예정 이름이다. `source_csv`는 최종 저장 시점에 파일이 존재할 때만 이름이 있고, 없으면 null이다. `csv_exists_at_finalization`은 그 시점의 존재 여부이며 무결성 보장이 아니다. `csv_write_failed=true`이면 일부만 기록된 CSV일 수도 있어 분석에 사용하면 안 된다.
 - `session_directory`, `activity_instance_id`는 앱이 확실히 아는 문맥이다. Activity가 새로 만들어지면 ID가 바뀐다. 보드 부팅 ID·재시작 여부·펌웨어/앱 커밋·협상 MTU는 이 경로에서 확인할 수 없으므로 null이다. 같은 세션이나 Activity ID가 같다고 보드 부팅이 같다는 뜻은 아니다.
 
@@ -123,3 +133,7 @@ Android SDK 없이 순수 Java sidecar 검사를 실행할 수 있다(JDK 17 이
 이 검사는 null/실패 메타데이터, 슬롯·도착 시각·행 수·연속 기록 구분, JSON 이스케이프와 덮어쓰기 거부를 확인한다. 실제 Android 수집·BLE·파일럿 동기화 검증을 대신하지 않는다.
 
 같은 명령으로 `GestureRouter` 시험도 돈다(초기 모드, 전환, 방향 매핑, 제어·접근성 서비스 꺼짐, 기록 형식). 실제 스와이프·BLE·화면 표시를 대신하지 않는다.
+
+또한 제품 코드인 `CaptureCoordinator`, `SessionDirectory`, `SlotContinuity`, `BleConnectionEpoch`를 직접 컴파일한다. 가짜 시계·UI/파일 대기열과 실제 임시 파일 I/O로 버튼 겹침·안내 재개, 오래된 시작/timeout/GO 콜백, ARMING 단절 재시도, 마지막 400행 직후 UI 정지·세션 종료·Activity 종료, 느린 저장과 안내 간격, 파일/요약/마커 실패, 같은 시각 폴더 충돌, 슬롯 역행·중복·공백과 이전 GATT 세대 거절을 검사한다. 모든 네이티브 명령의 종료 코드를 즉시 검사하며 산출물은 저장소 `.build/android-sidecar-tests/`에 둔다. JDK 17 이상에서 외부 테스트 라이브러리 없이 실행된다.
+
+`MainActivity`는 화면·음성·권한·GestureRouter 어댑터이고, 캡처/안내/세션 상태와 파일 작업 등록은 Android 의존성이 없는 `CaptureCoordinator` 한 곳에서 관리한다. BLE 클라이언트는 연결 시도마다 별도 세대를 부여하고 disconnect 콜백이 없어도 stop 시 기존 세대 경계를 먼저 알린다.

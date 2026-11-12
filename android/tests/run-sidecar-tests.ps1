@@ -12,4 +12,12 @@ if ($LASTEXITCODE -ne 0) { throw 'Sidecar tests failed.' }
 if ($LASTEXITCODE -ne 0) { throw 'Gesture router test compilation failed.' }
 & (Join-Path $JavaHome 'bin/java.exe') -cp $out com.hintringpilot.ringpilot.GestureRouterTest
 if ($LASTEXITCODE -ne 0) { throw 'Gesture router tests failed.' }
+$sources = @('CaptureSidecar', 'CaptureCoordinator', 'SessionDirectory', 'SlotContinuity', 'BleConnectionEpoch') | ForEach-Object {
+    Join-Path $root "android/app/src/main/java/com/hintringpilot/ringpilot/$_.java"
+}
+$sources += Join-Path $root 'android/tests/CaptureCoordinatorTest.java'
+& (Join-Path $JavaHome 'bin/javac.exe') --release 17 -encoding UTF-8 -d $out @sources
+if ($LASTEXITCODE -ne 0) { throw 'Capture coordinator test compilation failed.' }
+& (Join-Path $JavaHome 'bin/java.exe') "-Djava.io.tmpdir=$out" -cp $out com.hintringpilot.ringpilot.CaptureCoordinatorTest
+if ($LASTEXITCODE -ne 0) { throw 'Capture coordinator tests failed.' }
 

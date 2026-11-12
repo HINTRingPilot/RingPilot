@@ -30,7 +30,12 @@ import java.util.UUID;
 final class ImuBleClient {
     interface Listener {
         /** raw에는 샘플마다 accX,accY,accZ,gyrX,gyrY,gyrZ 원시값이 이어서 들어 있다. */
-        void onSamples(long firstSlot, short[] raw, int count);
+        void onSamples(long generation, long firstSlot, short[] raw, int count);
+
+        void onStreamReady(long generation);
+
+        /** Delivered synchronously before closing the old GATT, including manual stop. */
+        void onStreamBoundary(long generation, String reason);
 
         void onConnectionText(String text);
 
@@ -57,9 +62,12 @@ final class ImuBleClient {
     private final Listener listener;
     private final File logFile;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final BleConnectionEpoch epoch = new BleConnectionEpoch();
+    private final Object linkLock = new Object();
     private BluetoothDevice device;
     private BluetoothGatt gatt;
     private boolean running = false;
+    private long generation;
 
     private volatile boolean streaming = false;
     private volatile boolean devicePaused = false;
@@ -110,112 +118,157 @@ final class ImuBleClient {
             }
         }
         if (device == null) return DEVICE_NAME + "를 먼저 페어링합니다.";
-        running = true;
+        synchronized (linkLock) { running = true; }
         record("client_start", "");
         connect();
         return null;
     }
 
     void stop() {
-        running = false;
-        streaming = false;
-        mainHandler.removeCallbacksAndMessages(null);
-        closeGatt();
+        synchronized (linkLock) {
+            running = false;
+            mainHandler.removeCallbacksAndMessages(null);
+            closeGatt("stopped");
+        }
     }
 
     private void connect() {
-        if (!running || device == null) return;
-        closeGatt();
-        listener.onConnectionText("연결 시도 중");
-        gatt = device.connectGatt(context, false, callback, BluetoothDevice.TRANSPORT_LE);
+        synchronized (linkLock) {
+            if (!running || device == null) return;
+            closeGatt("connection_lost");
+            generation = epoch.begin();
+            expectedSlot = -1; rateWindowStart = -1; rateWindowSamples = 0;
+            devicePaused = false;
+            listener.onConnectionText("연결 시도 중");
+            gatt = device.connectGatt(context, false, callback(generation), BluetoothDevice.TRANSPORT_LE);
+            epoch.attach(generation, gatt);
+            if (gatt == null) {
+                closeGatt("connection_lost");
+                scheduleReconnect(generation);
+            }
+        }
     }
 
-    private void closeGatt() {
+    /** Caller holds linkLock. A stream ends even if Android never sends DISCONNECTED. */
+    private void closeGatt(String reason) {
+        streaming = false;
+        if (epoch.end(generation)) {
+            listener.onStreamBoundary(generation, reason);
+        }
         if (gatt != null) {
             gatt.close();
             gatt = null;
         }
     }
 
-    private final BluetoothGattCallback callback = new BluetoothGattCallback() {
-        @Override
-        public void onConnectionStateChange(BluetoothGatt g, int statusCode, int newState) {
-            long now = SystemClock.elapsedRealtime();
-            if (newState == BluetoothProfile.STATE_CONNECTED && statusCode == BluetoothGatt.GATT_SUCCESS) {
-                connectedAt = now;
-                expectedSlot = -1;
-                record("connected", disconnectedAt >= 0 ? "since_disconnect_ms=" + (now - disconnectedAt) : "");
-                listener.onConnectionText("연결됨, 설정 중");
-                if (!g.requestMtu(247)) g.discoverServices();
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                streaming = false;
-                if (connectedAt >= 0) {
-                    disconnectedAt = now;  // 연결된 상태에서 끊긴 시각만 재연결 측정 기준으로 쓴다
-                    connectedAt = -1;
-                    record("disconnected", "status=" + statusCode);
-                } else {
-                    record("connect_failed", "status=" + statusCode);
+    private boolean current(BluetoothGatt candidate, long attempt) {
+        return running && epoch.current(attempt, candidate);
+    }
+
+    private void scheduleReconnect(long attempt) {
+        mainHandler.postDelayed(() -> {
+            synchronized (linkLock) {
+                if (running && generation == attempt && gatt == null) connect();
+            }
+        }, RETRY_DELAY_MS);
+    }
+
+    private BluetoothGattCallback callback(long attempt) {
+        return new BluetoothGattCallback() {
+            @Override
+            public void onConnectionStateChange(BluetoothGatt g, int statusCode, int newState) {
+                synchronized (linkLock) {
+                    if (!current(g, attempt)) return;
+                    long now = SystemClock.elapsedRealtime();
+                    if (newState == BluetoothProfile.STATE_CONNECTED && statusCode == BluetoothGatt.GATT_SUCCESS) {
+                        connectedAt = now;
+                        expectedSlot = -1;
+                        record("connected", disconnectedAt >= 0 ? "since_disconnect_ms=" + (now - disconnectedAt) : "");
+                        listener.onConnectionText("연결됨, 설정 중");
+                        if (!g.requestMtu(247)) g.discoverServices();
+                    } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                        closeGatt("connection_lost");
+                        if (connectedAt >= 0) {
+                            disconnectedAt = now;
+                            connectedAt = -1;
+                            record("disconnected", "status=" + statusCode);
+                        } else {
+                            record("connect_failed", "status=" + statusCode);
+                        }
+                        resumePending = false;
+                        listener.onConnectionText("연결 끊김, 다시 연결 중");
+                        scheduleReconnect(attempt);
+                    }
                 }
-                resumePending = false;
-                listener.onConnectionText("연결 끊김, 다시 연결 중");
-                mainHandler.post(() -> {
-                    closeGatt();
-                    if (running) mainHandler.postDelayed(ImuBleClient.this::connect, RETRY_DELAY_MS);
-                });
             }
-        }
 
-        @Override
-        public void onMtuChanged(BluetoothGatt g, int mtu, int statusCode) {
-            record("mtu", "mtu=" + mtu + " status=" + statusCode);
-            refreshGattCache(g);
-            g.discoverServices();
-        }
-
-        @Override
-        public void onServicesDiscovered(BluetoothGatt g, int statusCode) {
-            BluetoothGattService service = g.getService(SERVICE_UUID);
-            if (statusCode != BluetoothGatt.GATT_SUCCESS || service == null) {
-                listener.onConnectionText("IMU 서비스를 찾지 못함 (status=" + statusCode + ")");
-                return;
+            @Override
+            public void onMtuChanged(BluetoothGatt g, int mtu, int statusCode) {
+                synchronized (linkLock) {
+                    if (!current(g, attempt)) return;
+                    record("mtu", "mtu=" + mtu + " status=" + statusCode);
+                    refreshGattCache(g);
+                    g.discoverServices();
+                }
             }
-            // 알림 설정은 한 번에 하나씩: 상태 먼저, 쓰기 완료 후 데이터.
-            enableNotify(g, service.getCharacteristic(STATUS_UUID));
-        }
 
-        @Override
-        public void onDescriptorWrite(BluetoothGatt g, BluetoothGattDescriptor descriptor, int statusCode) {
-            if (statusCode != BluetoothGatt.GATT_SUCCESS) {
-                listener.onConnectionText("알림 설정 실패 (status=" + statusCode + ")");
-                return;
+            @Override
+            public void onServicesDiscovered(BluetoothGatt g, int statusCode) {
+                synchronized (linkLock) {
+                    if (!current(g, attempt)) return;
+                    BluetoothGattService service = g.getService(SERVICE_UUID);
+                    if (statusCode != BluetoothGatt.GATT_SUCCESS || service == null) {
+                        listener.onConnectionText("IMU 서비스를 찾지 못함 (status=" + statusCode + ")");
+                        return;
+                    }
+                    // 알림 설정은 한 번에 하나씩: 상태 먼저, 쓰기 완료 후 데이터.
+                    enableNotify(g, service.getCharacteristic(STATUS_UUID));
+                }
             }
-            UUID chr = descriptor.getCharacteristic().getUuid();
-            if (STATUS_UUID.equals(chr)) {
-                enableNotify(g, g.getService(SERVICE_UUID).getCharacteristic(DATA_UUID));
-            } else if (DATA_UUID.equals(chr)) {
-                streaming = true;
-                long now = SystemClock.elapsedRealtime();
-                record("subscribed", disconnectedAt >= 0 ? "since_disconnect_ms=" + (now - disconnectedAt) : "");
-                listener.onConnectionText("수신 중");
-                // 수집 펌웨어(imu_ble_stream)에는 이 특성이 없다. 없으면 건너뛴다
-                BluetoothGattCharacteristic gesture = g.getService(SERVICE_UUID).getCharacteristic(GESTURE_UUID);
-                record("gesture_characteristic", gesture != null ? "found" : "missing");
-                if (gesture != null) enableNotify(g, gesture);
-            } else if (GESTURE_UUID.equals(chr)) {
-                record("gesture_subscribed", "");
+
+            @Override
+            public void onDescriptorWrite(BluetoothGatt g, BluetoothGattDescriptor descriptor, int statusCode) {
+                synchronized (linkLock) {
+                    if (!current(g, attempt)) return;
+                    if (statusCode != BluetoothGatt.GATT_SUCCESS) {
+                        listener.onConnectionText("알림 설정 실패 (status=" + statusCode + ")");
+                        return;
+                    }
+                    UUID chr = descriptor.getCharacteristic().getUuid();
+                    if (STATUS_UUID.equals(chr)) {
+                        enableNotify(g, g.getService(SERVICE_UUID).getCharacteristic(DATA_UUID));
+                    } else if (DATA_UUID.equals(chr)) {
+                        streaming = true;
+                        long now = SystemClock.elapsedRealtime();
+                        record("subscribed", disconnectedAt >= 0 ? "since_disconnect_ms=" + (now - disconnectedAt) : "");
+                        if (!devicePaused) listener.onStreamReady(attempt);
+                        listener.onConnectionText(devicePaused ? "링 일시정지됨 (연결 유지)" : "수신 중");
+                        BluetoothGattCharacteristic gesture = g.getService(SERVICE_UUID).getCharacteristic(GESTURE_UUID);
+                        record("gesture_characteristic", gesture != null ? "found" : "missing");
+                        if (gesture != null) enableNotify(g, gesture);
+                    } else if (GESTURE_UUID.equals(chr)) {
+                        record("gesture_subscribed", "");
+                    }
+                }
             }
-        }
 
-        @Override
-        public void onCharacteristicChanged(BluetoothGatt g, BluetoothGattCharacteristic characteristic) {
-            handleNotification(characteristic.getUuid(), characteristic.getValue());
-        }
+            @Override
+            public void onCharacteristicChanged(BluetoothGatt g, BluetoothGattCharacteristic characteristic) {
+                synchronized (linkLock) {
+                    if (!current(g, attempt)) return;
+                    handleNotification(attempt, characteristic.getUuid(), characteristic.getValue());
+                }
+            }
 
-        @Override
-        public void onCharacteristicChanged(BluetoothGatt g, BluetoothGattCharacteristic characteristic, byte[] value) {
-            handleNotification(characteristic.getUuid(), value);
-        }
-    };
+            @Override
+            public void onCharacteristicChanged(BluetoothGatt g, BluetoothGattCharacteristic characteristic, byte[] value) {
+                synchronized (linkLock) {
+                    if (!current(g, attempt)) return;
+                    handleNotification(attempt, characteristic.getUuid(), value);
+                }
+            }
+        };
+    }
 
     /** 본딩된 기기의 GATT 목록은 휴대폰에 캐시된다. 펌웨어에 특성이 추가돼도 보이도록 비운다(숨은 API, 실패하면 캐시를 그대로 쓴다). */
     private void refreshGattCache(BluetoothGatt g) {
@@ -237,14 +290,14 @@ final class ImuBleClient {
         if (!g.writeDescriptor(cccd)) listener.onConnectionText("알림 설정 쓰기 실패");
     }
 
-    private void handleNotification(UUID uuid, byte[] value) {
+    private void handleNotification(long attempt, UUID uuid, byte[] value) {
         if (value == null) return;
-        if (STATUS_UUID.equals(uuid)) handleStatus(value);
-        else if (DATA_UUID.equals(uuid)) handleData(value);
+        if (STATUS_UUID.equals(uuid)) handleStatus(attempt, value);
+        else if (DATA_UUID.equals(uuid)) handleData(attempt, value);
         else if (GESTURE_UUID.equals(uuid)) handleGesture(value);
     }
 
-    private void handleStatus(byte[] v) {
+    private void handleStatus(long attempt, byte[] v) {
         if (v.length < 10) return;
         int state = v[0] & 0xFF;
         int event = v[1] & 0xFF;
@@ -259,10 +312,12 @@ final class ImuBleClient {
                 record("status_subscribed", base);
                 break;
             case EVENT_PAUSED:
+                listener.onStreamBoundary(attempt, "paused");
                 record("paused", base);
                 listener.onConnectionText("링 일시정지됨 (연결 유지)");
                 break;
             case EVENT_RESUMED:
+                if (streaming) listener.onStreamReady(attempt);
                 resumePending = true;
                 resumedStatusAt = now;
                 expectedSlot = -1;  // 일시정지 동안의 슬롯 공백은 누락이 아니다
@@ -296,8 +351,8 @@ final class ImuBleClient {
         listener.onGesture(GESTURE_NAMES[index], sequence, score);
     }
 
-    private void handleData(byte[] v) {
-        if (v.length < 5) return;
+    private void handleData(long attempt, byte[] v) {
+        if (!streaming || devicePaused || v.length < 5) return;
         long firstSlot = readU32(v, 0);
         int count = v[4] & 0xFF;
         if (v.length < 5 + count * 12) return;
@@ -318,7 +373,7 @@ final class ImuBleClient {
             rateWindowStart = now;
             rateWindowSamples = 0;
         }
-        listener.onSamples(firstSlot, raw, count);
+        listener.onSamples(attempt, firstSlot, raw, count);
     }
 
     private static long readU32(byte[] v, int offset) {
