@@ -1,5 +1,7 @@
 # BLE PoC 테스트
 
+> 초기 시험 기록이다. `firmware/ble_poc`는 2026-11-05에 저장소에서 지웠고 커밋 `05c4cb3` 이전 이력에 있다.
+
 대상: Seeed XIAO nRF52840 Sense, Seeed nRF52 Boards(non-mbed) 1.1.13.
 휴대폰: Galaxy S10 / Android 12 (사용자 확인).
 

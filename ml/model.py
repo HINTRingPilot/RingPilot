@@ -3,7 +3,6 @@
 from tensorflow import keras
 
 
-SAMPLE_RATE_HZ = 100
 WINDOW_SAMPLES = 160
 AXES = ("accX", "accY", "accZ", "gyrX", "gyrY", "gyrZ")
 CLASS_NAMES = ("NONE", "UP", "DOWN", "LEFT", "RIGHT")

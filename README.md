@@ -1,58 +1,94 @@
 # RingPilot
 
-침대에서 Android 스마트폰을 조작하기 위한 검지 착용형 스마트링 리모컨 프로토타입.
-엄지 스틱으로 포인터와 클릭을 제어하고, 향후 IMU와 TinyML로 손가락 제스처를 인식하는 것을 목표로 합니다.
+검지에 끼는 반지로 스마트폰을 조작하는 프로토타입입니다. 침대에 누운 채로 폰을 다루려고 만들었습니다.
 
-## 현재 구현
+반지 안의 IMU가 손가락을 위·아래·좌·우로 까딱이는 동작을 보드에서 직접 인식하고(TinyML), 폰 앱이 그 결과를 받아 화면을 스와이프합니다. 반지에 달린 5방향 스위치로는 화면에 커서를 띄워 탭할 수 있습니다.
 
-XIAO nRF52840 Sense의 Arduino/Bluefruit 펌웨어로 BLE HID 마우스와 Custom GATT 서비스를 제공합니다(`ble_poc`).
-제스처 데이터 수집용 펌웨어(`imu_ble_stream`)는 IMU 6축 원시값을 100 Hz로 BLE 스트리밍하고, Android 앱이 이를 세션 단위로 기록합니다. 앱의 AccessibilityService(화면 스와이프 주입)는 이후 인식 결과 출력용으로 코드만 남아 있습니다.
-하드웨어는 SKRHACE010 5방향 스위치(D0·D1·D2·D3·D6, 공통 GND)와 55mAh Li-Po를 연결했습니다. 센터(D1)를 길게 누르면 System OFF로 꺼지고 다시 누르면 켜집니다.
+연구와 포트폴리오용이라 실제 배포 수준의 검증은 하지 않았습니다.
+
+## 동작 방식
 
 ```text
-PC USB 시리얼 → XIAO → BLE HID → Android 포인터/클릭
-                    └→ Custom GATT → RingPilot 앱 → 화면 스와이프
+반지 (XIAO nRF52840 Sense)                                     폰 (Android 앱)
+IMU 100 Hz → 온라인 영점 → TCN 판정(50 ms마다) → 발행 ──BLE──→ GestureRouter → 접근성 스와이프
+                                                  └ LED
+5방향 스위치 → 방향 상태·클릭 수 ─────────────────────BLE──→ PointerController → 커서 이동·탭
 ```
 
-## 검증 환경 및 결과
+제스처
 
-- 보드: Seeed XIAO nRF52840 Sense
-- 코어: Seeed nRF52 Boards(non-mbed) 1.1.13
-- 휴대폰: Galaxy S10 / Android 12
-- 확인 완료: 4방향 이동·클릭, HID와 GATT 알림 동시 동작, USB 전원 재연결 및 휴대폰 Bluetooth OFF/ON 후 기능 복구
-- nRF Connect 강제 종료·재실행: 수동 CONNECT 후 별도 알림 버튼 조작 없이 수신 복구
-- Android 앱: Galaxy S10에서 접근성 앱 자체 스와이프와 BLE 상하좌우 스와이프 명령을 실동작 확인
-- 하드웨어: 스위치 5개 입력 모두 반응, 배터리 단독 구동, 센터 길게 눌러 System OFF·센터와 USB 연결로 깨어남 (2026-10-18~23)
+- 위/아래: 위·아래로 스와이프합니다. 쇼츠 넘길 때 씁니다.
+- 좌/우: 상하 모드와 좌우 모드를 바꿉니다. 좌우 모드에서는 위가 왼쪽, 아래가 오른쪽 스와이프입니다.
 
-짧은 기능 시험 결과이며, 장시간 안정성·복구 시간·패킷 누락률·소비전력은 측정하지 않았습니다.
+스위치
+
+- 방향을 누르고 있으면 커서가 일정한 속도로 움직입니다. 커서는 평소 숨어 있다가 마지막 입력 1.5초 뒤 다시 사라집니다.
+- 센터를 짧게 누르면 커서 위치를 탭합니다. 일시정지 중일 때는 다시 켜집니다.
+- 센터 0.5초는 일시정지, 2초는 전원 끄기입니다. 일시정지는 제스처 인식만 멈추고, 그동안에도 방향 스위치로 커서는 움직일 수 있습니다.
+
+커서 기능은 코드와 빌드까지만 됐고 실제 반지와 폰에서는 아직 확인하지 않았습니다. 방향 핀 매핑도 미확인입니다.
+
+모델은 자이로 3축과 회전각 3축을 입력으로 받는 작은 TCN입니다. 파라미터 4,421개, 입력 길이 1.6초이고, 보드에서 한 번 판정하는 데 약 21 ms가 걸립니다.
+
+## 폴더
+
+| 폴더 | 내용 |
+|---|---|
+| [firmware/](firmware/README.md) | 반지 펌웨어 `gesture_infer`. 앱과 주고받는 BLE 전송 로직은 `libraries/RingPilotTransport`, 그 PC 테스트는 `tests/`. 수집 펌웨어와 PC 검증 도구는 `dev/` |
+| [android/](android/README.md) | 폰 앱(리모컨). 데이터 수집과 실사용 기록 화면은 `dev` 패키지 |
+| [ml/](ml/) | Python(TensorFlow) 학습·평가, C 변환, Python과 C 결과 비교. 테스트는 `ml/tests/` |
+| [tools/](tools/) | 폰 기록 가져오기(`pull-phone-sessions.js`), 수집 클립 주석 도구(Node.js), 전체 검사 스크립트(`verify-ecc-fixes.ps1`) |
+| [data/](data/) | 수집 세션 원본, 동작 시점 주석, 교차검증 분할 |
+| [docs/](docs/) | 진행 기록, 실험 결과, 계획, 코드 리뷰, 시행착오 |
 
 ## 실행
 
-1. [설치 안내](docs/설치안내.md)에 따라 Arduino 환경을 준비합니다.
-2. [ble_poc.ino](firmware/ble_poc/ble_poc.ino)를 Sense 보드에 업로드합니다.
-3. Android에서 `SmartRing-PoC`를 페어링합니다.
-4. USB 시리얼 모니터(115200 baud)에서 WASD로 이동, C로 클릭, U/J/L/R로 위·아래·왼쪽·오른쪽 스와이프 명령, ?로 상태를 조회합니다.
-5. 전체 통신 시험은 [BLE 테스트 안내](docs/BLE테스트.md)를 따릅니다. 당시의 스와이프 시험 화면은 현재 앱에서 제거됐습니다.
+1. [설치 안내](docs/설치안내.md)를 따라 Arduino, Python, Android 빌드 환경을 준비합니다(`setup.ps1`).
+2. [펌웨어 안내](firmware/README.md)대로 `firmware/gesture_infer`를 반지에 올립니다. 공유 라이브러리를 쓰기 때문에 컴파일할 때 `--libraries firmware/libraries`가 필요합니다.
+3. [앱 안내](android/README.md)대로 APK를 빌드해 설치합니다. APK는 저장소에 없어서 직접 빌드해야 합니다. 폰에서 `RingPilot-IMU`를 페어링하고 앱에서 스와이프 제어를 켜면 됩니다.
+4. 모델을 다시 학습하거나 평가하려면 `ml/v2_return.py`(학습·채점)와 `ml/v2_export_c.py`(C 헤더 내보내기, 일치 확인)를 씁니다.
 
-제스처 데이터를 무선으로 모을 때는 [imu_ble_stream.ino](firmware/imu_ble_stream/imu_ble_stream.ino)를 업로드하고 [Android 수집 앱](android/README.md)을 사용합니다.
+## 테스트
 
-모델 학습·평가는 로컬 Python(`ml/`)에서 진행합니다. 계획은 [학습 계획](docs/TrainingPlan.md), 실험 기록은 [BLE v1 실험](docs/experiments/ble-v1/README.md)(코드 확인용 테스트)과 [BLE v2 실험](docs/experiments/ble-v2/README.md)(자세별 5세션)에 있습니다.
+```powershell
+ml/.venv/Scripts/python.exe -m unittest discover -s ml/tests -t ml
+.\android\tests\run-sidecar-tests.ps1
+.\firmware\tests\run-transport-tests.ps1
+```
+
+차례대로 ML, 앱 로직(JDK만 있으면 됨), 펌웨어 전송 로직(g++ 필요) 테스트입니다. ML의 C 비교 테스트는 `RINGPILOT_CC`에 C 컴파일러를 지정해야 돌아갑니다.
+
+`tools/verify-ecc-fixes.ps1 -SpaceCompilerPath <C 컴파일러 경로>`는 위 테스트와 앱 빌드, `-ArduinoCli`를 주면 펌웨어 빌드까지 한 번에 돌리고, 하나라도 실패하면 바로 멈춥니다.
+
+## 확인한 것
+
+- 오프라인: 자세(세션)별로 나눈 교차검증에서 단일 동작 정검출이 평균 약 97%입니다. 클립 단위 결과라 실제 연속 사용 성능과는 다릅니다. 표는 [BLE v2 실험](docs/experiments/ble-v2/README.md)에 있습니다.
+- Python과 C: 같은 입력에서 점수 차이가 최대 1e-6 수준이고, 연속 스트림에서 발행도 같습니다(`ml/v2_export_c.py check`).
+- 실사용: 사용자 1명이 1~2분씩 두 번 써 봤습니다. 두 번째에는 동작 후보 49개 중 46개가 제대로 발행됐고, 써 본 느낌은 "끊김 없이 잘 됨"이었습니다([field-02](docs/experiments/ble-v2/field-02/README.md)). 정식 연속 인식률과 시간당 오발행은 재지 않았습니다.
+- 코드 리뷰 수정(2026-11-12): 리뷰에서 나온 8건을 고쳤습니다. PC 테스트(앱 274개 검사, Python 90개, 펌웨어 전송 8개 시나리오)와 에뮬레이터에서는 확인했지만, 실제 반지와 폰에서는 아직 다시 보지 않았습니다. 자세한 내용은 [수정 결과](docs/reviews/2026-11-12-ecc-fixes-results.md)에 있습니다.
+- 재지 않은 것: 배터리 지속 시간, BLE 최대 거리, 소비 전류.
 
 ## 문서
 
-- [개발 진행 요약 및 실험 회고 — 2026-10-25](docs/개발진행요약_2026-10-25.md)
+- [개발 진행 요약과 실험 회고 (2026-10-25)](docs/개발진행요약_2026-10-25.md)
 - [기획서 원안](기획서%20원안.txt)
-- [진행 기록 및 검증 근거](docs/진행기록.md)
+- [남은 할 일](docs/TODO.md)
+- [시행착오 정리](docs/시행착오정리.md)
+- [진행 기록과 검증 근거](docs/진행기록.md)
 - [Windows 개발환경 설치](docs/설치안내.md)
-- [Android 수집 앱](android/README.md)
-- [BLE 테스트 안내](docs/BLE테스트.md)
+- [Android 앱](android/README.md)
+- [BLE 테스트 기록](docs/BLE테스트.md) (초기 `ble_poc` 시절 기록, 스케치는 git 이력에만 있음)
 - [제스처 인식 구조 제안](docs/제스처인식구조안.md)
 - [모델 아키텍처](docs/ModelArchitecture.md)
 - [학습·평가 계획](docs/TrainingPlan.md)
 - [BLE v1 모델 실험 기록](docs/experiments/ble-v1/README.md)
 - [모델 개발·실험 기록 (조현준)](docs/진행기록_조현준.md)
 - [하드웨어 제작 보고서](docs/HardwareBuild.md)
+- [코드 리뷰 (2026-11-12)](docs/reviews/2026-11-12-ecc-code-review.md)
 - [시리얼 테스트 로그](docs/logs/)
 
-BLE v1 실험(1~7a)은 테스트용 세션으로 진행했고, 2026-10-23에 그 세션과 주석·분할·결과 파일을 삭제했습니다(문서는 보존). 2026-10-25에는 자이로 ±2000 dps에 맞춘 앱으로 자세별 5세션을 다시 수집했고, 사용 원본 336개로 기준선 보정·NONE 배분 비교·발행 시점 진단까지 진행했습니다. 결과와 한계는 [개발 진행 요약](docs/개발진행요약_2026-10-25.md)에 정리했습니다. 현재 목적은 연구·포트폴리오이며 실배포 검증은 필수 범위가 아닙니다.
-펌웨어 `.build/`, Android 빌드 결과와 로컬 SDK `.tools/`는 저장소에서 제외합니다.
+## 참고
+
+BLE v1 실험(1~7a)은 테스트용 세션으로 진행했고, 2026-10-23에 그 세션과 주석, 분할, 결과 파일을 지웠습니다. 문서는 남아 있습니다. 2026-10-25에 자이로 ±2000 dps에 맞춘 앱으로 자세별 5세션을 새로 모았고, 원본 336개로 기준선 보정, NONE 배분 비교, 발행 시점 진단까지 했습니다. 결과와 한계는 [개발 진행 요약](docs/개발진행요약_2026-10-25.md)에 있습니다.
+
+펌웨어 `.build/`, Android 빌드 결과, 로컬 SDK `.tools/`는 저장소에 올리지 않습니다.

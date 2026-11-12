@@ -1,4 +1,4 @@
-package com.hintringpilot.ringpilot.ui;
+package com.hintringpilot.ringpilot.dev;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -14,11 +14,13 @@ import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.TextView;
 
+import com.hintringpilot.ringpilot.ui.Ui;
+
 import java.util.Locale;
 
 /**
- * 화면의 중심인 네 방향 다이얼. 바깥 눈금은 진행률, 네 화살표는 방향, 가운데 원은 안내 글자다.
- * 화면 표시만 맡는다. 안내 시각과 기록은 이 뷰와 무관하게 MainActivity에서 정해진다.
+ * 수집 안내용 네 방향 다이얼. 바깥 눈금은 진행률, 네 화살표는 방향, 가운데 원은 안내 글자다.
+ * 화면 표시만 맡는다. 안내 시각과 기록은 이 뷰와 무관하게 CollectPanel에서 정해진다.
  */
 public final class DirectionDial extends ViewGroup {
     public enum Phase { IDLE, ARMED, STILL, GO, SAVED }

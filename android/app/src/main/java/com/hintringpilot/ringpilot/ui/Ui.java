@@ -103,6 +103,21 @@ public final class Ui {
         return Math.round(value * context.getResources().getDisplayMetrics().density);
     }
 
+    /** 세로 배치에서 폭을 채우고 위에 간격을 둔다. */
+    public static LinearLayout.LayoutParams matchWidth(Context context, int topMarginDp) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.topMargin = dp(context, topMarginDp);
+        return params;
+    }
+
+    /** 가로 배치에서 남은 폭을 나눠 갖고 왼쪽에 간격을 둔다. */
+    public static LinearLayout.LayoutParams weight(Context context, int leftMarginDp) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        params.leftMargin = dp(context, leftMarginDp);
+        return params;
+    }
+
     /** 바탕의 옅은 점 격자. 기기 패널 느낌을 주되 글자를 방해하지 않을 만큼만 보인다. */
     public static Drawable dotGrid(Context context) {
         int tile = dp(context, 18);

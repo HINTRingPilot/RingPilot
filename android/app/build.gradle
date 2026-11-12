@@ -12,6 +12,12 @@ android {
         targetSdk 35
         versionCode 1
         versionName '0.1.0'
+        // 개발용 화면(수집·기록 탭, Hz·누락 샘플). 기본은 숨기고 -PdevTools=true로 빌드하면 보인다
+        buildConfigField 'boolean', 'DEV_TOOLS', (project.findProperty('devTools') ?: 'false').toString()
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     compileOptions {

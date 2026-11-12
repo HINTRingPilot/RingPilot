@@ -55,11 +55,11 @@ try {
     Remove-Item Env:RINGPILOT_CC -ErrorAction SilentlyContinue
 
     Invoke-CheckedStage -Stage 'Java capture/router tests' -Executable '.\android\tests\run-sidecar-tests.ps1'
-    Invoke-CheckedStage -Stage 'Python tests' -Executable '.\ml\.venv\Scripts\python.exe' -Arguments @('-m', 'unittest', 'discover', '-s', 'ml', '-p', 'test_*.py')
+    Invoke-CheckedStage -Stage 'Python tests' -Executable '.\ml\.venv\Scripts\python.exe' -Arguments @('-m', 'unittest', 'discover', '-s', 'ml/tests', '-t', 'ml')
     Invoke-CheckedStage -Stage 'Firmware transport tests' -Executable '.\firmware\tests\run-transport-tests.ps1'
 
     $env:RINGPILOT_CC = '"' + $SpaceCompilerPath + '"'
-    Invoke-CheckedStage -Stage 'Quoted compiler host C parity' -Executable '.\ml\.venv\Scripts\python.exe' -Arguments @('-m', 'unittest', 'discover', '-s', 'ml', '-p', 'test_v2_c_infer.py')
+    Invoke-CheckedStage -Stage 'Quoted compiler host C parity' -Executable '.\ml\.venv\Scripts\python.exe' -Arguments @('-m', 'unittest', 'discover', '-s', 'ml/tests', '-t', 'ml', '-p', 'test_v2_c_infer.py')
     Remove-Item Env:RINGPILOT_CC -ErrorAction SilentlyContinue
 
     Push-Location android

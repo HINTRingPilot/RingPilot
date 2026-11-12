@@ -1,4 +1,4 @@
-package com.hintringpilot.ringpilot;
+package com.hintringpilot.ringpilot.dev;
 
 /** Packet order within one capture and stream generation. It does not infer board boot identity. */
 final class SlotContinuity {

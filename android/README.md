@@ -1,30 +1,54 @@
-# RingPilot Android 수집 앱
+# RingPilot Android 앱
 
-링(`firmware/imu_ble_stream`)이 BLE로 보내는 IMU 6축 원시값을 받아, 제스처 학습용 데이터를 세션 단위로 기록하는 앱이다.
+반지가 보드에서 판정해 보낸 제스처를 받아 화면 스와이프로 바꾸는 리모컨 앱이다. 개발용 빌드에는 학습 데이터 수집과 실사용 시험 기록 기능이 더 있다.
 
 ## 준비
 
-1. 링에 `firmware/imu_ble_stream/imu_ble_stream.ino`를 업로드한다.
+1. 반지에 `firmware/gesture_infer`를 올린다. 기본(사용자) 빌드는 IMU 원시값 스트림이 없다. 개발용 앱의 수집·연속 기록을 쓰려면 스트림을 켠 개발 빌드(`firmware/README.md`)나 `firmware/dev/imu_ble_stream`(추론 없음)을 올린다. 앱은 펌웨어에 있는 특성만 골라 구독한다.
 2. 휴대폰 Bluetooth 설정에서 `RingPilot-IMU`를 페어링한다. 설정 화면에서 "연결 안 됨"으로 보이는 것은 정상이다. 앱이 직접 연결한다.
-3. 앱을 열면 자동으로 연결한다. 맨 위 상태 줄이 초록 점과 `수신 중`, 오른쪽 위가 `100 Hz`이면 준비 완료다.
+3. 앱을 열면 자동으로 연결한다. 맨 위 상태 줄이 초록 점과 `수신 중`이면 준비 완료다.
+4. **스와이프 제어 켜기**를 누르고 접근성 설정에서 `RingPilot 스와이프`를 켠다.
 
 ## 화면 구성
 
-아래쪽 탭 세 개로 나뉜다. 화면 색과 모양은 `app/src/main/java/.../ui/Ui.java`에 모여 있다(Android 앱이라 CSS는 없고, 이 파일이 CSS 역할을 한다).
+맨 위에 이름, 연결 상태, **페어링 방법**·**연결 방법** 버튼(누르면 안내 팝업)이 있다. 그 아래는 탭 내용이다.
 
-- **리모컨**: 네 방향 다이얼, 스와이프 제어 켜기·끄기, 현재 모드, 누락 샘플, 최근 제스처. 화살표 옆 글자는 그 방향이 하는 일이다(상하 모드: 위·아래, 좌우 모드: 왼쪽·오른쪽, 좌우 제스처: 전환).
-- **수집**: 방향 안내 수집, 세션 메모와 현황, idle/other, 연속 기록, 세션 종료. 화살표 옆 숫자는 저장한 개수이고, 바깥 눈금은 안내 진행률이다. 안내가 도는 동안에는 준비용 칸을 접고 다이얼을 키운다.
-- **기록**: 최근 이벤트와 사용법.
+- **리모컨**(사용자 빌드는 이것만 보인다): 위·아래·좌우 제스처가 지금 하는 일 세 줄, 모드 띠(상하/좌우, 제어 상태), 스와이프 제어 켜기·끄기, 링 다시 연결. 제스처를 받으면 그 줄이 0.7초 빛난다. 스크롤 없이 한 화면에 든다.
+- **수집**(개발용): 방향 안내 수집, 세션 메모와 현황, idle/other, 연속 기록, 세션 종료. 위쪽 다이얼에 단계와 방향별 저장 개수를 보이고, 안내가 도는 동안에는 준비용 칸을 접고 다이얼을 키운다.
+- **기록**(개발용): 최근 이벤트 8개와 사용법.
 
-맨 위의 **페어링 방법**, **연결 방법** 토글을 누르면 어느 탭에서든 순서 안내가 펼쳐진다. 한 번에 하나만 열리고, 다시 누르면 접힌다.
+개발용 빌드는 오른쪽 위에 수신 Hz, 리모컨 탭에 누락 샘플 수도 보인다. 빌드 방법은 아래 "빌드"에 있다.
 
 글꼴은 `app/src/main/res/font`에 있다. 제목·버튼은 Do Hyeon, 설명 글은 Orbit(한글)과 IBM Plex Mono(영문·숫자), 숫자 표시는 IBM Plex Mono다. 모두 SIL OFL이며 라이선스 전문은 `app/src/main/assets/licenses`에 있어 APK에 함께 들어간다.
 
-디버그 빌드는 링 없이 화면 상태만 볼 수 있다. 세션과 파일은 만들지 않는다. 값은 `remote`, `collect`, `go`, `still`, `log`, `pairing`, `connect`다.
+디버그 빌드는 링 없이 화면 상태만 볼 수 있다. 세션과 파일은 만들지 않는다. 값은 `remote`(기본), `pairing`, `connect`, `collect`, `go`, `still`, `log`다. 수집·기록 화면은 개발용 빌드에서만 보인다.
 
 ```powershell
-adb shell am start -n com.hintringpilot.ringpilot/.MainActivity --es ui_preview go
+adb shell am start -n com.hintringpilot.ringpilot/.MainActivity --es ui_preview remote
 ```
+
+## 코드 구조
+
+모두 `app/src/main/java/com/hintringpilot/ringpilot/`에 있다. 개발용 화면에만 쓰는 클래스는 `dev/` 패키지에 둔다(사용자 빌드에서도 컴파일은 되지만 화면에 나오지 않는다).
+
+| 파일 | 맡는 일 |
+|---|---|
+| `MainActivity` | 화면 조립(상단 막대, 탭), 링 연결과 권한, 받은 제스처 실행과 기록, 화면 미리보기 |
+| `ImuBleClient` | BLE 연결·자동 재연결, IMU·상태·제스처·포인터 알림 해석, `connection_log.csv` 기록 |
+| `BleConnectionEpoch` | 연결 시도마다 세대를 붙여, 이전 연결의 늦은 콜백을 걸러 낸다 |
+| `GestureRouter` | 제스처 → 동작 판단(모드 전환, 방향 → 스와이프, 제어·접근성 꺼짐). 안드로이드 의존이 없어 JDK로 시험한다 |
+| `SwipeAccessibilityService` | 다른 앱에 스와이프·탭 주입, 모드 배너와 포인터 커서 그리기 |
+| `PointerController` | 반지 5방향 스위치 → 커서 이동(누르는 동안 일정 속도), 클릭 → 커서 위치 탭, 마지막 입력 1.5초 뒤 커서 숨김 |
+| `RemotePanel` | 리모컨 화면 |
+| `GuideDialogs` | 페어링·연결 안내 팝업 |
+| `dev/CollectPanel` | 수집 화면과 안내 수집 흐름(음성·소리 안내, 다시 하기, 일시정지) |
+| `dev/CaptureCoordinator` | 수집 준비·기록·저장과 안내·세션 종료를 한 곳에서 관리(Android 의존 없음, JDK로 시험한다) |
+| `dev/SessionDirectory` | 같은 초에 시작한 세션도 겹치지 않게 새 폴더 만들기(`-001` 접미사) |
+| `dev/SlotContinuity` | 보드 슬롯의 중복·공백·역행 판정 |
+| `dev/CaptureSidecar` | 기록마다 붙는 메타데이터 JSON. JDK로 시험한다 |
+| `dev/LogPanel` | 기록 탭(최근 이벤트) |
+| `ui/Ui` | 색·글꼴·카드·버튼 같은 공통 디자인 요소(CSS 역할) |
+| `dev/DirectionDial` | 수집 안내용 원형 다이얼 |
 
 ## 수집 방법
 
@@ -102,15 +126,17 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 .\gradlew.bat :app:assembleDebug
 ```
 
+기본 빌드는 사용자용이라 리모컨 화면만 보인다. 수집·기록 탭과 Hz·누락 샘플 표시(데이터 수집, 연속 기록, 실사용 시험용)는 코드에 남아 있고 `.\gradlew.bat :app:assembleDebug -PdevTools=true`로 빌드하면 보인다(`BuildConfig.DEV_TOOLS`).
+
 Android Studio 없이 빌드할 때는 JDK 17(예: Temurin 17)을 `JAVA_HOME`으로 두고, 명령줄 SDK를 `.tools/android-sdk`에 설치한 뒤 `android/local.properties`에 `sdk.dir=C:/<저장소 경로>/.tools/android-sdk`를 적는다(경로는 `/`로 쓴다. `\`를 쓰면 `\u`가 유니코드 이스케이프로 읽혀 빌드가 실패한다).
 
-## 보존한 기능
+## 제스처 처리와 기록
+
+5방향 스위치 포인터: 반지의 방향 스위치를 누르는 동안 커서가 일정 속도(1초에 화면 짧은 변의 절반)로 움직이고, 센터를 짧게 누르면 커서 위치를 탭한다. 커서는 평소 숨겨져 있다가 입력이 있을 때 보이고, 마지막 입력 1.5초 뒤 사라진다. 스와이프 제어가 켜져 있을 때만 동작한다. 탭은 `pointer_tap`, 결과는 `pointer_tap_result`로 연결 기록에 남는다.
 
 보드가 `firmware/gesture_infer`면 앱은 발행 알림(`b27a2003`)을 받아 화면에 표시하고, "스와이프 제어 켜기"를 누르면 접근성 서비스로 스와이프를 주입한다(기본은 꺼짐). 좌우 제스처는 구분 없이 상하·좌우 모드를 바꾸고 화면 위쪽에 모드를 1.2초 표시한다. 상하 모드는 위·아래 제스처가 위·아래 스와이프, 좌우 모드는 위 = 왼쪽, 아래 = 오른쪽 스와이프다. 앱을 다시 시작하면 상하 모드로 돌아간다. 수집 펌웨어에는 이 특성이 없어 건너뛴다. 전용 백그라운드 서비스는 없어 앱이 정리되면 끊긴다.
 
 제스처 처리는 연결 기록(`connection_log.csv`)에 남는다. `gesture`는 보드에서 받은 값(seq·dir·score·slot), `app_gesture`는 앱 판단(제어·접근성 서비스 상태, 전환 전후 모드 `V`·`H`, 동작, 스와이프), `swipe_result`는 요청 결과(`completed`·`cancelled`·`not_dispatched`), `swipe_control`은 제어 켜기·끄기다. `completed`는 시스템이 주입을 마쳤다는 뜻이고 앱 화면이 원하는 대로 움직였다는 뜻은 아니다. 제스처를 인식하지 못하면 행이 없으므로 무발행은 이 기록만으로 알 수 없다. 연속 기록과 메모를 함께 본다. seq는 1바이트라 한 바퀴 돌면 겹치니 시각과 함께 맞춘다.
-
-`SwipeAccessibilityService`(화면 스와이프 주입)는 스와이프 제어가 켜져 있고 접근성 서비스가 활성화된 경우 현재 화면의 `GestureRouter` 결과에 따라 호출된다.
 
 ## 캡처 시각 sidecar (영상 동기화 준비용)
 
@@ -136,4 +162,4 @@ Android SDK 없이 순수 Java sidecar 검사를 실행할 수 있다(JDK 17 이
 
 또한 제품 코드인 `CaptureCoordinator`, `SessionDirectory`, `SlotContinuity`, `BleConnectionEpoch`를 직접 컴파일한다. 가짜 시계·UI/파일 대기열과 실제 임시 파일 I/O로 버튼 겹침·안내 재개, 오래된 시작/timeout/GO 콜백, ARMING 단절 재시도, 마지막 400행 직후 UI 정지·세션 종료·Activity 종료, 느린 저장과 안내 간격, 파일/요약/마커 실패, 같은 시각 폴더 충돌, 슬롯 역행·중복·공백과 이전 GATT 세대 거절을 검사한다. 모든 네이티브 명령의 종료 코드를 즉시 검사하며 산출물은 저장소 `.build/android-sidecar-tests/`에 둔다. JDK 17 이상에서 외부 테스트 라이브러리 없이 실행된다.
 
-`MainActivity`는 화면·음성·권한·GestureRouter 어댑터이고, 캡처/안내/세션 상태와 파일 작업 등록은 Android 의존성이 없는 `CaptureCoordinator` 한 곳에서 관리한다. BLE 클라이언트는 연결 시도마다 별도 세대를 부여하고 disconnect 콜백이 없어도 stop 시 기존 세대 경계를 먼저 알린다.
+수집 화면(`dev/CollectPanel`)은 화면·음성 어댑터이고, 캡처/안내/세션 상태와 파일 작업 등록은 Android 의존성이 없는 `CaptureCoordinator` 한 곳에서 관리한다. BLE 클라이언트는 연결 시도마다 별도 세대를 부여하고 disconnect 콜백이 없어도 stop 시 기존 세대 경계를 먼저 알린다.

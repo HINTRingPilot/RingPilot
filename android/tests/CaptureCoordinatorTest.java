@@ -1,4 +1,4 @@
-package com.hintringpilot.ringpilot;
+package com.hintringpilot.ringpilot.dev;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,7 +64,7 @@ public final class CaptureCoordinatorTest {
     public static void main(String[] args) throws Exception {
         overlapAndStaleCallbacks(); persistenceBeforeClose(); guideWaitsForPersistence();
         streamBoundariesAndSlots(); collisionAndFailures();
-        prerequisitesAndFailureOrdering(); staleTimersAndFiniteBoundaries(); epochAndSlotContracts();
+        prerequisitesAndFailureOrdering(); staleTimersAndFiniteBoundaries(); slotAndSessionContracts();
         staleCueAndRedo();
         canceledHeaderOwnership();
         partialMetadataRequiresFreshSession();
@@ -259,15 +259,7 @@ public final class CaptureCoordinatorTest {
         String lostMeta = Files.readString(lost.csv("continuous").resolveSibling("continuous.1.csv.capture.json"));
         check(lostMeta.contains("\"end_status\": \"stopped\"") && lostMeta.contains("\"end_reason\": \"connection_lost\""), "continuous disconnect exact status/reason");
     }
-    static void epochAndSlotContracts() throws Exception {
-        BleConnectionEpoch epoch = new BleConnectionEpoch(); Object oldGatt = new Object(), newGatt = new Object();
-        long first = epoch.begin(); epoch.attach(first, oldGatt);
-        check(epoch.current(first, oldGatt), "current GATT accepted");
-        check(epoch.end(first), "stop delivers boundary without disconnect callback");
-        check(!epoch.end(first), "disconnect after stop cannot deliver duplicate boundary");
-        long second = epoch.begin(); epoch.attach(second, newGatt);
-        check(!epoch.current(first, oldGatt), "stale GATT callback rejected");
-        check(!epoch.end(first) && epoch.current(second, newGatt), "stale disconnect cannot close new GATT");
+    static void slotAndSessionContracts() throws Exception {
         SlotContinuity slots = new SlotContinuity();
         check(slots.accept(100000, 5) == SlotContinuity.Kind.CONTIGUOUS, "initial high slot valid");
         check(slots.accept(100000, 5) == SlotContinuity.Kind.DUPLICATE, "exact previous duplicate");

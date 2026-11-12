@@ -24,7 +24,7 @@ import v2
 
 ROOT = Path(__file__).resolve().parents[1]
 C_DIR = ROOT / "firmware/gesture_infer/src"
-HOST_SOURCE = ROOT / "firmware/gesture_host/host_check.c"
+HOST_SOURCE = ROOT / "firmware/dev/gesture_host/host_check.c"
 GYRO = slice(3, 6)
 INPUT_CHANNELS = ["gyrX", "gyrY", "gyrZ", "angX", "angY", "angZ"]
 KERNEL = 3

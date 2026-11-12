@@ -1,35 +1,52 @@
-# RingPilot 현재 펌웨어 빌드와 전송
+# 펌웨어
 
-현재 제스처 펌웨어는 `gesture_infer`, 수집 전용 펌웨어는 `imu_ble_stream`이다. Seeed nRF52 Boards **1.1.13**, Seeed Arduino LSM6DS3 **2.0.7**을 사용한다. 제스처 모델·환산 계수·UUID·기존 8/10-byte 이벤트와 IMU 패킷 형식은 유지한다.
+보드: Seeed XIAO nRF52840 Sense(Seeed nRF52 Boards non-mbed 1.1.13, FQBN `Seeeduino:nrf52:xiaonRF52840Sense`). 설치는 [설치 안내](../docs/설치안내.md).
 
-## 공통 전송 라이브러리
+개발용은 `dev/` 아래에 둔다. 사용자에게 들어가는 것은 `gesture_infer`(스트림을 끈 기본 빌드)뿐이다.
 
-두 스케치는 프로젝트의 `firmware/libraries/RingPilotTransport`를 사용한다. CLI에서 프로젝트 루트 기준으로 `--libraries firmware/libraries`를 지정한다. Arduino IDE에서는 `RingPilotTransport` 폴더를 스케치북의 `libraries` 폴더에 설치한다.
+| 스케치 | 용도 |
+|---|---|
+| [gesture_infer/](gesture_infer/) | **지금 쓰는 펌웨어.** 보드 안 제스처 판정·발행. 개발 빌드는 IMU 원시값 스트림도 보낸다 |
+| [dev/imu_ble_stream/](dev/imu_ble_stream/) | (개발용) 학습 데이터 수집용. 추론 없이 IMU만 보낸다(BLE 형식이 같아 같은 앱이 붙는다) |
+| [dev/gesture_host/](dev/gesture_host/) | (개발용) 보드에 올리지 않는다. 판정 코어를 PC에서 빌드해 Python과 비교·시간 측정(`ml/v2_export_c.py`, `ml/v2_latency.py`가 쓴다) |
 
-```powershell
-arduino-cli compile --fqbn Seeeduino:nrf52:xiaonRF52840Sense --libraries firmware/libraries --build-path .build/gesture_infer firmware/gesture_infer
-arduino-cli compile --fqbn Seeeduino:nrf52:xiaonRF52840Sense --libraries firmware/libraries --build-path .build/imu_ble_stream firmware/imu_ble_stream
+초기 하드웨어 확인용 시험 스케치(`ble_poc`, `battery_test`, `power_off_test`, `switch_test`)는 2026-11-05에 지웠다. 커밋 `05c4cb3` 이전 이력에 있다.
+
+## gesture_infer 구조
+
+```text
+imu_sampler(읽기 태스크, 10 ms) → 판정 대기열 → gesture_loop → gesture_runtime → 발행 → ble_link(제스처 알림), controls(LED)
+                                └(개발 빌드만) dev/imu_stream: 전송 대기열 → IMU 스트림
+controls: 센터 스위치(클릭·일시정지·전원 끄기)와 LED → pointer: 방향 스위치 상태·클릭 알림(커서는 앱이 그린다)
 ```
 
-이 작업 PC의 CLI·코어는 git 제외인 `.tools`에 설치했다. 로컬 환경에서는 명령의 `arduino-cli`를 `.tools/arduino-cli/arduino-cli.exe --config-file .tools/arduino-cli.yaml`로 바꿔 실행한다. 업로드는 위 컴파일 명령에 포함되지 않는다.
+| 파일 | 맡는 일 |
+|---|---|
+| `gesture_infer.ino` | setup·loop, 시리얼 명령(`?` 상태, `l` 통계, `r` 초기화) |
+| `src/imu_sampler` | IMU 설정, FreeRTOS 읽기 태스크, 잠금 없는 판정 대기열, 읽기 통계 |
+| `src/gesture_loop` | 대기열에서 자이로를 꺼내 판정 코어에 넣기(빈 슬롯 채우기), 발행 내보내기, 판정 시간 측정 |
+| `src/ble_link` | BLE 서비스·특성, 연결 파라미터, 상태·제스처 알림 대기열 |
+| `src/dev/imu_stream` | (개발 빌드만) 전송 대기열과 IMU 원시값 스트림 패킷 |
+| `src/build_config.h` | 빌드 설정. `RINGPILOT_IMU_STREAM`(기본 0 = 사용자 빌드) |
+| `src/controls` | 센터 스위치·LED, 일시정지·재개·System OFF |
+| `src/pointer` | 5방향 스위치 포인터. 방향 상태와 클릭 수를 알림(b27a2004)으로 보내고, 커서 그리기·탭은 앱이 한다. 방향 핀 매핑은 미확인 |
+| `src/gesture_runtime.c` | **판정 코어.** 온라인 영점, 50 ms마다 판정, 발행 규칙(0.8·차이 0.2·2회 연속, 잠금·재무장), 입력 지우기 |
+| `src/gesture_tcn.c` | 입력 처리(자이로 + 회전각)와 TCN 추론. 마지막 시점에 필요한 칸만 계산 |
+| `src/gesture_weights.h` | 모델 가중치. `ml/v2_export_c.py export`가 만든다(직접 고치지 않는다) |
+| `src/cycle_timer.h` | 시간 측정용 사이클 카운터 |
 
-## 상태와 제스처 전송
+판정 코어(`gesture_runtime.c`, `gesture_tcn.c`)는 Arduino에 의존하지 않는 C99라 PC에서도 빌드된다. Python 기준(`ml/v2_erase.py replay`)과 같은 발행을 내는지 `ml/v2_export_c.py check`로 확인한다.
 
-- BLE 콜백은 짧은 임계 구역에서 연결·특성 구독 상태만 게시한다. 고정 크기 큐의 추가·제거·전송은 loop만 담당한다.
-- 제스처는 최대 4개를 FIFO로 보관한다. notify false면 같은 순번·점수·슬롯의 패킷을 유지하고 다음 loop에서 재시도한다. 가득 차면 새 항목을 거절한다.
-- 발행 뒤 유효 기간은 250ms이며 남은 시간이 코어 대기 100ms+여유 20ms보다 짧으면 새 시도를 하지 않고 폐기한다. 이 수치는 초기 정책값이며 최적값이나 앱 응답 지연 측정치가 아니다.
-- 연결 세대·제스처 구독 세대가 바뀌거나 일시정지하면 이전 대기 제스처를 폐기한다. 구독 off→on이 한 loop 사이에 발생해도 세대 변경을 보존한다.
-- 현재 재개의 RESUMED는 큐 포화·일시적 상태 미구독에서도 보존한다. 스택이 RESUMED를 수용한 뒤 첫 IMU를 보내며, 첫 데이터 수용 후 FIRST_DATA를 기록한다.
-- 한 loop에서 상태·제스처·IMU를 각각 최대 한 번 시도하고 실패 뒤의 전송은 다음 loop로 넘긴다. 대기열·mailbox·전송 순서의 공통 코드는 호스트 검사와 실제 스케치가 공유한다.
-
-notify true는 BLE 스택이 수용했다는 뜻이다. 휴대폰 앱의 동작 완료 확인은 아니다. 이미 notify 내부에 들어간 호출은 현재 API로 취소할 수 없으며, 그 사이 연결/구독이 바뀌면 진단하고 추가 재시도를 막는다. 기존 수집 전용 스케치는 loop에서 샘플링하므로 블로킹 알림이 샘플 간격에 미치는 영향은 실기기에서 별도로 확인해야 한다.
-
-`gesture_infer`의 시리얼 `l`은 기존 판정·샘플 통계에 TX 수용/재시도/실패/만료/포화와 연결·구독·일시정지 폐기, 전송 도중 경계를 더해 출력한다. `r`은 통계만 초기화하며 대기 패킷은 변경하지 않는다. LED·Issued는 모델이 발행한 횟수로, TX accepted와 구분한다.
-
-## PC 검사
+빌드·업로드(arduino-cli):
 
 ```powershell
-.\firmware\tests\run-transport-tests.ps1
+arduino-cli compile --fqbn Seeeduino:nrf52:xiaonRF52840Sense --libraries firmware/libraries firmware/gesture_infer
+arduino-cli upload --fqbn Seeeduino:nrf52:xiaonRF52840Sense -p COM6 firmware/gesture_infer
 ```
 
-C++11 컴파일러(`g++`, 또는 `-Compiler`로 실행 경로 지정)가 필요하다. 실제 전송 큐·dispatcher·mailbox 어댑터를 사용하고 알림과 임계 구역만 모사한다. 재시도 bytes, FIFO, 만료·시각 순환, 연결 세대, 구독 off→on, notify 도중 경계, RESUMED→IMU→FIRST_DATA와 실패 뒤 전송 중단을 검사한다. 실제 무선 전송·보드 타이밍 확인을 대체하지 않는다.
+`gesture_infer`와 `dev/imu_ble_stream`은 BLE 전송 로직을 `libraries/RingPilotTransport`에서 함께 쓰므로 compile에 `--libraries firmware/libraries`가 있어야 한다. 이 라이브러리의 PC 테스트는 `tests/run-transport-tests.ps1`(g++ 필요)이다.
+
+개발 빌드(IMU 스트림 켬, 앱 개발용 빌드의 연속 기록·수집용)는 compile에 `--build-property "compiler.cpp.extra_flags=-DRINGPILOT_IMU_STREAM=1"`을 붙인다.
+사용자 빌드는 스트림 특성이 없어서, 앱의 재개·재연결 지연 기록(`RESULT_pause_resume`, `RESULT_boot_reconnect`)이 남지 않는다(첫 데이터 기준이라서).
+
+제스처 시험은 USB를 빼고 배터리로 한다(케이블 무게가 동작을 바꾼다).
