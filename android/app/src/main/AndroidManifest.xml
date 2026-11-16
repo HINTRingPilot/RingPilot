@@ -20,9 +20,11 @@
         android:supportsRtl="true"
         android:theme="@style/RingPilotTheme">
 
+        <!-- 화면은 하나만 둔다. 화면마다 반지 연결(ImuBleClient)을 따로 열어, 여러 개가 쌓이면 제스처가 중복 실행된다(2026-11-16 확인). -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
