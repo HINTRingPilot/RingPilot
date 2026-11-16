@@ -32,7 +32,7 @@ static void printStats() {
   Serial.print("Reads/repeated: "); Serial.print(s.total); Serial.print(" / "); Serial.println(s.repeated);
   Serial.print("Read gap max us, >12ms, <8ms: ");
   Serial.print(s.maxGapUs); Serial.print(", "); Serial.print(s.late); Serial.print(", "); Serial.println(s.early);
-  Serial.print("Read max us: "); Serial.println(s.maxReadUs);
+  Serial.print("Read avg/max us: "); Serial.print(s.reads ? s.sumReadUs / s.reads : 0); Serial.print(" / "); Serial.println(s.maxReadUs);
   Serial.print("Gyro queue dropped / read errors: "); Serial.print(s.gyroDropped); Serial.print(" / "); Serial.println(s.readErrors);
   ble_print_link(Serial);
 }

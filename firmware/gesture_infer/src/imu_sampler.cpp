@@ -12,9 +12,14 @@ static const uint32_t kSampleRateHz = 100;
 static const uint16_t kGyroQueueSize = 64;    // 판정 대기열, 약 0.64초 분량
 static const float kGyroDpsPerLsb = 0.07f;    // ±2000 dps 설정의 환산값(학습 데이터와 같음)
 static const uint32_t kI2cHz = 400000;        // 센서가 지원하는 Fast mode. 라이브러리 기본은 100 kHz
-// 출력 레지스터는 자이로 X·Y·Z(0x22~0x27), 가속도 X·Y·Z(0x28~0x2D) 순으로 붙어 있고, 주소 자동 증가(CTRL3_C IF_INC, 기본 켜짐)로
-// 한 번의 I2C 읽기에 이어서 읽힌다. 사용자 빌드는 가속도를 끄고 자이로 6바이트만, 개발 빌드(스트림)는 12바이트를 읽는다.
-static const uint8_t kReadBytes = RINGPILOT_IMU_STREAM ? 12 : 6;
+// XIAO nRF52840 Sense의 IMU는 내부 I2C 버스(Wire1, P0.07·P0.27)에 있다. 라이브러리도 안에서 Wire를 Wire1로 바꿔 쓴다.
+// 상태(0x1E), 예약(0x1F), 온도(0x20~0x21), 자이로 X·Y·Z(0x22~0x27), 가속도 X·Y·Z(0x28~0x2D)가 붙어 있고, 주소 자동 증가
+// (CTRL3_C IF_INC, 기본 켜짐)로 한 번의 I2C 읽기에 이어서 읽힌다. 상태부터 읽어 "새 자이로 값이 있었나"(GDA)도 같이 얻는다.
+// 사용자 빌드는 가속도를 끄고 상태~자이로 10바이트, 개발 빌드(스트림)는 가속도까지 16바이트를 읽는다.
+static const uint8_t kGyroOffset = 4;                 // 읽은 바이트에서 자이로가 시작하는 곳
+static const uint8_t kAccelOffset = kGyroOffset + 6;
+static const uint8_t kReadBytes = RINGPILOT_IMU_STREAM ? kAccelOffset + 6 : kAccelOffset;
+static const uint8_t kStatusGyroReady = 0x02;         // STATUS_REG GDA: 지난번 읽은 뒤 새 자이로 값이 나왔다
 
 static LSM6DS3 imu(I2C_MODE, 0x6A);
 static SemaphoreHandle_t imuMutex = nullptr;
@@ -28,7 +33,6 @@ static volatile uint32_t gyroTail = 0;  // loop만 바꾼다
 static ReadStats stats = {};
 static bool haveRead = false;  // 직전 읽기가 있는지(일시정지하면 끊는다)
 static uint32_t lastReadCycles = 0;
-static int16_t lastRaw[6] = {0, 0, 0, 0, 0, 0};
 
 static bool configureImu() {
   imu.settings.accelEnabled = RINGPILOT_IMU_STREAM ? 1 : 0;  // 판정은 자이로만 쓴다. 가속도는 스트림(학습 데이터)용
@@ -39,8 +43,8 @@ static bool configureImu() {
   imu.settings.gyroRange = 2000;
   imu.settings.gyroSampleRate = 104;
   imu.settings.gyroBandWidth = 50;
-  const bool ok = imu.begin() == 0;  // begin이 Wire.begin()을 다시 부르므로 그 뒤에 속도를 바꾼다
-  Wire.setClock(kI2cHz);
+  const bool ok = imu.begin() == 0;  // begin이 Wire1.begin()을 다시 부르므로 그 뒤에 속도를 바꾼다
+  Wire1.setClock(kI2cHz);
   return ok;
 }
 
@@ -49,35 +53,39 @@ static void powerDownImu() {
   imu.writeRegister(LSM6DS3_ACC_GYRO_CTRL2_G, 0x00);   // 자이로 power-down
 }
 
-static void recordReadTiming(const int16_t v[6], uint32_t t0, uint32_t t1) {
+// fresh: 센서가 지난 읽기 뒤 새 자이로 값을 냈는지(STATUS_REG GDA). 아니면 같은 값을 다시 읽은 것이다.
+static void recordReadTiming(bool fresh, uint32_t t0, uint32_t t1) {
   const uint32_t readUs = cycles_to_us(t1 - t0);
   if (readUs > stats.maxReadUs) stats.maxReadUs = readUs;
+  stats.sumReadUs += readUs;
+  stats.reads++;
   if (haveRead) {
     const uint32_t gap = cycles_to_us(t1 - lastReadCycles);
     if (gap > stats.maxGapUs) stats.maxGapUs = gap;
     if (gap > 12000) stats.late++;
     if (gap < 8000) stats.early++;
-    if (memcmp(lastRaw, v, sizeof(lastRaw)) == 0) stats.repeated++;
+    if (!fresh) stats.repeated++;
     stats.total++;
   }
   lastReadCycles = t1;
-  memcpy(lastRaw, v, sizeof(lastRaw));
   haveRead = true;
 }
 
-// 읽기 태스크에서 부른다. 한 번의 I2C 읽기로 같은 순간의 축을 모두 가져온다(축마다 따로 읽으면 약 3.6 ms, 몰아 읽으면 약 0.3~0.5 ms 예상).
+// 읽기 태스크에서 부른다. 한 번의 I2C 읽기로 상태와 같은 순간의 축을 모두 가져온다(축마다 따로 읽던 때는 3.58 ms).
 // v는 accX, accY, accZ, gyrX, gyrY, gyrZ 원시값(int16 LE)이다. 사용자 빌드는 가속도가 0이다. 스트림에는 단위 환산 없이 보낸다.
 static void takeSample(uint32_t slot) {
   const uint32_t t0 = cycle_now();
-  uint8_t raw[12] = {0};
-  if (imu.readRegisterRegion(raw, LSM6DS3_ACC_GYRO_OUTX_L_G, kReadBytes) != IMU_SUCCESS) stats.readErrors++;
+  uint8_t raw[kAccelOffset + 6] = {0};
+  if (imu.readRegisterRegion(raw, LSM6DS3_ACC_GYRO_STATUS_REG, kReadBytes) != IMU_SUCCESS) stats.readErrors++;
   const uint32_t t1 = cycle_now();
   int16_t v[6];
   for (int a = 0; a < 3; a++) {
-    v[a + 3] = static_cast<int16_t>(raw[2 * a] | (raw[2 * a + 1] << 8));      // 자이로
-    v[a] = static_cast<int16_t>(raw[6 + 2 * a] | (raw[6 + 2 * a + 1] << 8));  // 가속도(사용자 빌드는 0)
+    const uint8_t* g = raw + kGyroOffset + 2 * a;
+    const uint8_t* x = raw + kAccelOffset + 2 * a;
+    v[a + 3] = static_cast<int16_t>(g[0] | (g[1] << 8));  // 자이로
+    v[a] = static_cast<int16_t>(x[0] | (x[1] << 8));      // 가속도(사용자 빌드는 0)
   }
-  recordReadTiming(v, t0, t1);
+  recordReadTiming((raw[0] & kStatusGyroReady) != 0, t0, t1);
 
 #if RINGPILOT_IMU_STREAM
   imu_stream_push(slot, v);

@@ -17,11 +17,13 @@ struct GyroItem {
 
 struct ReadStats {
   uint32_t total;        // 직전 읽기가 있는 읽기 수
-  uint32_t repeated;     // 6축이 직전 읽기와 모두 같은 횟수(센서가 새 값을 내기 전에 읽음)
+  uint32_t repeated;     // 센서가 새 자이로 값을 내기 전에 다시 읽은 횟수(STATUS_REG GDA가 0)
   uint32_t maxGapUs;     // 읽기 사이 최대 간격
   uint32_t late;         // 직전 읽기에서 12 ms 넘게 지난 읽기(주기 10 ms)
   uint32_t early;        // 직전 읽기에서 8 ms 안에 온 읽기
-  uint32_t maxReadUs;    // I2C 읽기 한 번(6축)에 걸린 최대 시간
+  uint32_t maxReadUs;    // I2C 읽기 한 번에 걸린 최대 시간
+  uint32_t sumReadUs;    // 읽기 시간 합(평균 계산용)
+  uint32_t reads;        // 읽기 횟수
   uint32_t gyroDropped;  // 판정 대기열이 가득 차 버린 수
   uint32_t readErrors;   // I2C 읽기 실패(그 샘플은 0으로 들어간다)
 };
