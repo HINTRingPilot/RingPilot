@@ -14,12 +14,12 @@ struct Direction {
   const char* name;
 };
 
-// 스위치 단자 A·B·C·D와 XIAO 핀 배선은 docs/HardwareBuild.md 3절. 방향은 미확인 가정이다.
+// 스위치 단자와 XIAO 핀 배선은 docs/HardwareBuild.md 3절. 방향은 2026-11-16 보드에서 눌러 보고 사용자가 확인했다.
 static const Direction kDirections[] = {
-  {0, 1, "UP"},     // D0 = 단자 A
-  {2, 2, "DOWN"},   // D2 = 단자 C
-  {6, 4, "LEFT"},   // D6 = 단자 D
-  {3, 8, "RIGHT"},  // D3 = 단자 B
+  {6, 1, "UP"},     // D6 = 단자 D
+  {0, 2, "DOWN"},   // D0 = 단자 A
+  {3, 4, "LEFT"},   // D3 = 단자 B
+  {2, 8, "RIGHT"},  // D2 = 단자 C
 };
 
 static BLECharacteristic pointerEvent("b27a2004-8c5e-4b62-9a21-33dd714e9001");
