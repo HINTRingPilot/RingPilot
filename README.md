@@ -70,25 +70,31 @@ ml/.venv/Scripts/python.exe -m unittest discover -s ml/tests -t ml
 
 ## 문서
 
-- [개발 진행 요약과 실험 회고 (2026-10-25)](docs/개발진행요약_2026-10-25.md)
+처음 보는 분은 진행기록 요약 → 모델 구조 → 시행착오 정리 순서를 권합니다.
+
+| 문서 | 내용 |
+|---|---|
+| [진행기록 요약](docs/진행기록요약.md) | 전체 과정을 9단계로 간추린 것, 현재 상태 |
+| [모델 구조](docs/모델구조.md) | 지금 반지에 들어간 모델, 입력, 학습, 발행 규칙 |
+| [시행착오 정리](docs/시행착오정리.md) | 모델 개선 과정의 시도·원인·배운 점 |
+| [하드웨어 제작 보고서](docs/HardwareBuild.md) | 배선, 스위치, 배터리, 전원 |
+| [데이터 큐레이션 기록](docs/데이터큐레이션기록.md) | 데이터셋에서 뺀 것과 이유 |
+| [BLE v2 실험](docs/experiments/ble-v2/README.md) | 실험별 조건과 결과 |
+| [Android 앱](android/README.md), [펌웨어](firmware/README.md) | 빌드와 코드 구조 |
+| [Windows 개발환경 설치](docs/설치안내.md) | 펌웨어·앱·학습 환경 설치 |
+| [남은 할 일](docs/TODO.md) | 다음 작업과 보류 항목 |
+| [진행기록](docs/진행기록.md) | 원본 작업 일지(모든 조건·수치·검증 근거) |
+
+과거 기록:
+
 - [기획서 원안](기획서%20원안.txt)
-- [남은 할 일](docs/TODO.md)
-- [시행착오 정리](docs/시행착오정리.md)
-- [진행 기록과 검증 근거](docs/진행기록.md)
-- [Windows 개발환경 설치](docs/설치안내.md)
-- [Android 앱](android/README.md)
-- [BLE 테스트 기록](docs/BLE테스트.md) (초기 `ble_poc` 시절 기록, 스케치는 git 이력에만 있음)
-- [제스처 인식 구조 제안](docs/제스처인식구조안.md)
-- [모델 아키텍처](docs/ModelArchitecture.md)
-- [학습·평가 계획](docs/TrainingPlan.md)
-- [BLE v1 모델 실험 기록](docs/experiments/ble-v1/README.md)
-- [모델 개발·실험 기록 (조현준)](docs/진행기록_조현준.md)
-- [하드웨어 제작 보고서](docs/HardwareBuild.md)
+- [보관 문서](docs/archive/README.md): 10-25 회고, 초기 모델 설계·학습 계획, 설계 제안, BLE PoC 시험 기록
+- [BLE v1 모델 실험 기록](docs/experiments/ble-v1/README.md), [모델 개발·실험 기록 (조현준)](docs/진행기록_조현준.md)
 - [코드 리뷰 (2026-11-12)](docs/reviews/2026-11-12-ecc-code-review.md)
 - [시리얼 테스트 로그](docs/logs/)
 
 ## 참고
 
-BLE v1 실험(1~7a)은 테스트용 세션으로 진행했고, 2026-10-23에 그 세션과 주석, 분할, 결과 파일을 지웠습니다. 문서는 남아 있습니다. 2026-10-25에 자이로 ±2000 dps에 맞춘 앱으로 자세별 5세션을 새로 모았고, 원본 336개로 기준선 보정, NONE 배분 비교, 발행 시점 진단까지 했습니다. 결과와 한계는 [개발 진행 요약](docs/개발진행요약_2026-10-25.md)에 있습니다.
+BLE v1 실험(1~7a)은 테스트용 세션으로 진행했고, 2026-10-23에 그 세션과 주석, 분할, 결과 파일을 지웠습니다. 문서는 남아 있습니다. 2026-10-25에 자이로 ±2000 dps에 맞춘 앱으로 자세별 5세션을 새로 모았고, 원본 336개로 기준선 보정, NONE 배분 비교, 발행 시점 진단까지 했습니다. 결과와 한계는 [개발 진행 요약](docs/archive/개발진행요약_2026-10-25.md)에 있습니다.
 
 펌웨어 `.build/`, Android 빌드 결과, 로컬 SDK `.tools/`는 저장소에 올리지 않습니다.

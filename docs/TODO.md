@@ -8,6 +8,8 @@
 |---|---|
 | `docs/TODO.md`(이 문서) | **앞으로 할 일**과 순서, 누가 하는지 |
 | `docs/진행기록.md` | **한 일**: 날짜별 목적·변경·이유·검증·문제·다음(AGENTS.md 규칙). 맨 위 "지금 상태"가 현재 요약 |
+| `docs/진행기록요약.md` | 전체 흐름과 **현재 상태** 요약 |
+| `docs/모델구조.md` | 지금 모델·입력·발행 규칙 |
 | `docs/superpowers/specs/` | **설계**: 무엇을 왜 그렇게 만들지(구현 전 합의용) |
 | `docs/superpowers/plans/` | **실행 계획**: 단계별 작업·명령·판단 기준 |
 | `docs/experiments/ble-v2/return-label-01/README.md` | 실험 결과 표와 해석 |

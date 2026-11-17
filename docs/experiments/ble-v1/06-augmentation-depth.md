@@ -10,7 +10,7 @@
 
 ## 사전 단계 — epoch 보정(BLE-06-cal)
 
-[개발 평가 v2](../../TrainingPlan.md#개발-평가-v2--ble-06부터)에 따라 2×2 비교 전에 고정 epoch E를 정한다.
+[개발 평가 v2](../../archive/TrainingPlan.md#개발-평가-v2--ble-06부터)에 따라 2×2 비교 전에 고정 epoch E를 정한다.
 
 1. `data/splits/ble-v1-cv5.json`에 fold 배정을 저장하고, 방향별 fold 분포를 기록한다.
 2. 기준 A(2층, 무증강, 160행, 150 ms, Flatten)를 E ∈ {10, 20, 30, 40, 60} × 5 fold × 5 seed로 학습한다.

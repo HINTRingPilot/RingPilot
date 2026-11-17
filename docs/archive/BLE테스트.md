@@ -1,5 +1,7 @@
 # BLE PoC 테스트
 
+> **보관 문서:** 초기 BLE PoC(`firmware/ble_poc`, 삭제됨) 시험 기록이다. 하드웨어 현재 상태는 [하드웨어 제작 보고서](../HardwareBuild.md)를 본다.
+
 > 초기 시험 기록이다. `firmware/ble_poc`는 2026-11-05에 저장소에서 지웠고 커밋 `05c4cb3` 이전 이력에 있다.
 
 대상: Seeed XIAO nRF52840 Sense, Seeed nRF52 Boards(non-mbed) 1.1.13.
