@@ -214,7 +214,7 @@ void ble_on_resume(uint32_t releaseMs) {
 
 void ble_shutdown() {
   // 끊은 뒤 손을 뗄 때까지 기다리는 동안 광고가 자동 재시작되면 휴대폰이 잠깐 다시 붙었다가
-  // System OFF로 응답 없이 끊겨 재연결이 수 초 늦어진다(2026-10-19 측정에서 확인). 광고부터 멈춘다.
+  // System OFF로 응답 없이 끊겨 재연결이 수 초 늦어진다. 광고부터 멈춘다.
   Bluefruit.Advertising.restartOnDisconnect(false);
   Bluefruit.Advertising.stop();
   if (ble_connected()) {

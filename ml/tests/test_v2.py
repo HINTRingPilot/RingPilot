@@ -21,7 +21,7 @@ def write_clip(path, rows, gap=10, header=None, start=0):
 
 class PositiveCountTests(unittest.TestCase):
     def test_matches_v1_where_both_cover_all_windows(self):
-        # v1(ml/baseline.py, 2026-10-27 삭제)과 같던 출력의 지문
+        # 지난 v1 구현과 같던 출력의 지문
         counts = [v2.positive_count(e) for e in range(1000, 2860)]
         self.assertEqual(hashlib.sha256(json.dumps(counts).encode()).hexdigest(),
                          "7358f5d098a25c993d0151bdd1d52a18207d41e82250aedbdb4c61b7e77ee2f2")
@@ -170,7 +170,7 @@ class WindowTests(unittest.TestCase):
 
 class EventTests(unittest.TestCase):
     def test_same_as_v1_on_random_scores(self):
-        # v1(ml/baseline.py, 2026-10-27 삭제)과 같던 발행 출력의 지문. 2026-11-03 v1 채점 함수를 지우며 발행만으로 다시 잡았다
+        # 지난 v1 구현과 같던 발행 출력의 지문
         rng = np.random.default_rng(7)
         out = []
         for trial in range(300):
@@ -220,7 +220,7 @@ class SavedDataTests(unittest.TestCase):
 
     def test_records_match_files_and_counts(self):
         recs = self.data["records"]
-        # 2026-10-28: P5 raw_right.15·raw_left.1 제외(records.json revisions)
+        # P5 raw_right.15·raw_left.1 제외(records.json revisions)
         self.assertEqual(Counter(r["kind"] for r in recs), Counter({"raw_up": 71, "raw_down": 76, "raw_left": 73, "raw_right": 74, "idle": 15, "other": 25}))
         for r in recs:
             if r["direction"] != "NONE":

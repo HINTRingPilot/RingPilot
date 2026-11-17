@@ -1,4 +1,4 @@
-"""RingPilot 제스처 모델(TCN) 정의. 학습하지 않는다. 지난 2층 CNN(build_model)은 커밋 1162a44 이전 이력에 있다."""
+"""RingPilot 제스처 모델(TCN) 정의. 학습하지 않는다."""
 
 from tensorflow import keras
 

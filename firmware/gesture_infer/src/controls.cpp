@@ -7,7 +7,7 @@
 #include "imu_sampler.h"
 #include "pointer.h"
 
-static const uint8_t kCenterPin = 1;            // D1, 사용자 확인
+static const uint8_t kCenterPin = 1;            // D1
 static const uint8_t kChargeCurrentPin = 22;    // P0.13(HICHG). 입력(open)이면 50mA로 알려짐
 static const uint32_t kDebounceMs = 30;         // 이보다 짧은 누름은 접점 튐으로 무시
 static const uint32_t kPauseHoldMs = 500;       // 이 시간 미만은 클릭, 이상은 일시정지

@@ -1,4 +1,4 @@
-"""BLE v2 학습·채점 실행기. 지금 쓰는 조건 하나(LABEL)만 남겼다(2026-11-03 정리).
+"""BLE v2 학습·채점 실행기. 지금 쓰는 조건 하나(LABEL)만 남겼다.
 
 조건 newtcnrotwarpnoacc
   라벨    방향 라벨 r ≤ t < r+150 ms, 나머지 NONE. r은 복귀 피크 뒤 주축 자이로가 피크의 절반으로 내려온 첫 시점이며
@@ -13,7 +13,6 @@
   new_window      [복귀 피크, r+500 ms]
   extreme_window  [끝점, r+300 ms](주 채점). 끝점 = 가는 동작 주축 자이로가 0을 지나 복귀가 시작되는 순간.
 요약은 모든 방향 클립으로 계산하고, data/annotations/ble-v2/weak-gestures.json의 약한 동작 검출률을 by_epoch[E]["weak"]에 따로 적는다.
-지난 조건(old~newtcnrotwarp, accsub, seq 합성)과 기존 채점(old_window)의 코드는 커밋 1162a44 이전 이력에 있다.
 
 사용 (ml/.venv/Scripts/python.exe ml/v2_return.py <명령>):
   run --split C|S-P5 --seed N [--tag T] [--save-models]      한 seed의 모든 fold 학습·채점
@@ -47,8 +46,8 @@ EXP = "return-label-01"
 OUT = DOC / EXP
 RUNS = ROOT / "ml/runs" / EXP
 SCORINGS = ("new_window", "extreme_window")
-EXTREME_AFTER_R_MS = 300   # extreme_window의 끝 = r + 300 ms(2026-10-29 r+200에서 늘림. 실기기 체감 확인 전 잠정값)
-SPLITS = ("C", "S-P5")      # 기본 분할(사용자 결정, 2026-10-27). 다른 분할은 --splits로 고른다
+EXTREME_AFTER_R_MS = 300   # extreme_window의 끝 = r + 300 ms(잠정값)
+SPLITS = ("C", "S-P5")      # 기본 분할. 다른 분할은 --splits로 고른다
 ALL_DATA = "ALL"            # export 전용: 분할 없이 records의 원본 전부로 학습한다
 ANGLE_SCALE_DEG = 45.0
 SAMPLE_S = 0.01

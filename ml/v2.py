@@ -5,9 +5,8 @@
   split     분할 6개(C 1개, S-P1~P5) 저장
   verify    주석·분할 불변식 검사
 
-발행 함수(issue_events)와 NONE 추출(choose_training)은 v1(ml/baseline.py, 2026-10-27 삭제)의 동작을 그대로 옮긴 것이고,
+발행 함수(issue_events)와 NONE 추출(choose_training)은 v1의 동작을 그대로 옮긴 것이고,
 tests/test_v2.py가 출력의 지문으로 이를 확인한다. 학습 조건(창 처리·증강·모델)은 v2_return.py가 정해 build_sets·fit_snapshots에 넘긴다.
-지난 기준선 보정(v2_cal.py, 2층 CNN, e 기준 채점)의 코드는 커밋 1162a44 이전 이력에 있다.
 """
 
 import argparse

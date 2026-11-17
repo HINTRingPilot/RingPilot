@@ -17,7 +17,7 @@ RULES = {"R0": {"refractory_ms": 0, "rearm": 2},       # 지금 규칙(v2.issue_
          "R1": {"refractory_ms": 500, "rearm": 2},
          "R2": {"refractory_ms": 800, "rearm": 2},
          "R3": {"refractory_ms": 0, "rearm": 4},
-         # 2026-10-29 점수 모양 진단 뒤 추가: 복귀 중 반대 방향 발행 24건 중 20건이 연속 2회 판정만 조건을 채웠다
+         # 복귀 중 반대 방향 발행 24건 중 20건이 연속 2회 판정만 조건을 채웠다
          "R4": {"refractory_ms": 0, "rearm": 2, "consecutive": 3},
          "R5": {"refractory_ms": 500, "rearm": 2, "consecutive": 3}}
 SPLITS = ("C", "S-P1", "S-P2", "S-P3", "S-P4", "S-P5")

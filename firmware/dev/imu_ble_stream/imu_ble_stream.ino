@@ -16,7 +16,7 @@
 #include <RingPilotBleMailbox.h>
 
 static const uint32_t kSampleIntervalUs = 10000;  // 100 Hz
-static const uint8_t kCenterPin = 1;               // D1, 사용자 확인
+static const uint8_t kCenterPin = 1;               // D1
 static const uint32_t kDebounceMs = 30;            // 이보다 짧은 누름은 접점 튐으로 무시
 static const uint32_t kPauseHoldMs = 1000;         // 이 시간 미만은 클릭, 이상은 일시정지
 static const uint32_t kPowerOffHoldMs = 3000;      // 누르고 있는 동안 이 시간에 도달하면 System OFF
@@ -302,7 +302,7 @@ static void powerOff() {
   }
   ledsOff();
   // 끊은 뒤 손을 뗄 때까지 기다리는 동안 광고가 자동 재시작되면 휴대폰이 잠깐 다시 붙었다가
-  // System OFF로 응답 없이 끊겨 재연결이 수 초 늦어진다(2026-10-19 측정에서 확인). 광고부터 멈춘다.
+  // System OFF로 응답 없이 끊겨 재연결이 수 초 늦어진다. 광고부터 멈춘다.
   Bluefruit.Advertising.restartOnDisconnect(false);
   Bluefruit.Advertising.stop();
   if (connected()) {

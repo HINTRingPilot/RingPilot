@@ -8,7 +8,7 @@
 // 각 모듈의 규칙과 패킷 형식은 src/의 헤더 주석에 있다. 판정 코어(gesture_runtime.c, gesture_tcn.c)는 PC에서 ml/v2_export_c.py로 Keras와 같은지 확인한다.
 // 데이터 수집용(추론 없음)은 firmware/dev/imu_ble_stream이다. 스트림 형식이 같아 같은 앱이 붙는다.
 //
-// 시리얼(115200) 명령: ? = 상태, l = 판정·읽기 통계, r = 통계 초기화. 측정 조건·기록은 docs/experiments/ble-v2/latency-01/README.md.
+// 시리얼(115200) 명령: ? = 상태, l = 판정·읽기 통계, r = 통계 초기화.
 
 #include <Adafruit_TinyUSB.h>  // 업로드 시 자동 리셋(1200bps)을 유지하려고 포함
 
