@@ -25,6 +25,7 @@
     --bar: #7A4A31; --bar-base: #6B6E74; color-scheme: dark }
 
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }  /* .panel의 display: grid가 hidden 속성을 덮지 않게 */
   body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.7 var(--sans); }
   .wrap { max-width: 920px; margin: 0 auto; padding-block: 56px 64px;
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
